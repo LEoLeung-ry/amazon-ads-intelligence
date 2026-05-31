@@ -1,5 +1,7 @@
 # Amazon Ads Intelligence Workbench
 
+Future maintainers and Codex sessions should read [`CODEX_HANDOFF.md`](./CODEX_HANDOFF.md) before changing code or advertising logic.
+
 纯前端 Amazon Sponsored Products 广告分析工具，适合通过 GitHub Pages 发布。用户拖入的广告文件只在浏览器本地解析，不会上传到 GitHub 或任何服务器。
 
 打开页面后拖入以下文件即可分析：
