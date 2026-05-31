@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amazon Ads Intelligence Workbench</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-block">
+          <div class="brand-mark">AI</div>
+          <div>
+            <h1>Ads Intelligence</h1>
+            <p>商品推广分析工作台</p>
+          </div>
+        </div>
+
+        <section class="drop-card" id="dropZone">
+          <input id="fileInput" type="file" multiple accept=".xlsx,.xls,.csv" />
+          <div class="drop-icon" aria-hidden="true">↑</div>
+          <div class="drop-copy">
+            <strong>拖入广告文件</strong>
+            <span>Bulk、每小时 CSV、SciAds 记录</span>
+          </div>
+          <button class="secondary-btn" id="browseBtn" type="button">选择文件</button>
+        </section>
+
+        <div class="file-stack" id="fileStack"></div>
+
+        <section class="control-card">
+          <div class="control-row">
+            <label for="targetAcos">目标 ACOS</label>
+            <input id="targetAcos" type="number" value="30" min="1" max="100" step="1" />
+          </div>
+          <div class="control-row">
+            <label for="campaignSearch">活动搜索</label>
+            <input id="campaignSearch" type="search" placeholder="输入商品、活动、ASIN" />
+          </div>
+          <div class="segmented" id="productSegments"></div>
+          <div class="selector-actions">
+            <button class="icon-btn" id="selectVisibleBtn" type="button" title="选择当前筛选">✓</button>
+            <button class="icon-btn" id="clearSelectionBtn" type="button" title="清空选择">×</button>
+          </div>
+        </section>
+
+        <section class="campaign-panel">
+          <div class="panel-title">
+            <span>广告活动</span>
+            <b id="selectionCount">0</b>
+          </div>
+          <div class="campaign-list" id="campaignList"></div>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <h2 id="workspaceTitle">等待导入广告数据</h2>
+            <p id="workspaceSubtitle">拖入完整 Bulk 文件后选择多个广告活动；每小时报告会自动联动分时效率。</p>
+          </div>
+          <div class="status-pills" id="statusPills"></div>
+        </header>
+
+        <section class="hero-panel" id="emptyState">
+          <div class="hero-copy">
+            <span class="eyebrow">Drag, select, decide</span>
+            <h3>把 Bulk、小时报告、陪跑记录拖进来，系统会给出可执行的广告动作。</h3>
+            <p>页面会在浏览器本地解析文件，不上传数据。先选择产品组，再勾选多个广告活动，分析会立即重算。</p>
+          </div>
+          <div class="hero-visual" aria-hidden="true">
+            <div class="visual-bar tall"></div>
+            <div class="visual-bar mid"></div>
+            <div class="visual-bar low"></div>
+            <div class="visual-line"></div>
+          </div>
+        </section>
+
+        <section class="kpi-grid" id="kpiGrid"></section>
+
+        <section class="brief-grid">
+          <article class="brief-card">
+            <div class="card-head">
+              <h3>运营判断</h3>
+              <span id="healthBadge">未加载</span>
+            </div>
+            <div id="aiBrief" class="brief-text">导入数据后会生成账户阶段、预算动作、竞价方向和风险提示。</div>
+          </article>
+          <article class="brief-card">
+            <div class="card-head">
+              <h3>波动率监控</h3>
+              <span id="volatilityBadge">待联动</span>
+            </div>
+            <div id="volatilityBrief" class="brief-text">导入每小时广告报告后，按日监控选中活动的 CVR 和 RPC 稳定性。</div>
+          </article>
+          <article class="brief-card">
+            <div class="card-head">
+              <h3>SciAds 规则</h3>
+              <span id="mentorBadge">内置</span>
+            </div>
+            <div id="mentorBrief" class="brief-text">冷启动先积累数据；花费打不出去再加价；稳定转化率的 SKU 要转向抢流量。</div>
+          </article>
+        </section>
+
+        <nav class="tabs" id="tabs">
+          <button class="tab active" data-tab="overview" type="button">总览</button>
+          <button class="tab" data-tab="targets" type="button">标的诊断</button>
+          <button class="tab" data-tab="search" type="button">搜索词</button>
+          <button class="tab" data-tab="hourly" type="button">分时联动</button>
+          <button class="tab" data-tab="placement" type="button">广告位</button>
+          <button class="tab" data-tab="mentor" type="button">规则库</button>
+        </nav>
+
+        <section class="tab-panel active" id="tab-overview">
+          <div class="chart-row">
+            <div class="chart-card"><div id="campaignChart" class="chart"></div></div>
+            <div class="chart-card"><div id="mixChart" class="chart"></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-head"><h3>活动健康</h3><span id="campaignTableMeta"></span></div>
+            <div class="table-wrap"><table id="campaignTable"></table></div>
+          </div>
+        </section>
+
+        <section class="tab-panel" id="tab-targets">
+          <div class="table-toolbar">
+            <div class="tool-field">
+              <label for="targetCampaignFilter">活动筛选</label>
+              <input id="targetCampaignFilter" type="search" placeholder="搜索广告活动名称" />
+            </div>
+            <div class="tool-field compact">
+              <label for="targetActionFilter">动作</label>
+              <select id="targetActionFilter">
+                <option value="all">全部动作</option>
+                <option value="放量">放量</option>
+                <option value="降价">降价</option>
+                <option value="止损">止损</option>
+                <option value="保持">保持</option>
+                <option value="观察">观察</option>
+                <option value="无流量">无流量</option>
+                <option value="小幅优化">小幅优化</option>
+              </select>
+            </div>
+            <button class="export-btn" id="exportTargetCsv" type="button">导出 CSV</button>
+          </div>
+          <div class="table-card">
+            <div class="table-head"><h3>标的动作清单</h3><span>优先处理高影响、高花费项目</span></div>
+            <div class="table-wrap"><table id="targetTable"></table></div>
+          </div>
+        </section>
+
+        <section class="tab-panel" id="tab-search">
+          <div class="chart-row compact">
+            <div class="metric-strip" id="decisionStrip"></div>
+          </div>
+          <div class="table-toolbar">
+            <div class="tool-field">
+              <label for="searchCampaignFilter">活动筛选</label>
+              <input id="searchCampaignFilter" type="search" placeholder="搜索广告活动名称" />
+            </div>
+            <div class="tool-field compact">
+              <label for="searchActionFilter">动作</label>
+              <select id="searchActionFilter">
+                <option value="all">全部动作</option>
+                <option value="加精准词">加精准词</option>
+                <option value="加商品定向">加商品定向</option>
+                <option value="否定">否定</option>
+                <option value="保留/加预算">保留/加预算</option>
+                <option value="保留">保留</option>
+                <option value="观察">观察</option>
+                <option value="继续积累">继续积累</option>
+              </select>
+            </div>
+            <button class="export-btn" id="exportSearchCsv" type="button">导出 CSV</button>
+          </div>
+          <div class="table-card">
+            <div class="table-head"><h3>搜索词 / ASIN 决策</h3><span>加词、否定、保留、观察</span></div>
+            <div class="table-wrap"><table id="searchTable"></table></div>
+          </div>
+        </section>
+
+        <section class="tab-panel" id="tab-hourly">
+          <div class="insight-strip" id="hourlyInsightStrip"></div>
+          <div class="chart-row">
+            <div class="chart-card"><div id="hourlyChart" class="chart"></div></div>
+            <div class="chart-card"><div id="dayChart" class="chart"></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-head"><h3>小时效率</h3><span id="hourTableMeta" title="RPC = 7天总销售额 / 点击量，用来衡量每次点击带来的销售额。">导入每小时报告后显示</span></div>
+            <div class="table-wrap"><table id="hourTable"></table></div>
+          </div>
+        </section>
+
+        <section class="tab-panel" id="tab-placement">
+          <div class="insight-strip" id="placementSummary"></div>
+          <div class="chart-card wide"><div id="placementChart" class="chart"></div></div>
+          <div class="table-card">
+            <div class="table-head"><h3>广告位加成建议</h3><span>RPC 相对基准 × 60%</span></div>
+            <div class="table-wrap"><table id="placementTable"></table></div>
+          </div>
+        </section>
+
+        <section class="tab-panel" id="tab-mentor">
+          <div class="rules-grid" id="rulesGrid"></div>
+          <div class="table-card">
+            <div class="table-head"><h3>聊天记录摘录</h3><span>上传 SciAds 记录后自动抽取</span></div>
+            <div class="table-wrap"><table id="mentorTable"></table></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./assets/xlsx.full.min.js"></script>
+    <script src="./assets/echarts.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

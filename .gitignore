@@ -1,0 +1,10 @@
+# Local source reports and generated verification artifacts
+*.csv
+*.xlsx
+*.xls
+verification*.png
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
