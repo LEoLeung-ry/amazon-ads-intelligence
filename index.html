@@ -4,7 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Amazon Ads Intelligence Workbench</title>
+    <link rel="icon" href="data:," />
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./keyword-checker.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -16,6 +18,11 @@
             <p>商品推广分析工作台</p>
           </div>
         </div>
+
+        <nav class="mode-switch" aria-label="功能入口">
+          <button class="mode-btn active" data-mode="analysis" type="button">广告诊断</button>
+          <button class="mode-btn" data-mode="keyword" type="button">投放关键词检查</button>
+        </nav>
 
         <section class="drop-card" id="dropZone">
           <input id="fileInput" type="file" multiple accept=".xlsx,.xls,.csv" />
@@ -54,7 +61,7 @@
         </section>
       </aside>
 
-      <main class="workspace">
+      <main class="workspace mode-workspace active" id="analysisWorkspace">
         <header class="topbar">
           <div>
             <h2 id="workspaceTitle">等待导入广告数据</h2>
@@ -209,10 +216,118 @@
           </div>
         </section>
       </main>
+
+      <main class="workspace mode-workspace" id="keywordWorkspace" hidden>
+        <header class="topbar">
+          <div>
+            <h2>投放关键词检查</h2>
+            <p>独立检查 Bulk 里每个广告活动和广告组实际投放了哪些词、哪些匹配类型、竞价结构是否合理。</p>
+          </div>
+          <div class="status-pills" id="keywordStatusPills"></div>
+        </header>
+
+        <section class="hero-panel" id="keywordEmptyState">
+          <div class="hero-copy">
+            <span class="eyebrow">Keyword coverage</span>
+            <h3>把同一份 Amazon Bulk 文件拖入左侧，这里会单独生成关键词投放体检。</h3>
+            <p>这个模块不复用原来的标的诊断表格结论，而是重新读取关键词、匹配类型、竞价、广告活动、广告组和否定词结构。</p>
+          </div>
+          <div class="hero-visual keyword-visual" aria-hidden="true">
+            <div class="keyword-dot exact"></div>
+            <div class="keyword-dot phrase"></div>
+            <div class="keyword-dot broad"></div>
+            <div class="keyword-line"></div>
+          </div>
+        </section>
+
+        <section class="kpi-grid keyword-kpi-grid" id="keywordKpiGrid"></section>
+
+        <section class="brief-grid keyword-brief-grid">
+          <article class="brief-card">
+            <div class="card-head">
+              <h3>数学口径</h3>
+              <span>约束优化</span>
+            </div>
+            <div id="keywordMathBrief" class="brief-text">等待 Bulk 文件。这里会按“最大化订单，受预算、库存、目标 ACOS/CPS 约束”的思路检查投放结构。</div>
+          </article>
+          <article class="brief-card">
+            <div class="card-head">
+              <h3>结构风险</h3>
+              <span id="keywordRiskBadge">未加载</span>
+            </div>
+            <div id="keywordRiskBrief" class="brief-text">重点找缺精准、竞价倒挂、重复分散、正负冲突和出单搜索词未承接。</div>
+          </article>
+          <article class="brief-card">
+            <div class="card-head">
+              <h3>课程吸收</h3>
+              <span>已筛选</span>
+            </div>
+            <div id="keywordCourseBrief" class="brief-text">课程中值得吸收的是漏斗、CPS/ACOS 约束和关键词分层；经验规则会被转成可验证的表格标注。</div>
+          </article>
+        </section>
+
+        <section class="keyword-control-panel">
+          <div class="table-toolbar keyword-toolbar">
+            <div class="tool-field compact">
+              <label for="keywordTargetAcos">目标 ACOS</label>
+              <input id="keywordTargetAcos" type="number" value="30" min="1" max="100" step="1" />
+            </div>
+            <div class="tool-field">
+              <label for="keywordSearchInput">关键词筛选</label>
+              <input id="keywordSearchInput" type="search" placeholder="搜索日文词、ASIN、活动名" />
+            </div>
+            <div class="tool-field">
+              <label for="keywordCampaignFilter">活动</label>
+              <select id="keywordCampaignFilter">
+                <option value="all">全部广告活动</option>
+              </select>
+            </div>
+            <div class="tool-field compact">
+              <label for="keywordActionFilter">标注</label>
+              <select id="keywordActionFilter">
+                <option value="all">全部标注</option>
+                <option value="缺精准">缺精准</option>
+                <option value="竞价倒挂">竞价倒挂</option>
+                <option value="重复分散">重复分散</option>
+                <option value="正负冲突">正负冲突</option>
+                <option value="搜索出单未承接">搜索出单未承接</option>
+                <option value="未投放">未投放</option>
+                <option value="结构完整">结构完整</option>
+              </select>
+            </div>
+            <button class="export-btn" id="exportKeywordCsv" type="button">导出 CSV</button>
+          </div>
+
+          <div class="manual-check-card">
+            <div>
+              <label for="manualKeywordInput">手动检查词表</label>
+              <p>每行一个词；留空时自动检查 Bulk 中所有已投放词，并补入有转化但未精准承接的搜索词。</p>
+            </div>
+            <textarea id="manualKeywordInput" rows="4" placeholder="ハンディファン&#10;扇風機 ハンディ&#10;冷却プレート"></textarea>
+            <div class="manual-actions">
+              <button class="secondary-btn" id="runManualKeywordCheck" type="button">检查输入词</button>
+              <button class="secondary-btn" id="useAllKeywordCheck" type="button">使用全部投放词</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="insight-strip" id="keywordInsightStrip"></section>
+
+        <section class="table-card">
+          <div class="table-head"><h3>关键词覆盖与竞价结构</h3><span id="keywordTableMeta">等待 Bulk 文件</span></div>
+          <div class="table-wrap keyword-table-wrap"><table id="keywordCoverageTable"></table></div>
+        </section>
+
+        <section class="table-card">
+          <div class="table-head"><h3>广告组投放视图</h3><span>按广告活动 + 广告组拆开看结构</span></div>
+          <div class="table-wrap keyword-table-wrap"><table id="adGroupCoverageTable"></table></div>
+        </section>
+      </main>
     </div>
 
     <script src="./assets/xlsx.full.min.js"></script>
     <script src="./assets/echarts.min.js"></script>
     <script src="./app.js"></script>
+    <script src="./keyword-checker.js"></script>
   </body>
 </html>

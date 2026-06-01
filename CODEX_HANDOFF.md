@@ -19,6 +19,8 @@ Tracked files should stay small and deployment-safe:
 - `index.html`: app shell, tabs, upload area, tables, chart containers.
 - `app.js`: all parsing, analysis, filtering, chart rendering, and CSV export logic.
 - `styles.css`: full UI styling.
+- `keyword-checker.js`: separate keyword coverage checker. Keep this module independent from the original diagnostics logic except for the small Bulk handoff call in `app.js`.
+- `keyword-checker.css`: separate styling for the keyword checker entry and tables.
 - `assets/xlsx.full.min.js`: SheetJS browser bundle for XLSX/CSV-like workbook parsing.
 - `assets/echarts.min.js`: chart rendering library.
 - `README.md`: user-facing project summary.
@@ -47,6 +49,7 @@ The app then:
 - Recalculates the right-side analysis when campaign search or selection changes.
 - Shows overview, target diagnostics, search term decisions, hourly dayparting, placement advice, and SciAds rules.
 - Exports filtered target/search tables as CSV from the browser.
+- Provides a separate `投放关键词检查` entry that rereads the Bulk workbook for keyword coverage, match type, bid structure, negative terms, and ad group structure.
 
 Important behavior:
 
@@ -197,6 +200,46 @@ Core principle:
 - Negate when there are enough clicks/spend and no orders.
 - Protect low-sample terms during the attribution window.
 
+### Keyword coverage checker
+
+This is a separate feature, not a tab inside the original diagnostics logic.
+
+Files:
+
+- UI shell lives in `index.html` under `#keywordWorkspace`.
+- Logic lives in `keyword-checker.js`.
+- Styles live in `keyword-checker.css`.
+- `app.js` should only notify it after a Bulk workbook is parsed through `window.KeywordChecker.receiveBulk(workbook, { campaignSheetName, searchSheetName })`.
+
+Inputs:
+
+- Reads `商品推广活动` for positive keyword rows, negative keyword rows, bids, campaign names, ad group names, status, and performance metrics.
+- Reads `商品推广搜索词报告` for search terms with activity or orders, so the checker can flag search terms that generated orders but are not explicitly covered as positive keywords.
+
+Course logic assessment:
+
+- The SciAds course is worth learning only where the idea is mathematically checkable.
+- Absorb: advertising as constrained optimization: maximize ad orders subject to budget, stock, and target ACOS/CPS constraints.
+- Absorb: Exact match is the efficiency/control layer; phrase and broad are exploration layers; negative keywords are for traffic splitting.
+- Do not absorb blindly: anecdotal percentage rules, platform behavior claims, or old Sponsored Display rules unless current Amazon documentation/data verifies them.
+
+Current keyword checker actions:
+
+- `搜索出单未承接`: search term has orders and acceptable ACOS but no positive keyword coverage.
+- `缺精准`: phrase/broad exists but exact is missing.
+- `竞价倒挂`: exact average bid is lower than phrase or broad, against the intended `exact >= phrase >= broad` hierarchy.
+- `重复分散`: same term is spread across many campaign/ad group/match combinations.
+- `正负冲突`: same term has positive and negative rows inside the same campaign + ad group. Do not mark different ad groups inside the same campaign as conflict; that can be intentional traffic splitting.
+- `未投放`: manual term or active search term is absent from positive keyword targeting.
+- `精准控制`: exact exists without exploration matches.
+- `结构完整`: exact plus phrase/broad exists and bid hierarchy is acceptable.
+
+Manual mode:
+
+- The checker has a textarea where the user can paste one term per line.
+- Empty textarea means automatic mode: check all positive keywords plus active/search-order terms.
+- Manual mode must preserve Japanese terms and spaces inside terms. Split only on newlines and punctuation separators, not arbitrary spaces.
+
 ### Hourly/daypart logic
 
 The original fixed-segment explanation is preserved for reference:
@@ -239,8 +282,11 @@ The app should feel like an operational SaaS tool, not a marketing landing page.
 Important UI behavior:
 
 - First screen is the usable app, not a landing page.
+- The left sidebar has two separate mode buttons: `广告诊断` and `投放关键词检查`.
 - Left sidebar contains upload, target ACOS, product groups, campaign search, campaign list.
 - Top status pills show Bulk/hourly/SciAds load status.
+- `投放关键词检查` must remain a separate workspace, not merged into the original tab set.
+- Keyword checker should expose KPI cards, math/course brief, risk brief, manual term input, keyword coverage table, ad group table, filters, and CSV export.
 - Overview campaign names must be readable; do not aggressively truncate them.
 - Target/search table campaign columns should not wrap into tall rows; use single-line clipping with full text on hover.
 - Target/search tabs must have campaign-name search, action filter, and filtered CSV export.
@@ -282,6 +328,7 @@ Before opening a PR or merging:
 
    ```powershell
    node --check app.js
+   node --check keyword-checker.js
    ```
 
    If system `node` is blocked, use the bundled Codex runtime Node path.
@@ -310,6 +357,10 @@ Before opening a PR or merging:
    - Target/search CSV export produces filtered rows.
    - Dynamic hourly windows are shown.
    - Placement summary cards render.
+   - `投放关键词检查` mode appears as a separate entry.
+   - After loading Bulk, keyword checker produces keyword rows and ad group rows.
+   - Manual keyword input returns both found and not-found terms.
+   - Keyword checker CSV export produces filtered rows.
    - Browser console has no errors.
 
 ## 9. Known Constraints and Risks

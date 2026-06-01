@@ -256,6 +256,7 @@
       const searchSheetName = findSheetName(sheetNames, ["商品推广搜索词报告", "Sponsored Products Search Term"]);
       if (campaignSheetName || searchSheetName) {
         parseBulkWorkbook(workbook, campaignSheetName, searchSheetName);
+        notifyKeywordChecker(workbook, campaignSheetName, searchSheetName);
         record.type = `Bulk · ${state.campaignRows.length} 活动`;
         state.bulkLoaded = true;
         return;
@@ -267,6 +268,12 @@
     }
 
     throw new Error("暂不支持该文件类型");
+  }
+
+  function notifyKeywordChecker(workbook, campaignSheetName, searchSheetName) {
+    if (window.KeywordChecker && typeof window.KeywordChecker.receiveBulk === "function") {
+      window.KeywordChecker.receiveBulk(workbook, { campaignSheetName, searchSheetName });
+    }
   }
 
   async function readTextSmart(file) {
