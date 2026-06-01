@@ -287,6 +287,8 @@ Important UI behavior:
 - Top status pills show Bulk/hourly/SciAds load status.
 - `投放关键词检查` must remain a separate workspace, not merged into the original tab set.
 - Keyword checker should expose KPI cards, math/course brief, risk brief, manual term input, keyword coverage table, ad group table, filters, and CSV export.
+- Target diagnostics and search term decision tables must include the related ad group column (`广告组`) next to campaign (`活动`) so every action is traceable to both campaign and ad group.
+- The analysis workspace uses a quieter focus layout: four-column KPI chunks, a stronger primary judgment card, muted support cards, and a plain layered background to reduce cognitive load.
 - Overview campaign names must be readable; do not aggressively truncate them.
 - Target/search table campaign columns should not wrap into tall rows; use single-line clipping with full text on hover.
 - Target/search tabs must have campaign-name search, action filter, and filtered CSV export.

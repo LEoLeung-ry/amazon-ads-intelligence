@@ -338,6 +338,7 @@
         const campaignId = cleanText(valueAt(row, indexes.campaignId));
         const adGroup = cleanText(valueAt(row, indexes.adGroup));
         const adGroupId = cleanText(valueAt(row, indexes.adGroupId));
+        const adGroupLabel = adGroup || adGroupId || "-";
         const keyword = cleanText(valueAt(row, indexes.keyword));
         const targetName = cleanText(valueAt(row, indexes.targetName));
         const targetId = cleanText(valueAt(row, indexes.targetId));
@@ -392,7 +393,7 @@
             productGroup: campaignRow.productGroup,
             kind: classifyTarget(targetText, keyword, targetName),
             target: targetText,
-            adGroup,
+            adGroup: adGroupLabel,
             matchType: cleanText(valueAt(row, indexes.match)),
             status: cleanText(valueAt(row, indexes.status)),
             bid: firstPositive([toNumber(valueAt(row, indexes.bid)), toNumber(valueAt(row, indexes.defaultBid))]),
@@ -439,6 +440,7 @@
         const campaignId = cleanText(valueAt(row, indexes.campaignId));
         const adGroup = cleanText(valueAt(row, indexes.adGroup));
         const adGroupId = cleanText(valueAt(row, indexes.adGroupId));
+        const adGroupLabel = adGroup || adGroupId || "-";
         const keyword = cleanText(valueAt(row, indexes.keyword));
         const targetName = cleanText(valueAt(row, indexes.targetName));
         const targetId = cleanText(firstValue(row, [indexes.keywordId, indexes.targetId]));
@@ -459,7 +461,7 @@
             productGroup: campaignRow.productGroup,
             kind: classifyTarget(targetText, keyword, targetName),
             target: targetText,
-            adGroup,
+            adGroup: adGroupLabel,
             matchType: cleanText(valueAt(row, indexes.match)),
             status: cleanText(valueAt(row, indexes.status)),
             bid: toNumber(valueAt(row, indexes.bid)),
@@ -472,6 +474,7 @@
         searchRows.push({
           campaign,
           productGroup: campaignRow.productGroup,
+          adGroup: adGroupLabel,
           query,
           queryType: /^b0[a-z0-9]{8}$/i.test(query) ? "ASIN" : "搜索词",
           target: targetText,
@@ -783,6 +786,7 @@
         const action = targetAction(row, globalMetrics);
         return {
           campaign: row.campaign,
+          adGroup: row.adGroup || "-",
           target: row.target,
           kind: row.kind,
           match: row.matchType || "-",
@@ -809,6 +813,7 @@
       col("动作", "action", "tag"),
       col("标的", "target", "text"),
       col("活动", "campaign", "clip"),
+      col("广告组", "adGroup", "clip"),
       col("类型", "kind", "tag"),
       col("匹配", "match"),
       col("花费", "spend", "money"),
@@ -836,6 +841,7 @@
           query: row.query,
           queryType: row.queryType,
           campaign: row.campaign,
+          adGroup: row.adGroup || "-",
           target: row.target,
           spend: row.metrics.spend,
           sales: row.metrics.sales,
@@ -866,6 +872,7 @@
       col("搜索词 / ASIN", "query", "text"),
       col("类型", "queryType", "tag"),
       col("活动", "campaign", "clip"),
+      col("广告组", "adGroup", "clip"),
       col("来源标的", "target", "small"),
       col("花费", "spend", "money"),
       col("销售额", "sales", "money"),
