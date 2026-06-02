@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Amazon Ads Intelligence Workbench</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="./styles.css" />
-    <link rel="stylesheet" href="./keyword-checker.css" />
+    <link rel="stylesheet" href="./styles.css?v=cps-workbench" />
+    <link rel="stylesheet" href="./keyword-checker.css?v=cps-workbench" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,6 +24,11 @@
           <button class="mode-btn" data-mode="keyword" type="button">投放关键词检查</button>
         </nav>
 
+        <section class="search-card">
+          <label for="campaignSearch">活动搜索</label>
+          <input id="campaignSearch" type="search" placeholder="输入商品、活动、ASIN" />
+        </section>
+
         <section class="drop-card" id="dropZone">
           <input id="fileInput" type="file" multiple accept=".xlsx,.xls,.csv" />
           <div class="drop-icon" aria-hidden="true">↑</div>
@@ -36,15 +41,38 @@
 
         <div class="file-stack" id="fileStack"></div>
 
-        <section class="control-card">
-          <div class="control-row">
-            <label for="targetAcos">目标 ACOS</label>
-            <input id="targetAcos" type="number" value="30" min="1" max="100" step="1" />
+        <section class="goal-card">
+          <div class="goal-head">
+            <span>产品目标</span>
+            <b id="goalOverrideCount">0 个覆盖</b>
           </div>
-          <div class="control-row">
-            <label for="campaignSearch">活动搜索</label>
-            <input id="campaignSearch" type="search" placeholder="输入商品、活动、ASIN" />
+          <div class="goal-fields">
+            <label for="defaultTargetCps">
+              <span>默认目标 CPS</span>
+              <input id="defaultTargetCps" type="number" value="400" min="1" step="10" />
+            </label>
+            <label for="naturalCvr">
+              <span>自然 CVR</span>
+              <input id="naturalCvr" type="number" value="10" min="0" max="100" step="0.1" />
+            </label>
           </div>
+          <div class="goal-metrics">
+            <div>
+              <span>推导 ACOS</span>
+              <b id="derivedAcos">导入后计算</b>
+            </div>
+            <div>
+              <span>实际 CPS</span>
+              <b id="actualCps">导入后计算</b>
+            </div>
+            <div>
+              <span>目标差距</span>
+              <b id="goalGap">等待数据</b>
+            </div>
+          </div>
+        </section>
+
+        <section class="control-card activity-controls">
           <div class="segmented" id="productSegments"></div>
           <div class="selector-actions">
             <button class="icon-btn" id="selectVisibleBtn" type="button" title="选择当前筛选">✓</button>
@@ -61,7 +89,7 @@
         </section>
       </aside>
 
-      <main class="workspace mode-workspace active" id="analysisWorkspace">
+      <main class="workspace mode-workspace active" id="analysisWorkspace" data-ready="false">
         <header class="topbar">
           <div>
             <h2 id="workspaceTitle">等待导入广告数据</h2>
@@ -72,9 +100,14 @@
 
         <section class="hero-panel" id="emptyState">
           <div class="hero-copy">
-            <span class="eyebrow">Drag, select, decide</span>
-            <h3>把 Bulk、小时报告、陪跑记录拖进来，系统会给出可执行的广告动作。</h3>
-            <p>页面会在浏览器本地解析文件，不上传数据。先选择产品组，再勾选多个广告活动，分析会立即重算。</p>
+            <span class="eyebrow">Start light</span>
+            <h3>先导入 Bulk，系统只给你下一步最该做的广告动作。</h3>
+            <p>数据只在浏览器本地解析。新手先看行动队列，熟悉后再展开公式、证据和原始字段。</p>
+            <div class="onboarding-steps" aria-label="使用步骤">
+              <div><b>1</b><span>导入完整 Bulk</span></div>
+              <div><b>2</b><span>确认目标 CPS 与自然 CVR</span></div>
+              <div><b>3</b><span>处理放量、止损、结构修复</span></div>
+            </div>
           </div>
           <div class="hero-visual" aria-hidden="true">
             <div class="visual-bar tall"></div>
@@ -84,7 +117,7 @@
           </div>
         </section>
 
-        <section class="focus-band">
+        <section class="focus-band" id="focusBand" hidden>
           <section class="kpi-grid" id="kpiGrid"></section>
 
           <section class="brief-grid">
@@ -112,7 +145,9 @@
           </section>
         </section>
 
-        <nav class="tabs" id="tabs">
+        <section class="action-queue" id="actionQueue" hidden></section>
+
+        <nav class="tabs" id="tabs" hidden>
           <button class="tab active" data-tab="overview" type="button">总览</button>
           <button class="tab" data-tab="targets" type="button">标的诊断</button>
           <button class="tab" data-tab="search" type="button">搜索词</button>
@@ -250,7 +285,7 @@
               <h3>数学口径</h3>
               <span>约束优化</span>
             </div>
-            <div id="keywordMathBrief" class="brief-text">等待 Bulk 文件。这里会按“最大化订单，受预算、库存、目标 ACOS/CPS 约束”的思路检查投放结构。</div>
+            <div id="keywordMathBrief" class="brief-text">等待 Bulk 文件。这里会按“最大化订单，受预算、库存、目标 CPS 与参考 ACOS 约束”的思路检查投放结构。</div>
           </article>
           <article class="brief-card">
             <div class="card-head">
@@ -271,7 +306,7 @@
         <section class="keyword-control-panel">
           <div class="table-toolbar keyword-toolbar">
             <div class="tool-field compact">
-              <label for="keywordTargetAcos">目标 ACOS</label>
+              <label for="keywordTargetAcos">参考 ACOS</label>
               <input id="keywordTargetAcos" type="number" value="30" min="1" max="100" step="1" />
             </div>
             <div class="tool-field">
@@ -329,7 +364,7 @@
 
     <script src="./assets/xlsx.full.min.js"></script>
     <script src="./assets/echarts.min.js"></script>
-    <script src="./app.js"></script>
-    <script src="./keyword-checker.js"></script>
+    <script src="./app.js?v=cps-workbench"></script>
+    <script src="./keyword-checker.js?v=cps-workbench"></script>
   </body>
 </html>

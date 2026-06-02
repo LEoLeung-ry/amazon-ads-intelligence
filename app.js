@@ -16,7 +16,11 @@
     bulkLoaded: false,
     hourlyLoaded: false,
     mentorLoaded: false,
+    defaultTargetCps: 400,
+    naturalCvr: 0.1,
+    campaignTargetCpsOverrides: {},
     targetAcos: 0.3,
+    optimizationMode: "steadyGrowth",
     tableFilters: {
       targetCampaign: "",
       targetAction: "all",
@@ -26,7 +30,9 @@
     tableExports: {
       target: { columns: [], rows: [] },
       search: { columns: [], rows: [] },
+      productQueue: { columns: [], rows: [] },
     },
+    tableViews: {},
   };
 
   const mentorRules = [
@@ -82,17 +88,26 @@
       "fileInput",
       "browseBtn",
       "fileStack",
-      "targetAcos",
+      "defaultTargetCps",
+      "naturalCvr",
+      "derivedAcos",
+      "actualCps",
+      "goalGap",
+      "goalOverrideCount",
       "campaignSearch",
       "productSegments",
       "selectVisibleBtn",
       "clearSelectionBtn",
       "campaignList",
       "selectionCount",
+      "analysisWorkspace",
       "workspaceTitle",
       "workspaceSubtitle",
       "statusPills",
       "emptyState",
+      "focusBand",
+      "actionQueue",
+      "tabs",
       "kpiGrid",
       "healthBadge",
       "aiBrief",
@@ -116,6 +131,8 @@
     });
     buildLoadingMask();
     initCharts();
+    loadGoalPrefs();
+    syncGoalInputs();
     bindEvents();
     renderAll();
   });
@@ -155,8 +172,14 @@
       els.dropZone.classList.remove("dragging");
       handleFiles(event.dataTransfer.files);
     });
-    els.targetAcos.addEventListener("input", () => {
-      state.targetAcos = clamp(toNumber(els.targetAcos.value) / 100, 0.01, 1);
+    els.defaultTargetCps.addEventListener("input", () => {
+      state.defaultTargetCps = Math.max(1, toNumber(els.defaultTargetCps.value) || 1);
+      saveGoalPrefs();
+      renderAnalysis();
+    });
+    els.naturalCvr.addEventListener("input", () => {
+      state.naturalCvr = clamp(toNumber(els.naturalCvr.value) / 100, 0, 1);
+      saveGoalPrefs();
       renderAnalysis();
     });
     els.campaignSearch.addEventListener("input", () => {
@@ -189,15 +212,79 @@
       state.selectedCampaigns.clear();
       renderAll();
     });
-    $("tabs").addEventListener("click", (event) => {
+    els.actionQueue.addEventListener("click", handleActionQueueClick);
+    document.addEventListener("click", handleColumnControlClick);
+    document.addEventListener("change", handleColumnControlChange);
+    els.tabs.addEventListener("click", (event) => {
       const button = event.target.closest(".tab");
       if (!button) return;
-      document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
-      document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.remove("active"));
-      button.classList.add("active");
-      $(`tab-${button.dataset.tab}`).classList.add("active");
-      setTimeout(() => Object.values(state.charts).forEach((chart) => chart.resize()), 30);
+      activateTab(button.dataset.tab);
     });
+  }
+
+  function loadGoalPrefs() {
+    try {
+      const prefs = JSON.parse(localStorage.getItem("amazonAds.goalPrefs.v1") || "{}") || {};
+      if (Number.isFinite(Number(prefs.defaultTargetCps)) && Number(prefs.defaultTargetCps) > 0) {
+        state.defaultTargetCps = Number(prefs.defaultTargetCps);
+      }
+      if (Number.isFinite(Number(prefs.naturalCvr))) {
+        state.naturalCvr = clamp(Number(prefs.naturalCvr), 0, 1);
+      }
+      if (prefs.campaignTargetCpsOverrides && typeof prefs.campaignTargetCpsOverrides === "object") {
+        state.campaignTargetCpsOverrides = Object.fromEntries(
+          Object.entries(prefs.campaignTargetCpsOverrides)
+            .map(([campaign, value]) => [campaign, Number(value)])
+            .filter(([, value]) => Number.isFinite(value) && value > 0),
+        );
+      }
+    } catch (error) {
+      state.campaignTargetCpsOverrides = {};
+    }
+  }
+
+  function saveGoalPrefs() {
+    localStorage.setItem("amazonAds.goalPrefs.v1", JSON.stringify({
+      defaultTargetCps: state.defaultTargetCps,
+      naturalCvr: state.naturalCvr,
+      campaignTargetCpsOverrides: state.campaignTargetCpsOverrides,
+    }));
+  }
+
+  function syncGoalInputs() {
+    if (els.defaultTargetCps) els.defaultTargetCps.value = String(Math.round(state.defaultTargetCps));
+    if (els.naturalCvr) els.naturalCvr.value = fmtNumber(state.naturalCvr * 100, 1).replace(/\.0$/, "");
+  }
+
+  function activateTab(tabName) {
+    document.querySelectorAll("#analysisWorkspace .tab").forEach((tab) => {
+      tab.classList.toggle("active", tab.dataset.tab === tabName);
+    });
+    document.querySelectorAll("#analysisWorkspace .tab-panel").forEach((panel) => {
+      panel.classList.toggle("active", panel.id === `tab-${tabName}`);
+    });
+    setTimeout(() => Object.values(state.charts).forEach((chart) => chart.resize()), 30);
+  }
+
+  function handleActionQueueClick(event) {
+    const exportButton = event.target.closest("[data-export-queue]");
+    if (exportButton) {
+      exportTableCsv("productQueue", "全产品行动队列.csv");
+      return;
+    }
+    const button = event.target.closest("[data-queue-tab]");
+    if (!button) return;
+    const tab = button.dataset.queueTab;
+    if (button.dataset.targetAction) {
+      state.tableFilters.targetAction = button.dataset.targetAction;
+      els.targetActionFilter.value = button.dataset.targetAction;
+    }
+    if (button.dataset.searchAction) {
+      state.tableFilters.searchAction = button.dataset.searchAction;
+      els.searchActionFilter.value = button.dataset.searchAction;
+    }
+    activateTab(tab);
+    renderAnalysis();
   }
 
   async function handleFiles(fileList) {
@@ -579,6 +666,7 @@
   }
 
   function renderStatus() {
+    document.body.dataset.bulkReady = state.bulkLoaded ? "true" : "false";
     const pills = [
       { text: state.bulkLoaded ? "Bulk 已加载" : "Bulk 待导入", cls: state.bulkLoaded ? "ok" : "warn" },
       { text: state.hourlyLoaded ? "小时报告已联动" : "小时报告待导入", cls: state.hourlyLoaded ? "ok" : "warn" },
@@ -637,21 +725,40 @@
     els.campaignList.innerHTML = rows
       .map((row) => {
         const selected = state.selectedCampaigns.has(row.name);
-        return `<button class="campaign-item ${selected ? "selected" : ""}" type="button" data-campaign="${escapeAttr(row.name)}">
-          <span class="campaign-check">${selected ? "✓" : ""}</span>
-          <span class="campaign-main">
-            <span class="campaign-name" title="${escapeAttr(row.name)}">${escapeHtml(row.name)}</span>
-            <span class="campaign-meta">${escapeHtml(row.productGroup)} · ${escapeHtml(row.kind)} · ${fmtPct(row.calculated.acos)}</span>
-          </span>
-          <span class="campaign-money">${fmtMoney(row.metrics.spend)}</span>
-        </button>`;
+        const override = state.campaignTargetCpsOverrides[row.name];
+        const effectiveCps = campaignTargetCps(row.name);
+        return `<div class="campaign-item ${selected ? "selected" : ""}">
+          <button class="campaign-pick" type="button" data-campaign-toggle="${escapeAttr(row.name)}">
+            <span class="campaign-check">${selected ? "✓" : ""}</span>
+            <span class="campaign-main">
+              <span class="campaign-name" title="${escapeAttr(row.name)}">${escapeHtml(row.name)}</span>
+              <span class="campaign-meta">${escapeHtml(row.productGroup)} · ${escapeHtml(row.kind)} · CPS ${fmtMoney(row.calculated.cpa)} / 目标 ${fmtMoney(effectiveCps)}</span>
+            </span>
+            <span class="campaign-money">${fmtMoney(row.metrics.spend)}</span>
+          </button>
+          <label class="campaign-cps">
+            <span>CPS</span>
+            <input class="campaign-cps-input" type="number" min="1" step="10" placeholder="${escapeAttr(Math.round(state.defaultTargetCps))}" value="${override ? escapeAttr(Math.round(override)) : ""}" data-campaign-cps="${escapeAttr(row.name)}" />
+          </label>
+        </div>`;
       })
       .join("");
-    els.campaignList.querySelectorAll(".campaign-item").forEach((button) => {
+    els.campaignList.querySelectorAll("[data-campaign-toggle]").forEach((button) => {
       button.addEventListener("click", () => {
-        const name = button.dataset.campaign;
+        const name = button.dataset.campaignToggle;
         if (state.selectedCampaigns.has(name)) state.selectedCampaigns.delete(name);
         else state.selectedCampaigns.add(name);
+        renderAll();
+      });
+    });
+    els.campaignList.querySelectorAll("[data-campaign-cps]").forEach((input) => {
+      input.addEventListener("click", (event) => event.stopPropagation());
+      input.addEventListener("change", () => {
+        const campaign = input.dataset.campaignCps;
+        const value = toNumber(input.value);
+        if (value > 0) state.campaignTargetCpsOverrides[campaign] = value;
+        else delete state.campaignTargetCpsOverrides[campaign];
+        saveGoalPrefs();
         renderAll();
       });
     });
@@ -667,17 +774,26 @@
     const selectedPlacement = state.placementRows.filter((row) => selectedSet.has(row.campaign));
     const calculated = calc(metrics);
     const hasSelection = selectedCampaigns.length > 0;
+    const ready = state.bulkLoaded;
+    renderGoalSummary(metrics, selectedCampaigns);
 
-    els.emptyState.classList.toggle("hidden", state.bulkLoaded);
-    els.workspaceTitle.textContent = hasSelection ? `${selectedCampaigns.length} 个广告活动正在分析` : "请选择广告活动";
+    els.analysisWorkspace.dataset.ready = ready ? "true" : "false";
+    els.emptyState.classList.toggle("hidden", ready);
+    els.focusBand.hidden = !ready;
+    els.actionQueue.hidden = !ready;
+    els.tabs.hidden = !ready;
+    els.workspaceTitle.textContent = ready
+      ? hasSelection ? `${selectedCampaigns.length} 个广告活动正在分析` : "请选择广告活动"
+      : "导入后只看最该处理的动作";
     els.workspaceSubtitle.textContent = hasSelection
       ? analysisSubtitle(selectedCampaigns.length)
       : state.bulkLoaded
-        ? "活动搜索为空时展示全部；输入活动名后，右侧只分析匹配活动。也可以勾选多个活动做固定组合。"
-        : "拖入完整 Bulk 文件后选择多个广告活动；每小时报告会自动联动分时效率。";
+        ? "默认分析当前可见活动；需要聚焦时再搜索活动名或勾选固定组合。"
+        : "先拖入完整 Bulk 文件，系统会把建议压缩成放量、止损、结构修复三类。";
 
     renderKpis(metrics, calculated, selectedCampaigns.length, selectedSearch.length);
-    renderBrief(metrics, calculated, selectedTargets, selectedSearch);
+    renderBrief(metrics, calculated, selectedTargets, selectedSearch, selectedCampaigns);
+    renderActionQueue(metrics, calculated, selectedTargets, selectedSearch, selectedCampaigns);
     renderCampaignTable(selectedCampaigns);
     renderTargetDiagnostics(selectedTargets, metrics);
     renderSearchDiagnostics(selectedSearch, metrics);
@@ -689,12 +805,15 @@
 
   function renderKpis(metrics, calculated, campaignCount, searchCount) {
     const items = [
-      ["花费", fmtKpiMoney(metrics.spend), `CPC ${fmtMoney(calculated.cpc)}`],
-      ["销售额", fmtKpiMoney(metrics.sales), `RPC ${fmtMoney(calculated.rpc)}`],
-      ["ACOS", fmtPct(calculated.acos), calculated.acos <= state.targetAcos ? "低于目标" : "高于目标"],
-      ["ROAS", fmtNumber(calculated.roas, 2), `目标 ${fmtNumber(1 / state.targetAcos, 2)}`],
-      ["订单", fmtInt(metrics.orders), `CVR ${fmtPct(calculated.cvr)}`],
       ["点击", fmtInt(metrics.clicks), `CTR ${fmtPct(calculated.ctr)}`],
+      ["CTR", fmtPct(calculated.ctr), `${fmtInt(metrics.impressions)} 曝光`],
+      ["CVR", fmtPct(calculated.cvr), `自然 ${fmtPct(state.naturalCvr)}`],
+      ["订单", fmtInt(metrics.orders), `CPS ${fmtMoney(calculated.cpa)}`],
+      ["CPC", fmtMoney(calculated.cpc), `RPC ${fmtMoney(calculated.rpc)}`],
+      ["花费", fmtKpiMoney(metrics.spend), `${fmtInt(metrics.clicks)} 点击`],
+      ["销售额", fmtKpiMoney(metrics.sales), `AOV ${fmtMoney(calculated.aov)}`],
+      ["ACOS", fmtPct(calculated.acos), state.targetAcos ? `推导目标 ${fmtPct(state.targetAcos)}` : "由 CPS 推导"],
+      ["ROAS", fmtNumber(calculated.roas, 2), state.targetAcos ? `推导目标 ${fmtNumber(1 / state.targetAcos, 2)}` : "由 CPS 推导"],
       ["活动", fmtInt(campaignCount), `${fmtInt(searchCount)} 条搜索词`],
     ];
     els.kpiGrid.innerHTML = items
@@ -702,20 +821,21 @@
       .join("");
   }
 
-  function renderBrief(metrics, calculated, targets, searchRows) {
+  function renderBrief(metrics, calculated, targets, searchRows, campaigns = []) {
     const actionCounts = countBy(targets.map((row) => targetAction(row, metrics).action));
     const searchActions = countBy(searchRows.map((row) => searchDecision(row, metrics).action));
     const cpa = safeDivide(metrics.spend, metrics.orders);
-    const targetCpa = safeDivide(metrics.sales, metrics.orders) * state.targetAcos;
+    const targetCps = averageTargetCps(campaigns);
+    const derivedAcos = calculated.aov ? targetCps / calculated.aov : 0;
     let badgeClass = "badge-good";
     let badge = "健康";
     if (!metrics.clicks) {
       badge = "待选择";
       badgeClass = "";
-    } else if (calculated.acos > state.targetAcos * 1.35) {
+    } else if (cpa > targetCps * 1.35) {
       badge = "需控费";
       badgeClass = "badge-bad";
-    } else if (calculated.acos > state.targetAcos) {
+    } else if (cpa > targetCps) {
       badge = "偏高";
       badgeClass = "badge-warn";
     }
@@ -726,11 +846,11 @@
     if (!metrics.clicks) {
       brief.push("先从左侧选择广告活动，系统会把 Bulk、搜索词和小时报告缩小到这组活动后再计算。");
     } else {
-      brief.push(`当前 ACOS ${fmtPct(calculated.acos)}，目标 ${fmtPct(state.targetAcos)}，单次点击销售额 ${fmtMoney(calculated.rpc)}。`);
-      if (calculated.acos <= state.targetAcos * 0.8 && metrics.orders >= 3) {
+      brief.push(`当前实际 CPS ${fmtMoney(cpa)}，目标 CPS ${fmtMoney(targetCps)}，由 AOV 推导目标 ACOS ${derivedAcos ? fmtPct(derivedAcos) : "待计算"}。`);
+      if (cpa > 0 && cpa <= targetCps * 0.85 && metrics.orders >= 3) {
         brief.push("转化和回报处在可放量区间，优先看高 RPC 的广告位、精准词和高转化 ASIN。");
-      } else if (calculated.acos > state.targetAcos * 1.35) {
-        brief.push(`实际 CPA ${fmtMoney(cpa)} 已明显高于目标 CPA ${fmtMoney(targetCpa)}，先处理无单高花费标的和否定词。`);
+      } else if (cpa > targetCps * 1.35) {
+        brief.push(`实际 CPS 已明显高于目标 CPS，先处理无单高花费标的和否定词。`);
       } else {
         brief.push("整体还在可控区间，适合用小步调价保护学习期，同时把高质量搜索词拆出来。");
       }
@@ -742,6 +862,161 @@
     els.mentorBrief.textContent = state.mentorLoaded
       ? `已读取 ${state.mentorRows.length} 条陪跑记录。当前规则会优先保护归因期，花费打不出去才阶梯加价，稳定转化后再抢流量。`
       : "内置 SciAds 陪跑逻辑：先积累数据，再小步加价；稳定转化率的 SKU，后续增长重点在抢流量。";
+  }
+
+  function renderActionQueue(metrics, calculated, targets, searchRows, campaigns = []) {
+    if (!state.bulkLoaded) {
+      els.actionQueue.innerHTML = "";
+      return;
+    }
+    const targetRows = targets.map((row) => ({ row, decision: targetAction(row, metrics) }));
+    const searchDecisionRows = searchRows.map((row) => ({ row, decision: searchDecision(row, metrics) }));
+    const growthTargets = targetRows.filter((item) => item.decision.action === "放量");
+    const growthSearch = searchDecisionRows.filter((item) => item.decision.action === "保留/加预算");
+    const stopTargets = targetRows.filter((item) => ["止损", "降价"].includes(item.decision.action));
+    const stopSearch = searchDecisionRows.filter((item) => item.decision.action === "否定");
+    const structureSearch = searchDecisionRows.filter((item) => ["加精准词", "加商品定向"].includes(item.decision.action));
+    const keywordSummary = readKeywordCheckerSummary();
+    const keywordRisk = sumKeys(keywordSummary.actions || {}, ["缺精准", "竞价倒挂", "重复分散", "正负冲突", "搜索出单未承接"]);
+    const targetCps = averageTargetCps(campaigns);
+    const queueRows = buildProductActionRows(targetRows, searchDecisionRows);
+
+    const cards = [
+      {
+        tone: "green",
+        eyebrow: "Growth",
+        title: "放量机会",
+        value: growthTargets.length + growthSearch.length,
+        meta: `可放量销售额 ${fmtMoney(sumBy(growthTargets, (item) => item.row.metrics.sales) + sumBy(growthSearch, (item) => item.row.metrics.sales))}`,
+        body: "有订单且实际 CPS 低于目标 CPS 的标的，优先小步加价，避免一次性把学习期打乱。",
+        proof: `建议 bid = 目标 CPS × 平滑 CVR；当前平均目标 CPS 约 ${fmtMoney(targetCps)}，自然 CVR ${fmtPct(state.naturalCvr)} 参与小样本平滑。`,
+        button: "查看放量",
+        tab: "targets",
+        targetAction: "放量",
+      },
+      {
+        tone: "red",
+        eyebrow: "Stop loss",
+        title: "止损 / 否定",
+        value: stopTargets.length + stopSearch.length,
+        meta: `待保护花费 ${fmtMoney(sumBy(stopTargets, (item) => item.row.metrics.spend) + sumBy(stopSearch, (item) => item.row.metrics.spend))}`,
+        body: "无订单且点击或花费达到阈值时先控费；搜索词层面优先否定不相关或低质量流量。",
+        proof: "样本不足先观察；达到点击/花费阈值仍无订单，才进入止损或否定，避免误伤归因期。",
+        button: stopSearch.length > stopTargets.length ? "查看否定" : "查看止损",
+        tab: stopSearch.length > stopTargets.length ? "search" : "targets",
+        targetAction: stopSearch.length > stopTargets.length ? "" : "止损",
+        searchAction: stopSearch.length > stopTargets.length ? "否定" : "",
+      },
+      {
+        tone: "blue",
+        eyebrow: "Structure",
+        title: "结构修复",
+        value: structureSearch.length + keywordRisk,
+        meta: `承接机会 ${structureSearch.length} 个 · 结构风险 ${keywordRisk} 个`,
+        body: "搜索词或 ASIN 已经证明能转化时，应拆出来承接，用精准/商品定向做控制位。",
+        proof: "课程逻辑不是机械找词，而是把有效流量从探索层转到效率层，再用否定词做流量切分。",
+        button: "查看承接",
+        tab: "search",
+        searchAction: structureSearch.some((item) => item.decision.action === "加精准词") ? "加精准词" : "加商品定向",
+      },
+    ];
+
+    els.actionQueue.innerHTML = `
+      <div class="queue-head">
+        <div>
+          <span class="eyebrow">Priority queue</span>
+          <h3>先处理这三类动作</h3>
+        </div>
+        <p>默认稳健增长：在目标 CPS 约束内最大化广告订单，ACOS 只作为由 AOV 推导的解释指标。</p>
+      </div>
+      <div class="queue-grid">
+        ${cards.map((card) => actionQueueCard(card)).join("")}
+      </div>
+      <div class="table-card queue-table-card">
+        <div class="table-head">
+          <h3>全产品行动队列</h3>
+          <button class="export-btn" type="button" data-export-queue>导出 CSV (${queueRows.length})</button>
+        </div>
+        <div class="table-wrap"><table id="productActionTable"></table></div>
+      </div>
+    `;
+    const columns = [
+      col("动作", "action", "tag"),
+      col("对象", "item", "text"),
+      col("活动", "campaign", "clip"),
+      col("广告组", "adGroup", "clip"),
+      col("当前 CPS", "actualCps", "money"),
+      col("目标 CPS", "targetCps", "money"),
+      col("ACOS", "acos", "pct"),
+      col("建议竞价", "recBid", "money"),
+      col("原因", "reason", "reason", { width: "360px" }),
+      col("来源", "source", "tag", { defaultVisible: false }),
+      col("花费", "spend", "money", { defaultVisible: false }),
+      col("订单", "orders", "int", { defaultVisible: false }),
+    ];
+    state.tableExports.productQueue = { tableId: "productActionTable", columns, rows: queueRows };
+    renderTable("productActionTable", columns, queueRows.slice(0, 360), "导入 Bulk 后显示全产品行动队列。");
+  }
+
+  function buildProductActionRows(targetRows, searchDecisionRows) {
+    const targetQueue = targetRows.map(({ row, decision }) => ({
+      source: "标的",
+      action: decision.action,
+      item: row.target,
+      campaign: row.campaign,
+      adGroup: row.adGroup || "-",
+      spend: row.metrics.spend,
+      orders: row.metrics.orders,
+      actualCps: calc(row.metrics).cpa,
+      targetCps: decision.targetCps,
+      acos: row.calculated.acos,
+      recBid: decision.recBid,
+      reason: decision.reason,
+    }));
+    const searchQueue = searchDecisionRows.map(({ row, decision }) => ({
+      source: row.queryType === "ASIN" ? "ASIN" : "搜索词",
+      action: decision.action,
+      item: row.query,
+      campaign: row.campaign,
+      adGroup: row.adGroup || "-",
+      spend: row.metrics.spend,
+      orders: row.metrics.orders,
+      actualCps: calc(row.metrics).cpa,
+      targetCps: decision.targetCps,
+      acos: row.calculated.acos,
+      recBid: decision.recBid,
+      reason: decision.reason,
+    }));
+    return [...targetQueue, ...searchQueue]
+      .filter((row) => row.action !== "小幅优化" && row.action !== "继续积累")
+      .sort((a, b) => actionPriority(a.action) - actionPriority(b.action) || b.spend - a.spend);
+  }
+
+  function readKeywordCheckerSummary() {
+    try {
+      return JSON.parse(document.body.dataset.keywordChecker || "{}") || {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function actionQueueCard(card) {
+    return `
+      <article class="action-card ${card.tone}">
+        <div class="action-top">
+          <span>${escapeHtml(card.eyebrow)}</span>
+          <b>${fmtInt(card.value)}</b>
+        </div>
+        <h4>${escapeHtml(card.title)}</h4>
+        <p>${escapeHtml(card.body)}</p>
+        <strong>${escapeHtml(card.meta)}</strong>
+        <details>
+          <summary>公式和依据</summary>
+          <p>${escapeHtml(card.proof)}</p>
+        </details>
+        <button type="button" data-queue-tab="${escapeAttr(card.tab)}"${card.targetAction ? ` data-target-action="${escapeAttr(card.targetAction)}"` : ""}${card.searchAction ? ` data-search-action="${escapeAttr(card.searchAction)}"` : ""}>${escapeHtml(card.button)}</button>
+      </article>
+    `;
   }
 
   function renderCampaignTable(rows) {
@@ -759,6 +1034,8 @@
           sales: row.metrics.sales,
           clicks: row.metrics.clicks,
           orders: row.metrics.orders,
+          actualCps: row.calculated.cpa,
+          targetCps: action.targetCps,
           acos: row.calculated.acos,
           cvr: row.calculated.cvr,
           rpc: row.calculated.rpc,
@@ -767,15 +1044,17 @@
       });
     renderTable("campaignTable", [
       col("活动", "name", "full"),
-      col("产品组", "product"),
-      col("类型", "kind", "tag"),
+      col("产品组", "product", "text", { defaultVisible: false }),
+      col("类型", "kind", "tag", { defaultVisible: false }),
       col("花费", "spend", "money"),
       col("销售额", "sales", "money"),
-      col("点击", "clicks", "int"),
+      col("点击", "clicks", "int", { defaultVisible: false }),
       col("订单", "orders", "int"),
+      col("当前 CPS", "actualCps", "money"),
+      col("目标 CPS", "targetCps", "money"),
       col("ACOS", "acos", "pct"),
-      col("CVR", "cvr", "pct"),
-      col("RPC", "rpc", "money"),
+      col("CVR", "cvr", "pct", { defaultVisible: false }),
+      col("RPC", "rpc", "money", { defaultVisible: false, description: "RPC = 销售额 / 点击，用来衡量每次点击的销售产出。" }),
       col("判断", "status", "tag"),
     ], tableRows, "左侧选择广告活动后显示。");
   }
@@ -794,6 +1073,8 @@
           sales: row.metrics.sales,
           clicks: row.metrics.clicks,
           orders: row.metrics.orders,
+          actualCps: row.calculated.cpa,
+          targetCps: decision.targetCps,
           acos: row.calculated.acos,
           cvr: row.calculated.cvr,
           bid: row.bid,
@@ -814,20 +1095,22 @@
       col("标的", "target", "text"),
       col("活动", "campaign", "clip"),
       col("广告组", "adGroup", "clip"),
-      col("类型", "kind", "tag"),
-      col("匹配", "match"),
+      col("类型", "kind", "tag", { defaultVisible: false }),
+      col("匹配", "match", "text", { defaultVisible: false }),
       col("花费", "spend", "money"),
-      col("销售额", "sales", "money"),
-      col("点击", "clicks", "int"),
+      col("销售额", "sales", "money", { defaultVisible: false }),
+      col("点击", "clicks", "int", { defaultVisible: false }),
       col("订单", "orders", "int"),
+      col("当前 CPS", "actualCps", "money"),
+      col("目标 CPS", "targetCps", "money"),
       col("ACOS", "acos", "pct"),
-      col("CVR", "cvr", "pct"),
-      col("当前竞价", "bid", "money"),
+      col("CVR", "cvr", "pct", { defaultVisible: false }),
+      col("当前竞价", "bid", "money", { defaultVisible: false }),
       col("建议竞价", "recBid", "money"),
       col("调价", "bidChange", "signedPct"),
-      col("原因", "reason", "small"),
+      col("原因", "reason", "reason", { description: "按目标 CPS、自然 CVR 平滑、样本量和花费阈值生成。", width: "360px" }),
     ];
-    state.tableExports.target = { columns, rows: filtered };
+    state.tableExports.target = { tableId: "targetTable", columns, rows: filtered };
     els.exportTargetCsv.textContent = `导出 CSV (${filtered.length})`;
     renderTable("targetTable", columns, filtered.slice(0, 260), "没有可诊断的标的。");
   }
@@ -847,6 +1130,8 @@
           sales: row.metrics.sales,
           clicks: row.metrics.clicks,
           orders: row.metrics.orders,
+          cpa: row.calculated.cpa,
+          targetCps: campaignTargetCps(row.name),
           acos: row.calculated.acos,
           cvr: row.calculated.cvr,
           reason: decision.reason,
@@ -873,16 +1158,18 @@
       col("类型", "queryType", "tag"),
       col("活动", "campaign", "clip"),
       col("广告组", "adGroup", "clip"),
-      col("来源标的", "target", "small"),
+      col("来源标的", "target", "small", { defaultVisible: false }),
       col("花费", "spend", "money"),
-      col("销售额", "sales", "money"),
-      col("点击", "clicks", "int"),
+      col("销售额", "sales", "money", { defaultVisible: false }),
+      col("点击", "clicks", "int", { defaultVisible: false }),
       col("订单", "orders", "int"),
+      col("CPS", "cpa", "money"),
+      col("目标 CPS", "targetCps", "money", { defaultVisible: false }),
       col("ACOS", "acos", "pct"),
-      col("CVR", "cvr", "pct"),
-      col("原因", "reason", "small"),
+      col("CVR", "cvr", "pct", { defaultVisible: false }),
+      col("原因", "reason", "reason", { description: "出单合格承接；无单高花费否定；样本不足保护归因期。", width: "360px" }),
     ];
-    state.tableExports.search = { columns, rows: filtered };
+    state.tableExports.search = { tableId: "searchTable", columns, rows: filtered };
     els.exportSearchCsv.textContent = `导出 CSV (${filtered.length})`;
     renderTable("searchTable", columns, filtered.slice(0, 260), "没有搜索词数据。");
   }
@@ -896,7 +1183,7 @@
       els.volatilityBrief.textContent = "导入商品推广每小时报告后，会自动寻找高 RPC、高 CVR 且样本足够的连续小时段。";
       els.hourTableMeta.textContent = "导入每小时报告后显示";
       els.hourlyInsightStrip.innerHTML = "";
-      renderTable("hourTable", [col("小时", "hour"), col("分段", "segment"), col("点击", "clicks", "int"), col("销售额", "sales", "money")], [], "未导入每小时报告。");
+      renderTable("hourTable", [col("小时", "hour"), col("分段", "segment", "tag", { defaultVisible: false }), col("点击", "clicks", "int"), col("销售额", "sales", "money", { defaultVisible: false })], [], "未导入每小时报告。");
       clearChart("hourlyChart", "等待小时报告");
       clearChart("dayChart", "等待小时报告");
       return;
@@ -907,7 +1194,7 @@
       els.volatilityBrief.textContent = "每小时报告已加载，但当前选择的活动没有匹配到小时数据。";
       els.hourTableMeta.textContent = "当前活动无小时数据";
       els.hourlyInsightStrip.innerHTML = "";
-      renderTable("hourTable", [col("小时", "hour"), col("分段", "segment"), col("点击", "clicks", "int"), col("销售额", "sales", "money")], [], "当前活动无小时数据。");
+      renderTable("hourTable", [col("小时", "hour"), col("分段", "segment", "tag", { defaultVisible: false }), col("点击", "clicks", "int"), col("销售额", "sales", "money", { defaultVisible: false })], [], "当前活动无小时数据。");
       clearChart("hourlyChart", "无匹配小时数据");
       clearChart("dayChart", "无匹配日数据");
       return;
@@ -934,14 +1221,14 @@
     renderHourlyInsights(hourAnalysis, base, morning, afternoon);
     renderTable("hourTable", [
       col("小时", "hour"),
-      col("旧分段", "segment", "tag"),
+      col("旧分段", "segment", "tag", { defaultVisible: false }),
       col("点击", "clicks", "int"),
-      col("花费", "spend", "money"),
-      col("销售额", "sales", "money"),
+      col("花费", "spend", "money", { defaultVisible: false }),
+      col("销售额", "sales", "money", { defaultVisible: false }),
       col("订单", "orders", "int"),
       col("CVR", "cvr", "pct"),
       col("RPC", "rpc", "money", "RPC = 7天总销售额 / 点击量，用来衡量每次点击带来的销售额。"),
-      col("RPC提升", "uplift", "signedPct"),
+      col("RPC提升", "uplift", "signedPct", { defaultVisible: false }),
       col("建议加价", "advice", "signedPct"),
       col("判断", "hourStatus", "tag"),
     ], tableRows, "没有小时数据。");
@@ -1078,7 +1365,7 @@
     if (!rows.length) {
       els.placementSummary.innerHTML = "";
       renderTable("placementTable", [
-        col("活动", "campaign", "clip"),
+        col("活动", "campaign", "clip", { defaultVisible: false }),
         col("广告位", "placement", "tag"),
         col("建议加成", "recommended", "signedPct"),
       ], [], "Bulk 中没有可用广告位数据。");
@@ -1115,14 +1402,14 @@
     renderTable("placementTable", [
       col("活动", "campaign", "clip"),
       col("广告位", "placement", "tag"),
-      col("当前加成", "current", "signedPct"),
+      col("当前加成", "current", "signedPct", { defaultVisible: false }),
       col("建议加成", "recommended", "signedPct"),
       col("花费", "spend", "money"),
-      col("销售额", "sales", "money"),
-      col("点击", "clicks", "int"),
+      col("销售额", "sales", "money", { defaultVisible: false }),
+      col("点击", "clicks", "int", { defaultVisible: false }),
       col("订单", "orders", "int"),
       col("RPC", "rpc", "money"),
-      col("ACOS", "acos", "pct"),
+      col("ACOS", "acos", "pct", { defaultVisible: false }),
       col("原因", "reason", "small"),
     ], output.slice(0, 160), "Bulk 中没有可用广告位数据。");
   }
@@ -1164,7 +1451,7 @@
 
   function renderMentorTable() {
     renderTable("mentorTable", [
-      col("行号", "row", "int"),
+      col("行号", "row", "int", { defaultVisible: false }),
       col("内容", "text", "text"),
     ], state.mentorRows, "上传 SciAds 陪跑聊天记录后显示摘录。");
   }
@@ -1330,13 +1617,20 @@
   function renderTable(id, columns, rows, emptyText) {
     const table = $(id);
     if (!table) return;
-    const head = `<thead><tr>${columns.map((column) => `<th class="${column.cls || ""}"${column.tooltip ? ` title="${escapeAttr(column.tooltip)}"` : ""}>${escapeHtml(column.label)}</th>`).join("")}</tr></thead>`;
+    state.tableViews[id] = { columns, rows, emptyText };
+    const visibleColumns = getVisibleColumns(id, columns);
+    renderColumnControls(id, columns, visibleColumns);
+    const head = `<thead><tr>${visibleColumns.map((column) => {
+      const title = column.description || column.tooltip;
+      const style = column.width ? ` style="width:${escapeAttr(column.width)}"` : "";
+      return `<th class="${column.cls || ""}"${style}${title ? ` title="${escapeAttr(title)}"` : ""}>${escapeHtml(column.label)}</th>`;
+    }).join("")}</tr></thead>`;
     if (!rows.length) {
-      table.innerHTML = `${head}<tbody><tr><td colspan="${columns.length}" class="small-text">${escapeHtml(emptyText)}</td></tr></tbody>`;
+      table.innerHTML = `${head}<tbody><tr><td colspan="${visibleColumns.length}" class="small-text">${escapeHtml(emptyText)}</td></tr></tbody>`;
       return;
     }
     const body = rows
-      .map((row) => `<tr>${columns.map((column) => tableCell(row, column)).join("")}</tr>`)
+      .map((row) => `<tr>${visibleColumns.map((column) => tableCell(row, column)).join("")}</tr>`)
       .join("");
     table.innerHTML = `${head}<tbody>${body}</tbody>`;
   }
@@ -1344,8 +1638,9 @@
   function exportTableCsv(key, filename) {
     const table = state.tableExports[key];
     if (!table || !table.rows.length) return;
-    const header = table.columns.map((column) => column.label);
-    const body = table.rows.map((row) => table.columns.map((column) => formatForExport(row[column.key], column.type)));
+    const columns = getVisibleColumns(table.tableId || key, table.columns);
+    const header = columns.map((column) => column.label);
+    const body = table.rows.map((row) => columns.map((column) => formatForExport(row[column.key], column.type)));
     const csv = [header, ...body]
       .map((line) => line.map(csvEscape).join(","))
       .join("\r\n");
@@ -1353,7 +1648,7 @@
       key,
       filename,
       rows: table.rows.length,
-      columns: table.columns.length,
+      columns: columns.length,
       sample: csv.slice(0, 160),
     });
     const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
@@ -1390,6 +1685,7 @@
     if (column.type === "full") cls += " full-cell";
     if (column.type === "clip") cls += " clip-cell";
     if (column.type === "small") cls += " small-text";
+    if (column.type === "reason") cls += " reason-cell";
     let html = "";
     if (column.type === "money") html = fmtMoney(value);
     else if (column.type === "pct") html = fmtPct(value);
@@ -1398,13 +1694,154 @@
     else if (column.type === "num") html = fmtNumber(value, 2);
     else if (column.type === "tag") html = tag(value);
     else html = escapeHtml(value ?? "");
-    const title = ["clip", "full", "text", "small"].includes(column.type) ? ` title="${escapeAttr(value ?? "")}"` : "";
+    const title = ["clip", "full", "text", "small", "reason"].includes(column.type) ? ` title="${escapeAttr(value ?? "")}"` : "";
     return `<td class="${cls.trim()}"${title}>${html}</td>`;
   }
 
-  function col(label, key, type = "text", tooltip = "") {
-    const cls = type === "text" ? "text-cell" : type === "small" ? "small-text" : type === "full" ? "full-cell" : type === "clip" ? "clip-cell" : "";
-    return { label, key, type, cls, tooltip };
+  function col(label, key, type = "text", tooltip = "", options = {}) {
+    if (tooltip && typeof tooltip === "object") {
+      options = tooltip;
+      tooltip = "";
+    }
+    const cls = type === "text" ? "text-cell" : type === "small" ? "small-text" : type === "reason" ? "reason-cell" : type === "full" ? "full-cell" : type === "clip" ? "clip-cell" : "";
+    return {
+      label,
+      key,
+      type,
+      cls,
+      tooltip,
+      description: options.description || tooltip || "",
+      width: options.width || "",
+      defaultVisible: options.defaultVisible !== false,
+      expertVisible: options.expertVisible !== false,
+    };
+  }
+
+  function renderColumnControls(tableId, columns, visibleColumns) {
+    const table = $(tableId);
+    const card = table?.closest(".table-card");
+    if (!card || columns.length < 2) return;
+    let controls = card.querySelector(`.column-controls[data-table-id="${tableId}"]`);
+    if (!controls) {
+      controls = document.createElement("div");
+      controls.className = "column-controls";
+      controls.dataset.tableId = tableId;
+      const head = card.querySelector(".table-head");
+      if (head) head.insertAdjacentElement("afterend", controls);
+      else card.insertBefore(controls, card.firstChild);
+    }
+    const prefs = loadColumnPrefs(tableId);
+    const mode = prefs.mode || "default";
+    const visibleKeys = new Set(visibleColumns.map((column) => column.key));
+    const orderedColumns = orderedColumnsForCustom(tableId, columns);
+    controls.innerHTML = `
+      <div class="column-summary">
+        <span>显示 ${visibleColumns.length}/${columns.length} 列</span>
+        <div class="column-mode">
+          ${columnModeButton(tableId, "default", "默认列", mode)}
+          ${columnModeButton(tableId, "expert", "专家列", mode)}
+          ${columnModeButton(tableId, "custom", "自定义列", mode)}
+        </div>
+      </div>
+      <div class="column-picker${mode === "custom" ? "" : " hidden"}">
+        ${orderedColumns.map((column) => `
+          <label class="column-choice">
+            <input type="checkbox" data-column-scope="analysis" data-column-toggle="${escapeAttr(column.key)}" data-table-id="${escapeAttr(tableId)}"${visibleKeys.has(column.key) ? " checked" : ""} />
+            <span>${escapeHtml(column.label)}</span>
+            <button type="button" data-column-scope="analysis" data-column-move="up" data-column-key="${escapeAttr(column.key)}" data-table-id="${escapeAttr(tableId)}" title="上移">↑</button>
+            <button type="button" data-column-scope="analysis" data-column-move="down" data-column-key="${escapeAttr(column.key)}" data-table-id="${escapeAttr(tableId)}" title="下移">↓</button>
+          </label>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function columnModeButton(tableId, mode, label, currentMode) {
+    return `<button type="button" class="${currentMode === mode ? "active" : ""}" data-column-scope="analysis" data-column-mode="${mode}" data-table-id="${escapeAttr(tableId)}">${escapeHtml(label)}</button>`;
+  }
+
+  function handleColumnControlClick(event) {
+    const modeButton = event.target.closest("[data-column-mode][data-column-scope='analysis']");
+    if (modeButton) {
+      const tableId = modeButton.dataset.tableId;
+      const prefs = loadColumnPrefs(tableId);
+      prefs.mode = modeButton.dataset.columnMode;
+      if (prefs.mode === "custom" && !prefs.columns?.length) {
+        prefs.columns = getVisibleColumns(tableId, state.tableViews[tableId]?.columns || []).map((column) => column.key);
+      }
+      saveColumnPrefs(tableId, prefs);
+      rerenderTable(tableId);
+      return;
+    }
+    const moveButton = event.target.closest("[data-column-move][data-column-scope='analysis']");
+    if (!moveButton) return;
+    const tableId = moveButton.dataset.tableId;
+    const prefs = loadColumnPrefs(tableId);
+    const columns = state.tableViews[tableId]?.columns || [];
+    const current = orderedColumnsForCustom(tableId, columns).map((column) => column.key);
+    const index = current.indexOf(moveButton.dataset.columnKey);
+    const nextIndex = moveButton.dataset.columnMove === "up" ? index - 1 : index + 1;
+    if (index < 0 || nextIndex < 0 || nextIndex >= current.length) return;
+    [current[index], current[nextIndex]] = [current[nextIndex], current[index]];
+    prefs.mode = "custom";
+    prefs.columns = current.filter((key) => (prefs.columns?.length ? prefs.columns : current).includes(key));
+    saveColumnPrefs(tableId, prefs);
+    rerenderTable(tableId);
+  }
+
+  function handleColumnControlChange(event) {
+    const checkbox = event.target.closest("[data-column-toggle][data-column-scope='analysis']");
+    if (!checkbox) return;
+    const tableId = checkbox.dataset.tableId;
+    const columns = state.tableViews[tableId]?.columns || [];
+    const prefs = loadColumnPrefs(tableId);
+    const orderedKeys = orderedColumnsForCustom(tableId, columns).map((column) => column.key);
+    const current = new Set(prefs.columns?.length ? prefs.columns : getVisibleColumns(tableId, columns).map((column) => column.key));
+    if (checkbox.checked) current.add(checkbox.dataset.columnToggle);
+    else current.delete(checkbox.dataset.columnToggle);
+    prefs.mode = "custom";
+    prefs.columns = orderedKeys.filter((key) => current.has(key));
+    if (!prefs.columns.length && columns[0]) prefs.columns = [columns[0].key];
+    saveColumnPrefs(tableId, prefs);
+    rerenderTable(tableId);
+  }
+
+  function rerenderTable(tableId) {
+    const view = state.tableViews[tableId];
+    if (view) renderTable(tableId, view.columns, view.rows, view.emptyText);
+  }
+
+  function getVisibleColumns(tableId, columns) {
+    if (!columns.length) return [];
+    const prefs = loadColumnPrefs(tableId);
+    if (prefs.mode === "custom" && prefs.columns?.length) {
+      const byKey = new Map(columns.map((column) => [column.key, column]));
+      const selected = prefs.columns.map((key) => byKey.get(key)).filter(Boolean);
+      return selected.length ? selected : [columns[0]];
+    }
+    const mode = prefs.mode || "default";
+    const visible = columns.filter((column) => mode === "expert" ? column.expertVisible !== false : column.defaultVisible !== false);
+    return visible.length ? visible : [columns[0]];
+  }
+
+  function orderedColumnsForCustom(tableId, columns) {
+    const prefs = loadColumnPrefs(tableId);
+    const byKey = new Map(columns.map((column) => [column.key, column]));
+    const ordered = (prefs.columns || []).map((key) => byKey.get(key)).filter(Boolean);
+    const rest = columns.filter((column) => !ordered.some((item) => item.key === column.key));
+    return [...ordered, ...rest];
+  }
+
+  function loadColumnPrefs(tableId) {
+    try {
+      return JSON.parse(localStorage.getItem(`amazonAds.columnPrefs.${tableId}`) || "{}") || {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function saveColumnPrefs(tableId, prefs) {
+    localStorage.setItem(`amazonAds.columnPrefs.${tableId}`, JSON.stringify(prefs));
   }
 
   function tag(value) {
@@ -1427,64 +1864,73 @@
     const m = row.metrics;
     const c = row.calculated || calc(m);
     const aov = global.aov || c.aov || 0;
-    const targetCpa = aov * state.targetAcos;
-    const baselineCvr = global.cvr || c.cvr || 0.04;
-    const smoothedCvr = safeDivide(m.orders + baselineCvr * 20, m.clicks + 20);
+    const targetCps = campaignTargetCps(row.campaign);
+    const targetAcos = aov ? clamp(targetCps / aov, 0.01, 1) : state.targetAcos;
+    const smoothedCvr = safeDivide(m.orders + state.naturalCvr * 20, m.clicks + 20);
     const observedCpc = c.cpc || row.bid || 0;
-    let recBid = targetCpa ? targetCpa * smoothedCvr : row.bid || observedCpc;
+    let recBid = targetCps ? targetCps * smoothedCvr : row.bid || observedCpc;
     if (observedCpc > 0) recBid = clamp(recBid, observedCpc * 0.45, observedCpc * 1.6);
     if (!recBid && row.bid) recBid = row.bid;
     const currentBid = row.bid || observedCpc || recBid;
     let action = "小幅优化";
-    let reason = "按平滑 CVR 和目标 CPA 回推竞价";
+    let reason = "按目标 CPS 和自然 CVR 平滑后的 CVR 回推竞价";
+    const actualCps = c.cpa;
+    const stopThreshold = Math.max(300, targetCps * 0.8);
 
     if (m.clicks < 3 && m.impressions < 500) {
       action = "无流量";
-      recBid = currentBid ? currentBid * 1.15 : recBid;
+      recBid = currentBid ? Math.max(recBid, currentBid * 1.15) : recBid;
       reason = "曝光和点击都不足，优先小步提高可见度";
-    } else if (m.orders === 0 && (m.clicks >= 12 || m.spend >= Math.max(300, targetCpa * 0.8))) {
+    } else if (m.orders === 0 && (m.clicks >= 12 || m.spend >= stopThreshold)) {
       action = "止损";
       recBid = currentBid ? currentBid * 0.7 : recBid;
-      reason = "无订单且点击/花费已到止损阈值";
-    } else if (c.acos > state.targetAcos * 1.4 && m.spend >= Math.max(200, targetCpa * 0.6)) {
+      reason = `无订单且点击/花费已到 CPS 止损阈值 ${fmtMoney(stopThreshold)}`;
+    } else if (actualCps > targetCps * 1.25 && m.spend >= Math.max(200, targetCps * 0.6)) {
       action = "降价";
       recBid = Math.min(recBid, currentBid ? currentBid * 0.85 : recBid);
-      reason = "ACOS 明显高于目标，先降价控费";
-    } else if (c.acos > 0 && c.acos <= state.targetAcos * 0.8 && m.orders >= 2) {
+      reason = "实际 CPS 高于目标，先降价控费";
+    } else if (actualCps > 0 && actualCps <= targetCps * 0.85 && m.orders >= 2) {
       action = "放量";
       recBid = Math.max(recBid, currentBid ? currentBid * 1.12 : recBid);
-      reason = "有订单且 ACOS 低于目标，可小步放量";
-    } else if (m.orders >= 1 && c.acos <= state.targetAcos) {
+      reason = "有订单且实际 CPS 低于目标，可小步放量";
+    } else if (m.orders >= 1 && actualCps <= targetCps) {
       action = "保持";
-      reason = "表现接近目标，保持并继续观察";
+      reason = `实际 CPS 不高于目标 CPS ${fmtMoney(targetCps)}，保持并继续观察`;
     } else if (m.clicks < 8 && m.orders === 0) {
       action = "观察";
       reason = "点击样本不足，保护归因期";
     }
 
     const bidChange = currentBid ? recBid / currentBid - 1 : 0;
-    return { action, reason, recBid, bidChange };
+    return { action, reason, recBid, bidChange, targetCps, targetAcos };
   }
 
   function searchDecision(row, globalMetrics) {
     const m = row.metrics;
     const c = row.calculated || calc(m);
     const global = calc(globalMetrics);
-    const targetCpa = (global.aov || c.aov || 0) * state.targetAcos;
+    const targetCps = campaignTargetCps(row.campaign);
+    const aov = global.aov || c.aov || 0;
+    const targetAcos = aov ? clamp(targetCps / aov, 0.01, 1) : state.targetAcos;
+    const smoothedCvr = safeDivide(m.orders + state.naturalCvr * 20, m.clicks + 20);
+    const recBid = targetCps * smoothedCvr;
     const alreadyTargeted = isAlreadyTargeted(row.campaign, row.query) || isAlreadyTargeted(row.campaign, row.target);
-    if (m.orders >= 1 && c.acos > 0 && c.acos <= state.targetAcos * 1.1) {
-      if (alreadyTargeted) return { action: "保留/加预算", reason: "已有转化且 ACOS 合格，保留并给预算" };
+    if (m.orders >= 1 && c.cpa > 0 && c.cpa <= targetCps * 1.1) {
+      if (alreadyTargeted) return { action: "保留/加预算", reason: "已有转化且 CPS 合格，保留并给预算", targetCps, targetAcos, recBid };
       return {
         action: row.queryType === "ASIN" ? "加商品定向" : "加精准词",
-        reason: "搜索词/ASIN 已出单且回报合格，可拆出承接",
+        reason: "搜索词/ASIN 已出单且 CPS 合格，可拆出承接",
+        targetCps,
+        targetAcos,
+        recBid,
       };
     }
-    if (m.orders === 0 && (m.clicks >= 12 || m.spend >= Math.max(300, targetCpa * 0.8))) {
-      return { action: "否定", reason: "无订单且点击/花费达到止损阈值" };
+    if (m.orders === 0 && (m.clicks >= 12 || m.spend >= Math.max(300, targetCps * 0.8))) {
+      return { action: "否定", reason: `无订单且点击/花费达到 CPS 止损阈值 ${fmtMoney(Math.max(300, targetCps * 0.8))}`, targetCps, targetAcos, recBid };
     }
-    if (m.clicks < 8) return { action: "观察", reason: "样本不足，先保护归因期" };
-    if (alreadyTargeted) return { action: "保留", reason: "已覆盖，继续观察出单质量" };
-    return { action: "继续积累", reason: "需要更多点击或订单确认质量" };
+    if (m.clicks < 8) return { action: "观察", reason: "样本不足，先保护归因期", targetCps, targetAcos, recBid };
+    if (alreadyTargeted) return { action: "保留", reason: "已覆盖，继续观察出单质量", targetCps, targetAcos, recBid };
+    return { action: "继续积累", reason: "需要更多点击或订单确认质量", targetCps, targetAcos, recBid };
   }
 
   function computeDaypartAdvice(bySegment) {
@@ -1505,12 +1951,20 @@
 
   function finalizeDefaultSelection() {
     if (!state.bulkLoaded) return;
+    const valid = new Set(state.campaignRows.map((row) => row.name));
     if (state.selectedCampaigns.size) {
-      const valid = new Set(state.campaignRows.map((row) => row.name));
       state.selectedCampaigns.forEach((name) => {
         if (!valid.has(name)) state.selectedCampaigns.delete(name);
       });
     }
+    let removedOverride = false;
+    Object.keys(state.campaignTargetCpsOverrides).forEach((name) => {
+      if (!valid.has(name)) {
+        delete state.campaignTargetCpsOverrides[name];
+        removedOverride = true;
+      }
+    });
+    if (removedOverride) saveGoalPrefs();
   }
 
   function getVisibleCampaigns() {
@@ -1531,14 +1985,53 @@
     return visible;
   }
 
+  function campaignTargetCps(campaignName) {
+    const override = state.campaignTargetCpsOverrides[campaignName];
+    return Number.isFinite(override) && override > 0 ? override : state.defaultTargetCps;
+  }
+
+  function averageTargetCps(campaigns) {
+    const rows = campaigns && campaigns.length ? campaigns : [];
+    if (!rows.length) return state.defaultTargetCps;
+    return average(rows.map((row) => campaignTargetCps(row.name)).filter((value) => value > 0)) || state.defaultTargetCps;
+  }
+
+  function derivedTargetAcosForMetrics(metrics, campaigns) {
+    const calculated = calc(metrics);
+    const targetCps = averageTargetCps(campaigns);
+    return calculated.aov ? clamp(targetCps / calculated.aov, 0.01, 1) : state.targetAcos;
+  }
+
+  function renderGoalSummary(metrics = blankMetrics(), campaigns = []) {
+    const calculated = calc(metrics);
+    const targetCps = averageTargetCps(campaigns);
+    const derivedAcos = calculated.aov ? targetCps / calculated.aov : 0;
+    const actualCps = calculated.cpa;
+    state.targetAcos = derivedAcos ? clamp(derivedAcos, 0.01, 1) : state.targetAcos;
+    const overrideCount = Object.keys(state.campaignTargetCpsOverrides).length;
+    if (els.goalOverrideCount) els.goalOverrideCount.textContent = `${fmtInt(overrideCount)} 个覆盖`;
+    if (els.derivedAcos) els.derivedAcos.textContent = derivedAcos ? fmtPct(derivedAcos) : "导入后计算";
+    if (els.actualCps) els.actualCps.textContent = actualCps ? fmtMoney(actualCps) : "导入后计算";
+    if (els.goalGap) {
+      if (!actualCps) {
+        els.goalGap.textContent = `目标 ${fmtMoney(targetCps)}`;
+        els.goalGap.className = "";
+      } else {
+        const gap = actualCps / targetCps - 1;
+        els.goalGap.textContent = `${fmtSignedPct(gap)} vs ${fmtMoney(targetCps)}`;
+        els.goalGap.className = gap <= 0 ? "status-good" : gap <= 0.2 ? "status-warn" : "status-bad";
+      }
+    }
+  }
+
   function analysisSubtitle(count) {
     if (state.search) {
-      return `活动搜索正在过滤：${count} 个匹配活动，目标 ACOS ${fmtPct(state.targetAcos)}。`;
+      return `活动搜索正在过滤：${count} 个匹配活动，默认目标 CPS ${fmtMoney(state.defaultTargetCps)}。`;
     }
     if (state.selectedCampaigns.size) {
-      return `当前目标 ACOS 为 ${fmtPct(state.targetAcos)}，诊断基于左侧已勾选活动。`;
+      return `当前按已勾选活动诊断；活动可覆盖 CPS，未覆盖时继承 ${fmtMoney(state.defaultTargetCps)}。`;
     }
-    return `当前目标 ACOS 为 ${fmtPct(state.targetAcos)}，未输入搜索词时展示全部活动。`;
+    return `未输入搜索词时展示全产品活动；默认目标 CPS ${fmtMoney(state.defaultTargetCps)}，自然 CVR ${fmtPct(state.naturalCvr)}。`;
   }
 
   function getOrCreateCampaign(map, name, seed = {}) {
@@ -1590,10 +2083,12 @@
   }
 
   function campaignStatus(row) {
+    const targetCps = campaignTargetCps(row.name);
+    const actualCps = row.calculated.cpa;
     if (!row.metrics.clicks) return "无流量";
-    if (row.calculated.acos && row.calculated.acos <= state.targetAcos * 0.8 && row.metrics.orders >= 2) return "可放量";
-    if (row.calculated.acos > state.targetAcos * 1.35) return "需控费";
-    if (row.metrics.orders === 0 && row.metrics.spend > 500) return "无单花费";
+    if (actualCps && actualCps <= targetCps * 0.85 && row.metrics.orders >= 2) return "可放量";
+    if (actualCps > targetCps * 1.25) return "需控费";
+    if (row.metrics.orders === 0 && row.metrics.spend > Math.max(300, targetCps * 0.8)) return "无单花费";
     return "稳定观察";
   }
 
@@ -1907,6 +2402,10 @@
 
   function sumKeys(object, keys) {
     return keys.reduce((sum, key) => sum + (object[key] || 0), 0);
+  }
+
+  function sumBy(rows, getter) {
+    return rows.reduce((sum, row) => sum + (Number(getter(row)) || 0), 0);
   }
 
   function actionPriority(action) {

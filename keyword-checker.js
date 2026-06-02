@@ -19,6 +19,8 @@
     },
     exportRows: [],
     exportColumns: [],
+    exportTableId: "keywordCoverageTable",
+    tableViews: {},
   };
 
   const els = {};
@@ -69,6 +71,8 @@
     });
     bindModeSwitch();
     bindKeywordEvents();
+    document.addEventListener("click", handleColumnControlClick);
+    document.addEventListener("change", handleColumnControlChange);
     renderKeywordChecker();
   });
 
@@ -474,8 +478,8 @@
       .map(([label, value, foot]) => `<article class="kpi-card"><div class="kpi-label">${escapeHtml(label)}</div><div class="kpi-value">${escapeHtml(value)}</div><div class="kpi-foot">${escapeHtml(foot)}</div></article>`)
       .join("");
     els.keywordMathBrief.textContent = state.loaded
-      ? `本模块采用课程里可验证的思想：把广告看作 Max(订单) 且受预算、库存、目标 ACOS/CPS 约束的优化问题；关键词结构用精准承接效率，用广泛/词组探索流量。`
-      : "等待 Bulk 文件。这里会按“最大化订单，受预算、库存、目标 ACOS/CPS 约束”的思路检查投放结构。";
+      ? `本模块采用课程里可验证的思想：把广告看作 Max(订单) 且受预算、库存、目标 CPS 与参考 ACOS 约束的优化问题；关键词结构用精准承接效率，用广泛/词组探索流量。`
+      : "等待 Bulk 文件。这里会按“最大化订单，受预算、库存、目标 CPS 与参考 ACOS 约束”的思路检查投放结构。";
     const riskCount = sumKeys(actionCounts, ["缺精准", "竞价倒挂", "重复分散", "正负冲突", "搜索出单未承接"]);
     els.keywordRiskBadge.textContent = state.loaded ? `${riskCount} 个风险` : "未加载";
     els.keywordRiskBadge.className = riskCount ? "badge-warn" : state.loaded ? "badge-good" : "";
@@ -522,17 +526,18 @@
       col("关键词", "keyword", "text"),
       col("覆盖", "coverage", "tag"),
       col("匹配/竞价", "matchDetails", "match"),
-      col("活动", "campaigns", "clip"),
-      col("活动数", "campaignCount", "int"),
-      col("广告组数", "adGroupCount", "int"),
-      col("花费", "spend", "money"),
-      col("销售额", "sales", "money"),
-      col("点击", "clicks", "int"),
+      col("活动", "campaigns", "clip", { defaultVisible: false }),
+      col("活动数", "campaignCount", "int", { defaultVisible: false }),
+      col("广告组数", "adGroupCount", "int", { defaultVisible: false }),
+      col("花费", "spend", "money", { defaultVisible: false }),
+      col("销售额", "sales", "money", { defaultVisible: false }),
+      col("点击", "clicks", "int", { defaultVisible: false }),
       col("订单", "orders", "int"),
       col("ACOS", "acos", "pct"),
-      col("CVR", "cvr", "pct"),
-      col("原因", "reason", "reason"),
+      col("CVR", "cvr", "pct", { defaultVisible: false }),
+      col("原因", "reason", "reason", { description: "精准承接、探索层、否定词和竞价层级的综合判断。" }),
     ];
+    state.exportTableId = "keywordCoverageTable";
     state.exportColumns = columns;
     state.exportRows = keywordRows;
     els.keywordTableMeta.textContent = state.loaded
@@ -548,11 +553,11 @@
       col("广告组", "adGroup", "clip"),
       col("关键词", "keywords", "int"),
       col("精准", "exact", "int"),
-      col("词组", "phrase", "int"),
-      col("广泛", "broad", "int"),
-      col("否定", "negative", "int"),
+      col("词组", "phrase", "int", { defaultVisible: false }),
+      col("广泛", "broad", "int", { defaultVisible: false }),
+      col("否定", "negative", "int", { defaultVisible: false }),
       col("花费", "spend", "money"),
-      col("销售额", "sales", "money"),
+      col("销售额", "sales", "money", { defaultVisible: false }),
       col("订单", "orders", "int"),
       col("ACOS", "acos", "pct"),
       col("样例词", "sample", "reason"),
@@ -591,12 +596,13 @@
 
   function exportKeywordCsv() {
     if (!state.exportRows.length) return;
-    const header = state.exportColumns.map((column) => column.label);
-    const body = state.exportRows.map((row) => state.exportColumns.map((column) => formatForExport(row[column.key], column.type)));
+    const columns = getVisibleColumns(state.exportTableId, state.exportColumns);
+    const header = columns.map((column) => column.label);
+    const body = state.exportRows.map((row) => columns.map((column) => formatForExport(row[column.key], column.type)));
     const csv = [header, ...body].map((line) => line.map(csvEscape).join(",")).join("\r\n");
     document.body.dataset.lastKeywordExport = JSON.stringify({
       rows: state.exportRows.length,
-      columns: state.exportColumns.length,
+      columns: columns.length,
       sample: csv.slice(0, 160),
     });
     const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
@@ -789,12 +795,15 @@
   function renderTable(id, columns, rows, emptyText) {
     const table = $(id);
     if (!table) return;
-    const head = `<thead><tr>${columns.map((column) => `<th class="${column.cls || ""}">${escapeHtml(column.label)}</th>`).join("")}</tr></thead>`;
+    state.tableViews[id] = { columns, rows, emptyText };
+    const visibleColumns = getVisibleColumns(id, columns);
+    renderColumnControls(id, columns, visibleColumns);
+    const head = `<thead><tr>${visibleColumns.map((column) => `<th class="${column.cls || ""}"${column.description ? ` title="${escapeAttr(column.description)}"` : ""}>${escapeHtml(column.label)}</th>`).join("")}</tr></thead>`;
     if (!rows.length) {
-      table.innerHTML = `${head}<tbody><tr><td colspan="${columns.length}" class="small-text">${escapeHtml(emptyText)}</td></tr></tbody>`;
+      table.innerHTML = `${head}<tbody><tr><td colspan="${visibleColumns.length}" class="small-text">${escapeHtml(emptyText)}</td></tr></tbody>`;
       return;
     }
-    const body = rows.map((row) => `<tr>${columns.map((column) => tableCell(row, column)).join("")}</tr>`).join("");
+    const body = rows.map((row) => `<tr>${visibleColumns.map((column) => tableCell(row, column)).join("")}</tr>`).join("");
     table.innerHTML = `${head}<tbody>${body}</tbody>`;
   }
 
@@ -814,7 +823,7 @@
     return `<td class="${cls.trim()}"${title}>${html}</td>`;
   }
 
-  function col(label, key, type = "text") {
+  function col(label, key, type = "text", options = {}) {
     const clsMap = {
       text: "text-cell",
       clip: "clip-cell",
@@ -822,7 +831,142 @@
       match: "keyword-match",
       score: "keyword-score",
     };
-    return { label, key, type, cls: clsMap[type] || "" };
+    return {
+      label,
+      key,
+      type,
+      cls: clsMap[type] || "",
+      description: options.description || "",
+      defaultVisible: options.defaultVisible !== false,
+      expertVisible: options.expertVisible !== false,
+    };
+  }
+
+  function renderColumnControls(tableId, columns, visibleColumns) {
+    const table = $(tableId);
+    const card = table?.closest(".table-card");
+    if (!card || columns.length < 2) return;
+    let controls = card.querySelector(`.column-controls[data-table-id="${tableId}"]`);
+    if (!controls) {
+      controls = document.createElement("div");
+      controls.className = "column-controls";
+      controls.dataset.tableId = tableId;
+      const head = card.querySelector(".table-head");
+      if (head) head.insertAdjacentElement("afterend", controls);
+      else card.insertBefore(controls, card.firstChild);
+    }
+    const prefs = loadColumnPrefs(tableId);
+    const mode = prefs.mode || "default";
+    const visibleKeys = new Set(visibleColumns.map((column) => column.key));
+    const orderedColumns = orderedColumnsForCustom(tableId, columns);
+    controls.innerHTML = `
+      <div class="column-summary">
+        <span>显示 ${visibleColumns.length}/${columns.length} 列</span>
+        <div class="column-mode">
+          ${columnModeButton(tableId, "default", "默认列", mode)}
+          ${columnModeButton(tableId, "expert", "专家列", mode)}
+          ${columnModeButton(tableId, "custom", "自定义列", mode)}
+        </div>
+      </div>
+      <div class="column-picker${mode === "custom" ? "" : " hidden"}">
+        ${orderedColumns.map((column) => `
+          <label class="column-choice">
+            <input type="checkbox" data-column-scope="keyword" data-column-toggle="${escapeAttr(column.key)}" data-table-id="${escapeAttr(tableId)}"${visibleKeys.has(column.key) ? " checked" : ""} />
+            <span>${escapeHtml(column.label)}</span>
+            <button type="button" data-column-scope="keyword" data-column-move="up" data-column-key="${escapeAttr(column.key)}" data-table-id="${escapeAttr(tableId)}" title="上移">↑</button>
+            <button type="button" data-column-scope="keyword" data-column-move="down" data-column-key="${escapeAttr(column.key)}" data-table-id="${escapeAttr(tableId)}" title="下移">↓</button>
+          </label>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function columnModeButton(tableId, mode, label, currentMode) {
+    return `<button type="button" class="${currentMode === mode ? "active" : ""}" data-column-scope="keyword" data-column-mode="${mode}" data-table-id="${escapeAttr(tableId)}">${escapeHtml(label)}</button>`;
+  }
+
+  function handleColumnControlClick(event) {
+    const modeButton = event.target.closest("[data-column-mode][data-column-scope='keyword']");
+    if (modeButton) {
+      const tableId = modeButton.dataset.tableId;
+      const prefs = loadColumnPrefs(tableId);
+      prefs.mode = modeButton.dataset.columnMode;
+      if (prefs.mode === "custom" && !prefs.columns?.length) {
+        prefs.columns = getVisibleColumns(tableId, state.tableViews[tableId]?.columns || []).map((column) => column.key);
+      }
+      saveColumnPrefs(tableId, prefs);
+      rerenderTable(tableId);
+      return;
+    }
+    const moveButton = event.target.closest("[data-column-move][data-column-scope='keyword']");
+    if (!moveButton) return;
+    const tableId = moveButton.dataset.tableId;
+    const prefs = loadColumnPrefs(tableId);
+    const columns = state.tableViews[tableId]?.columns || [];
+    const current = orderedColumnsForCustom(tableId, columns).map((column) => column.key);
+    const index = current.indexOf(moveButton.dataset.columnKey);
+    const nextIndex = moveButton.dataset.columnMove === "up" ? index - 1 : index + 1;
+    if (index < 0 || nextIndex < 0 || nextIndex >= current.length) return;
+    [current[index], current[nextIndex]] = [current[nextIndex], current[index]];
+    prefs.mode = "custom";
+    prefs.columns = current.filter((key) => (prefs.columns?.length ? prefs.columns : current).includes(key));
+    saveColumnPrefs(tableId, prefs);
+    rerenderTable(tableId);
+  }
+
+  function handleColumnControlChange(event) {
+    const checkbox = event.target.closest("[data-column-toggle][data-column-scope='keyword']");
+    if (!checkbox) return;
+    const tableId = checkbox.dataset.tableId;
+    const columns = state.tableViews[tableId]?.columns || [];
+    const prefs = loadColumnPrefs(tableId);
+    const orderedKeys = orderedColumnsForCustom(tableId, columns).map((column) => column.key);
+    const current = new Set(prefs.columns?.length ? prefs.columns : getVisibleColumns(tableId, columns).map((column) => column.key));
+    if (checkbox.checked) current.add(checkbox.dataset.columnToggle);
+    else current.delete(checkbox.dataset.columnToggle);
+    prefs.mode = "custom";
+    prefs.columns = orderedKeys.filter((key) => current.has(key));
+    if (!prefs.columns.length && columns[0]) prefs.columns = [columns[0].key];
+    saveColumnPrefs(tableId, prefs);
+    rerenderTable(tableId);
+  }
+
+  function rerenderTable(tableId) {
+    const view = state.tableViews[tableId];
+    if (view) renderTable(tableId, view.columns, view.rows, view.emptyText);
+  }
+
+  function getVisibleColumns(tableId, columns) {
+    if (!columns.length) return [];
+    const prefs = loadColumnPrefs(tableId);
+    if (prefs.mode === "custom" && prefs.columns?.length) {
+      const byKey = new Map(columns.map((column) => [column.key, column]));
+      const selected = prefs.columns.map((key) => byKey.get(key)).filter(Boolean);
+      return selected.length ? selected : [columns[0]];
+    }
+    const mode = prefs.mode || "default";
+    const visible = columns.filter((column) => mode === "expert" ? column.expertVisible !== false : column.defaultVisible !== false);
+    return visible.length ? visible : [columns[0]];
+  }
+
+  function orderedColumnsForCustom(tableId, columns) {
+    const prefs = loadColumnPrefs(tableId);
+    const byKey = new Map(columns.map((column) => [column.key, column]));
+    const ordered = (prefs.columns || []).map((key) => byKey.get(key)).filter(Boolean);
+    const rest = columns.filter((column) => !ordered.some((item) => item.key === column.key));
+    return [...ordered, ...rest];
+  }
+
+  function loadColumnPrefs(tableId) {
+    try {
+      return JSON.parse(localStorage.getItem(`amazonAds.columnPrefs.${tableId}`) || "{}") || {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function saveColumnPrefs(tableId, prefs) {
+    localStorage.setItem(`amazonAds.columnPrefs.${tableId}`, JSON.stringify(prefs));
   }
 
   function tag(value) {

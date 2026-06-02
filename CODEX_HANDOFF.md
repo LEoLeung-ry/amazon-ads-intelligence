@@ -45,9 +45,11 @@ The user opens the GitHub Pages URL and drags in files manually:
 The app then:
 
 - Parses files locally in the browser.
-- Lets the user filter product groups and search campaign names.
+- Lets the user search campaign names from the top of the left sidebar, filter product groups, and optionally select campaigns.
+- Uses product-level default CPS plus optional per-campaign CPS overrides as the primary optimization target.
+- Uses manually entered natural CVR to smooth small-sample bid recommendations.
 - Recalculates the right-side analysis when campaign search or selection changes.
-- Shows overview, target diagnostics, search term decisions, hourly dayparting, placement advice, and SciAds rules.
+- Shows overview, an all-product action queue, target diagnostics, search term decisions, hourly dayparting, placement advice, and SciAds rules.
 - Exports filtered target/search tables as CSV from the browser.
 - Provides a separate `投放关键词检查` entry that rereads the Bulk workbook for keyword coverage, match type, bid structure, negative terms, and ad group structure.
 
@@ -56,6 +58,9 @@ Important behavior:
 - If the left campaign search box is empty, analyze all currently visible campaigns.
 - If the campaign search box has text, analyze only fuzzy-matched campaigns.
 - Manual campaign selection is still supported, but global campaign search takes priority when present.
+- The owner optimizes one product at a time across all of that product's campaigns. The default homepage workflow must therefore stay product-wide first, not campaign-by-campaign first.
+- Campaign-level CPS overrides are optional. Empty override fields inherit the product default CPS.
+- Goal preferences are saved in `localStorage` under `amazonAds.goalPrefs.v1`; uploaded files themselves are never persisted.
 
 ## 4. Input Files and Expected Columns
 
@@ -155,7 +160,39 @@ Use these definitions consistently:
 - ROAS = sales / spend
 - RPC = sales / clicks
 - AOV = sales / orders
-- CPA = spend / orders
+- CPS/CPA = spend / orders. The UI currently uses the label `CPS`; code may still use `cpa` where it means spend per order.
+
+### Current target model: CPS first
+
+The current application is CPS-driven. Do not revert it to target-ACOS-as-primary-input.
+
+Primary state in `app.js`:
+
+- `defaultTargetCps`: product default target CPS. Current default is `400`.
+- `naturalCvr`: manually entered product natural conversion rate. Current default is `0.10`.
+- `campaignTargetCpsOverrides`: object keyed by campaign name. A positive value overrides the product default for that campaign.
+- `targetAcos`: retained only as a derived/explanatory value for existing ACOS comparisons and UI display.
+
+Local persistence:
+
+- `amazonAds.goalPrefs.v1`
+- Stores `defaultTargetCps`, `naturalCvr`, and `campaignTargetCpsOverrides`.
+- When a new Bulk file is loaded, overrides for campaign names that are no longer present are removed.
+
+Required formulas:
+
+- campaign target CPS = campaign override CPS || product default CPS
+- AOV = sales / orders
+- derived target ACOS = target CPS / AOV
+- smoothed CVR = `(ad orders + natural CVR * 20) / (ad clicks + 20)`
+- recommended bid = target CPS * smoothed CVR
+- no-order stop-loss threshold = `max(300, target CPS * 0.8)`
+
+Important interpretation:
+
+- ACOS is now an explanation metric derived from CPS and AOV, not the user's main control input.
+- Natural CVR must affect low-sample bid recommendations. Keep the smoothing behavior in `targetAction()` and `searchDecision()`.
+- The KPI display order is fixed: clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaign count.
 
 ### Target diagnostics
 
@@ -165,9 +202,9 @@ Target recommendations are produced from:
 - spend
 - orders
 - sales
-- ACOS versus target ACOS
-- smoothed CVR
-- target CPA
+- actual CPS versus target CPS
+- natural-CVR-smoothed CVR
+- campaign-level CPS override if present
 - current bid / observed CPC
 
 Current action categories:
@@ -196,9 +233,20 @@ Search term actions include:
 
 Core principle:
 
-- Add terms/ASINs when there is at least one order and ACOS is acceptable.
-- Negate when there are enough clicks/spend and no orders.
+- Add terms/ASINs when there is at least one order and CPS is acceptable.
+- Negate when there are enough clicks/spend and no orders, using the CPS stop-loss threshold.
 - Protect low-sample terms during the attribution window.
+
+### All-product action queue
+
+The homepage action queue is now the primary workflow.
+
+- `renderActionQueue()` shows three summary cards plus the `productActionTable`.
+- `buildProductActionRows()` mixes target rows and search term rows into one product-wide queue.
+- The queue is sorted by action priority first, then spend.
+- It must show action, object, campaign, ad group, current CPS, target CPS, ACOS, recommended bid, and reason.
+- It uses the same column preference system as other tables and exports through `exportTableCsv("productQueue", ...)`.
+- Keep this product-wide queue as the default path so the user does not have to jump through hundreds of campaigns manually.
 
 ### Keyword coverage checker
 
@@ -219,7 +267,7 @@ Inputs:
 Course logic assessment:
 
 - The SciAds course is worth learning only where the idea is mathematically checkable.
-- Absorb: advertising as constrained optimization: maximize ad orders subject to budget, stock, and target ACOS/CPS constraints.
+- Absorb: advertising as constrained optimization: maximize ad orders subject to budget, stock, and target CPS constraints; use ACOS as a derived check, not the main steering wheel.
 - Absorb: Exact match is the efficiency/control layer; phrase and broad are exploration layers; negative keywords are for traffic splitting.
 - Do not absorb blindly: anecdotal percentage rules, platform behavior claims, or old Sponsored Display rules unless current Amazon documentation/data verifies them.
 
@@ -283,12 +331,16 @@ Important UI behavior:
 
 - First screen is the usable app, not a landing page.
 - The left sidebar has two separate mode buttons: `广告诊断` and `投放关键词检查`.
-- Left sidebar contains upload, target ACOS, product groups, campaign search, campaign list.
+- Left sidebar campaign search appears above upload and goal controls.
+- Left sidebar contains upload, product default target CPS, natural CVR, derived ACOS, actual CPS, target gap, product groups, and campaign list.
+- Each campaign row supports a compact CPS override input. Empty input means inherit product default CPS.
 - Top status pills show Bulk/hourly/SciAds load status.
 - `投放关键词检查` must remain a separate workspace, not merged into the original tab set.
 - Keyword checker should expose KPI cards, math/course brief, risk brief, manual term input, keyword coverage table, ad group table, filters, and CSV export.
 - Target diagnostics and search term decision tables must include the related ad group column (`广告组`) next to campaign (`活动`) so every action is traceable to both campaign and ad group.
-- The analysis workspace uses a quieter focus layout: four-column KPI chunks, a stronger primary judgment card, muted support cards, and a plain layered background to reduce cognitive load.
+- The analysis workspace uses a quieter focus layout: fixed-order KPI chunks, a stronger primary judgment card, muted support cards, and a plain layered background to reduce cognitive load.
+- KPI order must remain: 点击, CTR, CVR, 订单, CPC, 花费, 销售额, ACOS, ROAS, 活动.
+- The all-product action queue should stay above deep tab tables after data import.
 - Overview campaign names must be readable; do not aggressively truncate them.
 - Target/search table campaign columns should not wrap into tall rows; use single-line clipping with full text on hover.
 - Target/search tabs must have campaign-name search, action filter, and filtered CSV export.
@@ -303,7 +355,7 @@ Current deployment:
 - GitHub Pages from `main` branch root.
 - Public URL: https://leoleung-ry.github.io/amazon-ads-intelligence/
 
-Future change workflow:
+Default future change workflow:
 
 1. Create a new branch from `main`.
 2. Make the change.
@@ -321,6 +373,12 @@ Suggested branch names:
 - `fix/github-pages-assets`
 
 Never force-push `main` unless the owner explicitly requests it.
+
+Owner-requested direct publish:
+
+- If the owner explicitly asks to push/replace the GitHub Pages version, direct commits to `main` are allowed.
+- Before every GitHub push, update `CODEX_HANDOFF.md` so another AI can reconstruct the current code logic, UI architecture, data flow, and business rules without this conversation.
+- Direct publish still requires syntax checks and `git diff --check`.
 
 ## 8. Local Verification Checklist
 
@@ -352,6 +410,12 @@ Before opening a PR or merging:
 5. Verify:
 
    - Bulk file loads and campaign count appears.
+   - Left sidebar shows activity search above upload.
+   - Product goal card shows default target CPS, natural CVR, derived ACOS, actual CPS, and target gap.
+   - Editing default CPS or natural CVR updates recommendations.
+   - Campaign CPS override fields save to `amazonAds.goalPrefs.v1` and override target CPS for that campaign.
+   - KPI order is clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaigns.
+   - All-product action queue renders and exports CSV using current columns.
    - Hourly CSV loads and hourly table has 24 rows.
    - SciAds workbook loads or built-in rules remain available.
    - Left campaign search filters the right-side analysis.
