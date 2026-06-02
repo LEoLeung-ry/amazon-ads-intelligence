@@ -10370,21 +10370,38 @@ dsp和adx结合，终于有了目前的dsp广告产品。
         ch.classList.toggle('hidden', !visible && q);
       });
     });
+    let hashScrollUntil = 0;
+    let lastHashAutoScroll = 0;
     function scrollToHashTarget() {
       if (!window.location.hash) return;
       const targetId = decodeURIComponent(window.location.hash.slice(1));
       const target = document.getElementById(targetId);
       if (!target) return;
       requestAnimationFrame(() => {
+        lastHashAutoScroll = Date.now();
         target.scrollIntoView({ block: 'start', behavior: 'auto' });
       });
     }
-    window.addEventListener('load', () => {
+    function settleHashTarget() {
+      hashScrollUntil = Date.now() + 9000;
       scrollToHashTarget();
-      setTimeout(scrollToHashTarget, 250);
-      setTimeout(scrollToHashTarget, 1000);
+      [150, 400, 900, 1600, 2600, 4200, 6500, 9000].forEach(delay => {
+        setTimeout(() => {
+          if (Date.now() <= hashScrollUntil) scrollToHashTarget();
+        }, delay);
+      });
+    }
+    window.addEventListener('scroll', () => {
+      if (Date.now() - lastHashAutoScroll > 250) hashScrollUntil = 0;
+    }, { passive: true });
+    document.querySelectorAll('img').forEach(img => {
+      img.addEventListener('load', () => {
+        if (Date.now() <= hashScrollUntil) scrollToHashTarget();
+      }, { passive: true });
     });
-    window.addEventListener('hashchange', scrollToHashTarget);
+    window.addEventListener('load', settleHashTarget);
+    window.addEventListener('hashchange', settleHashTarget);
+    settleHashTarget();
   </script>
 </body>
 </html>
