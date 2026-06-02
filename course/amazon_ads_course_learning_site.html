@@ -10370,6 +10370,21 @@ dsp和adx结合，终于有了目前的dsp广告产品。
         ch.classList.toggle('hidden', !visible && q);
       });
     });
+    function scrollToHashTarget() {
+      if (!window.location.hash) return;
+      const targetId = decodeURIComponent(window.location.hash.slice(1));
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      requestAnimationFrame(() => {
+        target.scrollIntoView({ block: 'start', behavior: 'auto' });
+      });
+    }
+    window.addEventListener('load', () => {
+      scrollToHashTarget();
+      setTimeout(scrollToHashTarget, 250);
+      setTimeout(scrollToHashTarget, 1000);
+    });
+    window.addEventListener('hashchange', scrollToHashTarget);
   </script>
 </body>
 </html>
