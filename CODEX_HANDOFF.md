@@ -226,6 +226,8 @@ Search term actions include:
 - `加精准词`
 - `加商品定向`
 - `否定`
+- `检查否定`
+- `已否定`
 - `保留/加预算`
 - `保留`
 - `观察`
@@ -236,6 +238,11 @@ Core principle:
 - Add terms/ASINs when there is at least one order and CPS is acceptable.
 - Negate when there are enough clicks/spend and no orders, using the CPS stop-loss threshold.
 - Protect low-sample terms during the attribution window.
+- Parse active Bulk negative keyword rows into `state.negativeByScope` before search term decisions.
+- Match negative keyword coverage by campaign plus ad group name or ad group ID. Amazon Bulk campaign rows may expose ad group ID while search term rows expose the informational ad group name, so both scopes must be indexed.
+- If a no-order search term is already covered by an active negative keyword in the same campaign/ad group, return `已否定` with `recBid: 0` and keep it out of the all-product action queue.
+- If a search term has orders but is covered by a negative keyword, return `检查否定`; this is an exception that should remain visible because it may indicate an accidental traffic block.
+- When exact and phrase negatives both match a query, prefer the exact negative in the explanation.
 
 ### All-product action queue
 
@@ -244,9 +251,12 @@ The homepage action queue is now the primary workflow.
 - `renderActionQueue()` shows three summary cards plus the `productActionTable`.
 - `buildProductActionRows()` mixes target rows and search term rows into one product-wide queue.
 - The queue is sorted by action priority first, then spend.
+- The default queue is intentionally strict. It should include only real action categories: `止损`, `否定`, `检查否定`, `降价`, `放量`, `加精准词`, `加商品定向`, and `保留/加预算`.
+- Keep `观察`, `无流量`, `保持`, `保留`, `继续积累`, `小幅优化`, and `已否定` out of the default queue. These can still appear in expanded diagnostic tables, but showing them by default makes the homepage feel overwhelming.
 - It must show action, object, campaign, ad group, current CPS, target CPS, ACOS, recommended bid, and reason.
 - It uses the same column preference system as other tables and exports through `exportTableCsv("productQueue", ...)`.
 - Keep this product-wide queue as the default path so the user does not have to jump through hundreds of campaigns manually.
+- The deeper tabs (`总览`, `标的诊断`, `搜索词`, `分时联动`, `广告位`, `规则库`) are collapsed by default after import and are revealed through the action queue button. This avoids repeating the queue and prevents a dense report wall from appearing before the user asks for details.
 
 ### Keyword coverage checker
 
@@ -341,8 +351,10 @@ Important UI behavior:
 - The analysis workspace uses a quieter focus layout: fixed-order KPI chunks, a stronger primary judgment card, muted support cards, and a plain layered background to reduce cognitive load.
 - KPI order must remain: 点击, CTR, CVR, 订单, CPC, 花费, 销售额, ACOS, ROAS, 活动.
 - The all-product action queue should stay above deep tab tables after data import.
+- Deep analysis tabs should stay hidden until the user clicks `展开详细分析`.
 - Overview campaign names must be readable; do not aggressively truncate them.
 - Target/search table campaign columns should not wrap into tall rows; use single-line clipping with full text on hover.
+- Target/search table reason columns should stay single-line clipped with hover/title access through existing table rendering, so reason text does not inflate row height.
 - Target/search tabs must have campaign-name search, action filter, and filtered CSV export.
 - Hourly tab must explain RPC.
 - Numeric percentages should show at most one decimal place.
@@ -410,12 +422,15 @@ Before opening a PR or merging:
 5. Verify:
 
    - Bulk file loads and campaign count appears.
+   - With `bulk-ap762ut670mr2-20260502-20260530-1780320002160.xlsx`, the search term `ベビーカー 扇風機` in campaign/ad group `ryo_手持风扇_e8_自动` is detected as already covered by Bulk negative exact (`否定精准匹配`) and does not appear in the all-product action queue.
    - Left sidebar shows activity search above upload.
    - Product goal card shows default target CPS, natural CVR, derived ACOS, actual CPS, and target gap.
    - Editing default CPS or natural CVR updates recommendations.
    - Campaign CPS override fields save to `amazonAds.goalPrefs.v1` and override target CPS for that campaign.
    - KPI order is clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaigns.
    - All-product action queue renders and exports CSV using current columns.
+   - The all-product action queue excludes observation/keep/no-flow/already-negated rows by default.
+   - Deep tabs remain collapsed after import until `展开详细分析` is clicked.
    - Hourly CSV loads and hourly table has 24 rows.
    - SciAds workbook loads or built-in rules remain available.
    - Left campaign search filters the right-side analysis.

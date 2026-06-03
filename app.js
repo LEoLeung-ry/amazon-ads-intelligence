@@ -8,6 +8,7 @@
     targetRows: [],
     searchRows: [],
     placementRows: [],
+    negativeByScope: new Map(),
     hourlyRows: [],
     mentorRows: [],
     productFilter: "全部",
@@ -16,6 +17,7 @@
     bulkLoaded: false,
     hourlyLoaded: false,
     mentorLoaded: false,
+    detailsExpanded: false,
     defaultTargetCps: 400,
     naturalCvr: 0.1,
     campaignTargetCpsOverrides: {},
@@ -73,6 +75,7 @@
       body: "稳定 SKU 的 7 天 CVR 波动超过 ±1 个百分点时预警，优先排查差评、竞品活动、价格和库存。",
     },
   ];
+  const primaryQueueActions = new Set(["止损", "否定", "检查否定", "降价", "放量", "加精准词", "加商品定向", "保留/加预算"]);
 
   const els = {};
   const currency = new Intl.NumberFormat("ja-JP", {
@@ -267,6 +270,12 @@
   }
 
   function handleActionQueueClick(event) {
+    const detailsButton = event.target.closest("[data-toggle-details]");
+    if (detailsButton) {
+      state.detailsExpanded = !state.detailsExpanded;
+      renderAnalysis();
+      return;
+    }
     const exportButton = event.target.closest("[data-export-queue]");
     if (exportButton) {
       exportTableCsv("productQueue", "全产品行动队列.csv");
@@ -383,6 +392,7 @@
     const targetMap = new Map();
     const placementMap = new Map();
     const targetedByCampaign = new Map();
+    const negativeByScope = new Map();
     const bulkCampaignMetrics = new Map();
 
     if (campaignRowsRaw.length > 1) {
@@ -394,6 +404,7 @@
         campaign: findIndex(header, ["广告活动名称", "广告活动名称（仅供参考）", "Campaign Name"]),
         campaignRef: findIndex(header, ["广告活动名称（仅供参考）", "Campaign Name (Informational only)"]),
         adGroup: findIndex(header, ["广告组名称", "广告组名称（仅供参考）", "Ad Group Name"]),
+        adGroupName: findIndex(header, ["广告组名称（仅供参考）", "Ad Group Name (Informational only)", "Ad Group Name"]),
         product: findIndex(header, ["SKU", "ASIN（仅供参考）", "ASIN"]),
         asin: findIndex(header, ["ASIN（仅供参考）", "ASIN"]),
         targetType: findIndex(header, ["投放类型", "Targeting Type"]),
@@ -423,12 +434,16 @@
         if (!campaign) continue;
         const entity = cleanText(valueAt(row, indexes.entity));
         const campaignId = cleanText(valueAt(row, indexes.campaignId));
-        const adGroup = cleanText(valueAt(row, indexes.adGroup));
+        const adGroupRaw = cleanText(valueAt(row, indexes.adGroup));
+        const adGroupName = cleanText(valueAt(row, indexes.adGroupName));
+        const adGroup = adGroupName || adGroupRaw;
         const adGroupId = cleanText(valueAt(row, indexes.adGroupId));
         const adGroupLabel = adGroup || adGroupId || "-";
         const keyword = cleanText(valueAt(row, indexes.keyword));
         const targetName = cleanText(valueAt(row, indexes.targetName));
         const targetId = cleanText(valueAt(row, indexes.targetId));
+        const matchType = cleanText(valueAt(row, indexes.match));
+        const status = cleanText(valueAt(row, indexes.status));
         const placement = cleanText(valueAt(row, indexes.placement));
         const product = cleanText(firstValue(row, [indexes.asin, indexes.product]));
         const campaignRow = getOrCreateCampaign(campaignMap, campaign, {
@@ -467,12 +482,20 @@
 
         const targetText = keyword || targetName || targetId;
         if (!targetText || !isTargetEntity(entity, keyword, targetName, targetId)) continue;
+        if (isNegativeTarget(entity, matchType)) {
+          const negativeScopes = Array.from(new Set([adGroupLabel, adGroupName, adGroupRaw, adGroupId].filter(Boolean)));
+          if (!negativeScopes.length) negativeScopes.push("-");
+          negativeScopes.forEach((scopeAdGroup) => {
+            addNegativeTerm(negativeByScope, campaign, scopeAdGroup, targetText, matchType, status);
+          });
+          continue;
+        }
         addTargetedTerm(targetedByCampaign, campaign, targetText);
         const targetKey = [
           campaignId || campaign,
           adGroupId || adGroup,
           cleanText(valueAt(row, indexes.targetId)) || keyword || targetName,
-          cleanText(valueAt(row, indexes.match)),
+          matchType,
         ].join("||");
         if (!targetMap.has(targetKey)) {
           targetMap.set(targetKey, {
@@ -481,8 +504,8 @@
             kind: classifyTarget(targetText, keyword, targetName),
             target: targetText,
             adGroup: adGroupLabel,
-            matchType: cleanText(valueAt(row, indexes.match)),
-            status: cleanText(valueAt(row, indexes.status)),
+            matchType,
+            status,
             bid: firstPositive([toNumber(valueAt(row, indexes.bid)), toNumber(valueAt(row, indexes.defaultBid))]),
             metrics: blankMetrics(),
             source: "bulk",
@@ -600,6 +623,7 @@
       .map((row) => enrichMetrics(row))
       .sort((a, b) => b.metrics.spend - a.metrics.spend || b.metrics.clicks - a.metrics.clicks);
     state.targetedByCampaign = targetedByCampaign;
+    state.negativeByScope = negativeByScope;
   }
 
   function parseHourlyRows(rows) {
@@ -781,7 +805,11 @@
     els.emptyState.classList.toggle("hidden", ready);
     els.focusBand.hidden = !ready;
     els.actionQueue.hidden = !ready;
-    els.tabs.hidden = !ready;
+    const detailsVisible = ready && state.detailsExpanded;
+    els.tabs.hidden = !detailsVisible;
+    document.querySelectorAll("#analysisWorkspace .tab-panel").forEach((panel) => {
+      panel.hidden = !detailsVisible;
+    });
     els.workspaceTitle.textContent = ready
       ? hasSelection ? `${selectedCampaigns.length} 个广告活动正在分析` : "请选择广告活动"
       : "导入后只看最该处理的动作";
@@ -875,6 +903,7 @@
     const growthSearch = searchDecisionRows.filter((item) => item.decision.action === "保留/加预算");
     const stopTargets = targetRows.filter((item) => ["止损", "降价"].includes(item.decision.action));
     const stopSearch = searchDecisionRows.filter((item) => item.decision.action === "否定");
+    const negativeConflictSearch = searchDecisionRows.filter((item) => item.decision.action === "检查否定");
     const structureSearch = searchDecisionRows.filter((item) => ["加精准词", "加商品定向"].includes(item.decision.action));
     const keywordSummary = readKeywordCheckerSummary();
     const keywordRisk = sumKeys(keywordSummary.actions || {}, ["缺精准", "竞价倒挂", "重复分散", "正负冲突", "搜索出单未承接"]);
@@ -898,14 +927,14 @@
         tone: "red",
         eyebrow: "Stop loss",
         title: "止损 / 否定",
-        value: stopTargets.length + stopSearch.length,
-        meta: `待保护花费 ${fmtMoney(sumBy(stopTargets, (item) => item.row.metrics.spend) + sumBy(stopSearch, (item) => item.row.metrics.spend))}`,
+        value: stopTargets.length + stopSearch.length + negativeConflictSearch.length,
+        meta: `待保护花费 ${fmtMoney(sumBy(stopTargets, (item) => item.row.metrics.spend) + sumBy(stopSearch, (item) => item.row.metrics.spend) + sumBy(negativeConflictSearch, (item) => item.row.metrics.spend))}`,
         body: "无订单且点击或花费达到阈值时先控费；搜索词层面优先否定不相关或低质量流量。",
         proof: "样本不足先观察；达到点击/花费阈值仍无订单，才进入止损或否定，避免误伤归因期。",
-        button: stopSearch.length > stopTargets.length ? "查看否定" : "查看止损",
-        tab: stopSearch.length > stopTargets.length ? "search" : "targets",
-        targetAction: stopSearch.length > stopTargets.length ? "" : "止损",
-        searchAction: stopSearch.length > stopTargets.length ? "否定" : "",
+        button: negativeConflictSearch.length ? "查看冲突" : stopSearch.length > stopTargets.length ? "查看否定" : "查看止损",
+        tab: negativeConflictSearch.length || stopSearch.length > stopTargets.length ? "search" : "targets",
+        targetAction: negativeConflictSearch.length || stopSearch.length > stopTargets.length ? "" : "止损",
+        searchAction: negativeConflictSearch.length ? "检查否定" : stopSearch.length > stopTargets.length ? "否定" : "",
       },
       {
         tone: "blue",
@@ -927,7 +956,10 @@
           <span class="eyebrow">Priority queue</span>
           <h3>先处理这三类动作</h3>
         </div>
-        <p>默认稳健增长：在目标 CPS 约束内最大化广告订单，ACOS 只作为由 AOV 推导的解释指标。</p>
+        <div class="queue-actions">
+          <p>默认稳健增长：先用全产品队列处理真正要动的词、ASIN 和标的。</p>
+          <button class="secondary-btn" type="button" data-toggle-details>${state.detailsExpanded ? "收起详细分析" : "展开详细分析"}</button>
+        </div>
       </div>
       <div class="queue-grid">
         ${cards.map((card) => actionQueueCard(card)).join("")}
@@ -988,7 +1020,7 @@
       reason: decision.reason,
     }));
     return [...targetQueue, ...searchQueue]
-      .filter((row) => row.action !== "小幅优化" && row.action !== "继续积累")
+      .filter((row) => isPrimaryQueueAction(row.action))
       .sort((a, b) => actionPriority(a.action) - actionPriority(b.action) || b.spend - a.spend);
   }
 
@@ -1131,7 +1163,7 @@
           clicks: row.metrics.clicks,
           orders: row.metrics.orders,
           cpa: row.calculated.cpa,
-          targetCps: campaignTargetCps(row.name),
+          targetCps: decision.targetCps,
           acos: row.calculated.acos,
           cvr: row.calculated.cvr,
           reason: decision.reason,
@@ -1148,7 +1180,9 @@
       ["加精准词", counts["加精准词"] || 0],
       ["加商品定向", counts["加商品定向"] || 0],
       ["否定", counts["否定"] || 0],
+      ["检查否定", counts["检查否定"] || 0],
       ["保留/加预算", counts["保留/加预算"] || 0],
+      ["已否定", counts["已否定"] || 0],
       ["观察", counts["观察"] || 0],
     ];
     els.decisionStrip.innerHTML = pills.map(([label, value]) => `<div class="metric-pill"><b>${fmtInt(value)}</b><span>${label}</span></div>`).join("");
@@ -1851,6 +1885,8 @@
   }
 
   function tagClass(text) {
+    if (/已否定/.test(text)) return "violet";
+    if (/检查否定/.test(text)) return "red";
     if (/放量|健康|保留|加精准|加商品|ASIN|精准|首页/.test(text)) return "green";
     if (/降价|观察|宽泛|商品页面/.test(text)) return "amber";
     if (/止损|否定|偏高|无单/.test(text)) return "red";
@@ -1915,6 +1951,25 @@
     const smoothedCvr = safeDivide(m.orders + state.naturalCvr * 20, m.clicks + 20);
     const recBid = targetCps * smoothedCvr;
     const alreadyTargeted = isAlreadyTargeted(row.campaign, row.query) || isAlreadyTargeted(row.campaign, row.target);
+    const negativeCoverage = findNegativeCoverage(row.campaign, row.adGroup || "-", row.query);
+    if (negativeCoverage && m.orders === 0) {
+      return {
+        action: "已否定",
+        reason: `Bulk 中已存在同活动/广告组 ${negativeCoverage.matchType}，无需重复否定`,
+        targetCps,
+        targetAcos,
+        recBid: 0,
+      };
+    }
+    if (negativeCoverage && m.orders >= 1) {
+      return {
+        action: "检查否定",
+        reason: `该搜索词已有订单，但 Bulk 中存在 ${negativeCoverage.matchType}，请确认是否误伤有效流量`,
+        targetCps,
+        targetAcos,
+        recBid,
+      };
+    }
     if (m.orders >= 1 && c.cpa > 0 && c.cpa <= targetCps * 1.1) {
       if (alreadyTargeted) return { action: "保留/加预算", reason: "已有转化且 CPS 合格，保留并给预算", targetCps, targetAcos, recBid };
       return {
@@ -2067,6 +2122,58 @@
     if (!normalized) return false;
     const set = state.targetedByCampaign?.get(campaign);
     return set ? set.has(normalized) : false;
+  }
+
+  function isNegativeTarget(entity, matchType) {
+    const text = `${entity} ${matchType}`.toLowerCase();
+    return /否定|negative/.test(text);
+  }
+
+  function negativeMatchKind(matchType) {
+    const text = cleanText(matchType).toLowerCase();
+    if (/精准|精确|exact/.test(text)) return "exact";
+    if (/词组|phrase/.test(text)) return "phrase";
+    return "negative";
+  }
+
+  function activeNegativeStatus(status) {
+    const text = cleanText(status).toLowerCase();
+    return !/暂停|归档|存档|paused|archived|disabled|已暂停/.test(text);
+  }
+
+  function negativeScopeKey(campaign, adGroup) {
+    return `${campaign || "-"}||${adGroup || "-"}`;
+  }
+
+  function addNegativeTerm(map, campaign, adGroup, term, matchType, status) {
+    const normalized = normalizeTerm(term);
+    if (!normalized || !activeNegativeStatus(status)) return;
+    const key = negativeScopeKey(campaign, adGroup);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push({
+      term,
+      normalized,
+      matchKind: negativeMatchKind(matchType),
+      matchType: cleanText(matchType) || "否定",
+    });
+  }
+
+  function findNegativeCoverage(campaign, adGroup, query) {
+    const normalized = normalizeTerm(query);
+    if (!normalized) return null;
+    const candidates = [
+      ...(state.negativeByScope?.get(negativeScopeKey(campaign, adGroup)) || []),
+      ...(state.negativeByScope?.get(negativeScopeKey(campaign, "-")) || []),
+    ];
+    const matches = candidates.filter((entry) => {
+      if (entry.matchKind === "exact") return normalized === entry.normalized;
+      if (entry.matchKind === "phrase") return normalized.includes(entry.normalized);
+      return normalized === entry.normalized || normalized.includes(entry.normalized);
+    });
+    return matches.sort((a, b) => {
+      const priority = { exact: 1, phrase: 2, negative: 3 };
+      return (priority[a.matchKind] || 4) - (priority[b.matchKind] || 4) || b.normalized.length - a.normalized.length;
+    })[0] || null;
   }
 
   function addTargetedTerm(map, campaign, term) {
@@ -2408,10 +2515,15 @@
     return rows.reduce((sum, row) => sum + (Number(getter(row)) || 0), 0);
   }
 
+  function isPrimaryQueueAction(action) {
+    return primaryQueueActions.has(action);
+  }
+
   function actionPriority(action) {
     const order = {
       止损: 1,
       否定: 1,
+      检查否定: 1,
       降价: 2,
       放量: 3,
       加精准词: 3,
@@ -2423,6 +2535,7 @@
       观察: 7,
       继续积累: 8,
       小幅优化: 9,
+      已否定: 10,
     };
     return order[action] || 10;
   }

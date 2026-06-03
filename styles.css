@@ -281,8 +281,8 @@ button {
 
 .goal-card {
   display: grid;
-  gap: 12px;
-  padding: 14px;
+  gap: 9px;
+  padding: 12px;
 }
 
 .goal-head {
@@ -302,7 +302,7 @@ button {
 .goal-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .goal-fields label {
@@ -312,26 +312,28 @@ button {
 
 .goal-metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: 1fr;
+  gap: 6px;
 }
 
 .goal-metrics div {
   min-width: 0;
-  padding: 9px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
   border: 1px solid var(--line);
   border-radius: 7px;
   background: var(--surface-2);
 }
 
 .goal-metrics b {
-  display: block;
-  margin-top: 3px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #10212b;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .control-card {
@@ -770,13 +772,13 @@ body[data-bulk-ready="false"] .campaign-panel {
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(5, minmax(118px, 1fr));
+  gap: 8px;
 }
 
 .kpi-card {
   min-width: 0;
-  padding: 12px 14px;
+  padding: 9px 11px;
 }
 
 .kpi-label {
@@ -785,16 +787,16 @@ body[data-bulk-ready="false"] .campaign-panel {
 }
 
 .kpi-value {
-  margin-top: 7px;
+  margin-top: 5px;
   color: #101820;
-  font-size: 21px;
+  font-size: 18px;
   line-height: 1.1;
   font-weight: 800;
   overflow-wrap: anywhere;
 }
 
 .kpi-foot {
-  margin-top: 6px;
+  margin-top: 4px;
   color: var(--muted);
   font-size: 11px;
   white-space: nowrap;
@@ -806,16 +808,16 @@ body[data-bulk-ready="false"] .campaign-panel {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(240px, 0.8fr) minmax(240px, 0.8fr);
   gap: 12px;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .brief-card {
   min-width: 0;
-  padding: 14px;
+  padding: 12px;
 }
 
 .focus-band {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .action-queue {
@@ -827,7 +829,7 @@ body[data-bulk-ready="false"] .campaign-panel {
   align-items: end;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .queue-head h3,
@@ -845,24 +847,38 @@ body[data-bulk-ready="false"] .campaign-panel {
 }
 
 .queue-head p {
-  max-width: 520px;
+  max-width: 420px;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
   text-align: right;
 }
 
+.queue-actions {
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+}
+
+.queue-actions .secondary-btn {
+  width: fit-content;
+  grid-column: auto;
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
 .queue-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 
 .action-card {
   min-width: 0;
   display: grid;
-  gap: 10px;
-  padding: 15px;
+  gap: 6px;
+  padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
@@ -897,7 +913,7 @@ body[data-bulk-ready="false"] .campaign-panel {
 
 .action-top b {
   color: #0f172a;
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1;
 }
 
@@ -908,14 +924,14 @@ body[data-bulk-ready="false"] .campaign-panel {
 }
 
 .action-card h4 {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .action-card p,
 .action-card details p {
   color: #475569;
   font-size: 12px;
-  line-height: 1.55;
+  line-height: 1.45;
 }
 
 .action-card strong {
@@ -940,7 +956,7 @@ body[data-bulk-ready="false"] .campaign-panel {
 
 .action-card button {
   width: fit-content;
-  min-height: 32px;
+  min-height: 28px;
   padding: 0 12px;
   border: 1px solid var(--line-strong);
   border-radius: 7px;
