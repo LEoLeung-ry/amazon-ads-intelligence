@@ -261,18 +261,20 @@ Core principle:
 
 The homepage action queue is now the primary workflow.
 
-- `renderActionQueue()` shows three summary cards plus the `productActionTable`.
+- `renderActionQueue()` is deliberately light in the first layer: `Next action` coach, `Today focus`, compact task rail, then the `productActionTable`.
+- Do not restore the old bulky three-card-first action area. It pushed the executable table too far down and made the post-import screen feel like a report wall.
+- `actionTaskChip(card)` renders the compact task rail. It keeps the three business tasks visible, acts as a preset filter, and preserves formula/proof text inside a small `details` disclosure.
 - `buildProductActionRows()` mixes target rows and search term rows into one product-wide queue.
 - The queue is sorted by action priority first, then spend.
 - `state.queueFilters` controls the lightweight execution filter bar: `action`, `risk`, `review`, `impact`, and `sort`.
 - The action filter accepts both exact actions and task presets. Presets are `growth` (`放量`, `保留/加预算`), `stop` (`检查否定`, `否定`, `止损`, `降价`), and `structure` (`加精准词`, `加商品定向`).
-- The three action cards should filter the all-product queue through these presets instead of jumping into deep target/search tabs. This keeps new users in the primary execution workflow.
-- If a card has no queue rows for its preset, disable the card button and show `暂无队列`; do not let users click into an empty-looking path.
+- The three task chips should filter the all-product queue through these presets instead of jumping into deep target/search tabs. This keeps new users in the primary execution workflow.
+- If a task chip has no queue rows for its preset, disable the chip button; do not let users click into an empty-looking path.
 - `buildTodayFocusRows(queueRows)` creates the `今日优先` focus set: top 30 pending rows scored by action priority, risk, spend, no-order status, over-target CPS, and negative-conflict risk. It is an onboarding/operations layer for large queues, not a replacement for the full queue.
 - On first successful Bulk import, `state.pendingQueueAutoFocus` should switch the default queue view to `todayFocus` only when the user is still in the untouched default queue view and `buildTodayFocusRows()` produced rows. This makes the first post-import table manageable instead of showing thousands of rows.
 - When the queue is actively filtered to `todayFocus`, keep `state.todayFocusKeys` stable while the user confirms or holds rows. Do not recompute the focus set after every confirmation, or confirmed rows may disappear from the current export scope before the user can export them.
-- `renderTodayFocus(todayFocusRows, queueRows)` sits between the execution coach and the table. Its `查看今日优先` button sets `state.queueFilters.impact = "todayFocus"` and keeps review status on `pending`; when already focused, it shows `查看全部动作` so users can return to the complete queue without hunting through the filter dropdown.
-- `buildExecutionCoach(scopedRows, confirmedRows)` creates the lightweight `Next action` strip between the action cards and the table. It compresses thousands of rows into one recommended next step.
+- `renderTodayFocus(todayFocusRows, queueRows)` sits immediately after the execution coach and before the task rail/table. Its `查看今日优先` button sets `state.queueFilters.impact = "todayFocus"` and keeps review status on `pending`; when already focused, it shows `查看全部动作` so users can return to the complete queue without hunting through the filter dropdown.
+- `buildExecutionCoach(scopedRows, confirmedRows)` creates the lightweight `Next action` strip above the task rail. It compresses thousands of rows into one recommended next step before the user sees category counts.
 - The execution coach priority is: stop/loss-control first, then growth, then structure. This reflects the operator workflow: protect waste before scaling, then repair structure.
 - The coach uses the current task/risk/impact filter scope but ignores the selected review-status filter for its summary, matching the pending/confirmed summary behavior.
 - The default queue filter is `review: "pending"` so the user starts from unresolved actions only. Confirmed and held actions remain available by switching the status filter to `已确认`, `暂缓`, or `全部状态`.

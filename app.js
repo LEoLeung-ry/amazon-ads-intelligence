@@ -1112,11 +1112,11 @@
           <button class="secondary-btn" type="button" data-toggle-details>${state.detailsExpanded ? "收起详细分析" : "展开详细分析"}</button>
         </div>
       </div>
-      <div class="queue-grid">
-        ${cards.map((card) => actionQueueCard(card)).join("")}
-      </div>
       ${renderExecutionCoach(executionCoach)}
       ${renderTodayFocus(todayFocusRows, queueRows)}
+      <div class="task-rail" aria-label="行动任务筛选">
+        ${cards.map((card) => actionTaskChip(card)).join("")}
+      </div>
       <div class="table-card queue-table-card">
         <div class="table-head">
           <div>
@@ -1604,21 +1604,23 @@
       .join("");
   }
 
-  function actionQueueCard(card) {
+  function actionTaskChip(card) {
+    const active = state.queueFilters.action === card.queueAction;
+    const disabled = card.queueCount ? "" : " disabled";
     return `
-      <article class="action-card ${card.tone}">
-        <div class="action-top">
-          <span>${escapeHtml(card.eyebrow)}</span>
-          <b>${fmtInt(card.value)}</b>
-        </div>
-        <h4>${escapeHtml(card.title)}</h4>
-        <p>${escapeHtml(card.body)}</p>
-        <strong>${escapeHtml(card.meta)}</strong>
+      <article class="task-chip ${card.tone} ${active ? "active" : ""}">
+        <button type="button" data-queue-action-preset="${escapeAttr(card.queueAction)}" aria-pressed="${active ? "true" : "false"}"${disabled}>
+          <span class="task-chip-main">
+            <span>${escapeHtml(card.eyebrow)}</span>
+            <b>${fmtInt(card.value)}</b>
+          </span>
+          <span class="task-title">${escapeHtml(card.title)}</span>
+          <small>${escapeHtml(card.meta)}</small>
+        </button>
         <details>
           <summary>公式和依据</summary>
-          <p>${escapeHtml(card.proof)}</p>
+          <p>${escapeHtml(card.body)} ${escapeHtml(card.proof)}</p>
         </details>
-        <button type="button" data-queue-action-preset="${escapeAttr(card.queueAction)}"${card.queueCount ? "" : " disabled"}>${escapeHtml(card.queueCount ? card.button : "暂无队列")}</button>
       </article>
     `;
   }

@@ -1069,114 +1069,118 @@ body[data-bulk-ready="false"] .campaign-panel {
   font-size: 12px;
 }
 
-.queue-grid {
+.task-rail {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
+  margin-top: 10px;
 }
 
-.action-card {
+.task-chip {
   min-width: 0;
   display: grid;
-  gap: 6px;
-  padding: 10px 12px;
+  gap: 5px;
+  padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--surface);
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+  background: #fff;
 }
 
-.action-card.green {
-  border-top: 3px solid var(--green);
+.task-chip.green {
+  border-left: 3px solid var(--green);
 }
 
-.action-card.red {
-  border-top: 3px solid var(--red);
+.task-chip.red {
+  border-left: 3px solid var(--red);
 }
 
-.action-card.blue {
-  border-top: 3px solid var(--blue);
+.task-chip.blue {
+  border-left: 3px solid var(--blue);
 }
 
-.action-top {
-  display: flex;
+.task-chip.active {
+  border-color: rgba(15, 118, 110, 0.42);
+  background: #f0fdfa;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.task-chip button {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 2px;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #10212b;
+  text-align: left;
+  cursor: pointer;
 }
 
-.action-top span {
+.task-chip button:disabled {
+  cursor: not-allowed;
+  color: #94a3b8;
+}
+
+.task-chip-main {
+  grid-row: span 2;
+  min-width: 76px;
+  display: grid;
+  gap: 2px;
+}
+
+.task-chip-main span {
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
-.action-top b {
+.task-chip-main b {
   color: #0f172a;
   font-size: 20px;
   line-height: 1;
 }
 
-.action-card h4,
-.action-card p,
-.action-card details p {
-  margin: 0;
-}
-
-.action-card h4 {
-  font-size: 14px;
-}
-
-.action-card p,
-.action-card details p {
-  color: #475569;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.action-card strong {
-  color: #10212b;
+.task-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 13px;
+  font-weight: 900;
 }
 
-.action-card details {
+.task-chip small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.task-chip details {
   padding-top: 2px;
 }
 
-.action-card summary {
+.task-chip summary {
+  width: fit-content;
   color: var(--teal);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   cursor: pointer;
 }
 
-.action-card details p {
-  margin-top: 7px;
-}
-
-.action-card button {
-  width: fit-content;
-  min-height: 28px;
-  padding: 0 12px;
-  border: 1px solid var(--line-strong);
-  border-radius: 7px;
-  background: #fff;
-  color: #10212b;
+.task-chip details p {
+  margin: 6px 0 0;
+  color: #475569;
   font-size: 12px;
-  font-weight: 800;
-}
-
-.action-card button:hover {
-  border-color: var(--teal);
-  color: var(--teal);
-}
-
-.action-card button:disabled {
-  cursor: not-allowed;
-  border-color: var(--line);
-  background: #f8fafc;
-  color: #94a3b8;
+  line-height: 1.45;
 }
 
 .execution-coach {
@@ -2079,7 +2083,7 @@ tbody tr:hover {
 
   .chart-row,
   .brief-grid,
-  .queue-grid {
+  .task-rail {
     grid-template-columns: 1fr;
   }
 
