@@ -21,6 +21,7 @@
     lastQueueCount: 0,
     lastReviewCounts: { pending: 0, confirmed: 0, held: 0 },
     actionReviews: {},
+    todayFocusKeys: new Set(),
     defaultTargetCps: 670,
     naturalCvr: 0.05,
     campaignTargetCpsOverrides: {},
@@ -335,6 +336,18 @@
     const presetButton = event.target.closest("[data-queue-action-preset]");
     if (presetButton) {
       state.queueFilters.action = presetButton.dataset.queueActionPreset || "all";
+      state.queueFilters.review = "pending";
+      state.queueFilters.sort = "priority";
+      renderAnalysis();
+      requestAnimationFrame(() => {
+        const tableCard = els.actionQueue.querySelector(".queue-table-card");
+        if (tableCard) tableCard.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
+      return;
+    }
+    const impactButton = event.target.closest("[data-queue-impact]");
+    if (impactButton) {
+      state.queueFilters.impact = impactButton.dataset.queueImpact || "all";
       state.queueFilters.review = "pending";
       state.queueFilters.sort = "priority";
       renderAnalysis();
@@ -1024,6 +1037,8 @@
     const keywordRisk = sumKeys(keywordSummary.actions || {}, ["缺精准", "竞价倒挂", "重复分散", "正负冲突", "搜索出单未承接"]);
     const targetCps = averageTargetCps(campaigns);
     const queueRows = buildProductActionRows(targetRows, searchDecisionRows);
+    const todayFocusRows = buildTodayFocusRows(queueRows);
+    state.todayFocusKeys = new Set(todayFocusRows.map((row) => row.reviewKey));
     const filteredQueueRows = filterQueueRows(queueRows);
     const scopedQueueRows = filterQueueRows(queueRows, { review: "all" });
     state.lastQueueCount = filteredQueueRows.length;
@@ -1089,6 +1104,7 @@
         ${cards.map((card) => actionQueueCard(card)).join("")}
       </div>
       ${renderExecutionCoach(executionCoach)}
+      ${renderTodayFocus(todayFocusRows, queueRows)}
       <div class="table-card queue-table-card">
         <div class="table-head">
           <div>
@@ -1196,6 +1212,45 @@
     }
   }
 
+  function buildTodayFocusRows(rows) {
+    return rows
+      .filter((row) => (row.reviewState || "pending") === "pending")
+      .map((row) => ({ row, score: todayFocusScore(row) }))
+      .sort((a, b) => b.score - a.score || actionPriority(a.row.action) - actionPriority(b.row.action) || b.row.spend - a.row.spend)
+      .slice(0, 30)
+      .map((item) => item.row);
+  }
+
+  function todayFocusScore(row) {
+    const priorityScore = Math.max(0, 12 - actionPriority(row.action)) * 100000;
+    const riskScore = row.risk === "高风险" ? 65000 : row.risk === "中风险" ? 30000 : 12000;
+    const spendScore = Math.min(Number(row.spend) || 0, 300000);
+    const noOrderScore = row.orders ? 0 : 18000;
+    const overTargetScore = row.actualCps && row.targetCps && row.actualCps > row.targetCps ? 16000 : 0;
+    const conflictScore = row.action === "检查否定" ? 24000 : 0;
+    return priorityScore + riskScore + spendScore + noOrderScore + overTargetScore + conflictScore;
+  }
+
+  function renderTodayFocus(rows, allRows) {
+    const spend = sumBy(rows, (row) => row.spend);
+    const highRisk = rows.filter((row) => row.risk === "高风险").length;
+    const noOrders = rows.filter((row) => row.orders === 0).length;
+    const active = state.queueFilters.impact === "todayFocus";
+    return `<div class="today-focus ${active ? "active" : ""}">
+      <div>
+        <span class="eyebrow">Today focus</span>
+        <h4>先处理 ${fmtInt(rows.length)} 个最值得看的动作</h4>
+        <p>从 ${fmtInt(allRows.length)} 个动作里按风险、花费、动作优先级自动收敛。适合新人先完成一轮，不必一开始面对整张大表。</p>
+      </div>
+      <div class="today-focus-metrics">
+        <span><b>${fmtMoney(spend)}</b> 涉及花费</span>
+        <span><b>${fmtInt(highRisk)}</b> 高风险</span>
+        <span><b>${fmtInt(noOrders)}</b> 无订单</span>
+        <button class="export-btn" type="button" data-queue-impact="todayFocus"${rows.length ? "" : " disabled"}>${active ? "正在查看" : "查看今日优先"}</button>
+      </div>
+    </div>`;
+  }
+
   function actionGuidance(row) {
     const spendText = fmtMoney(row.spend);
     const clickText = `${fmtInt(row.clicks)} 次点击`;
@@ -1276,6 +1331,7 @@
       const riskOk = filters.risk === "all" || row.risk === filters.risk;
       const reviewOk = filters.review === "all" || row.reviewState === filters.review;
       const impactOk = filters.impact === "all"
+        || (filters.impact === "todayFocus" && state.todayFocusKeys.has(row.reviewKey))
         || (filters.impact === "highSpend" && row.spend >= Math.max(3000, (Number(row.targetCps) || 0) * 4))
         || (filters.impact === "hasOrders" && row.orders > 0)
         || (filters.impact === "noOrders" && row.orders === 0)
@@ -1412,7 +1468,7 @@
       ${queueSelect("任务/动作", "action", actionOptions, filters.action, queueActionLabel)}
       ${queueSelect("风险", "risk", ["all", "高风险", "中风险", "低风险"], filters.risk, (value) => value === "all" ? "全部风险" : value)}
       ${queueSelect("状态", "review", ["pending", "confirmed", "held", "all"], filters.review, (value) => value === "all" ? "全部状态" : reviewLabels[value])}
-      ${queueSelect("影响", "impact", ["all", "highSpend", "overTarget", "hasOrders", "noOrders"], filters.impact, queueImpactLabel)}
+      ${queueSelect("影响", "impact", ["all", "todayFocus", "highSpend", "overTarget", "hasOrders", "noOrders"], filters.impact, queueImpactLabel)}
       ${queueSelect("排序", "sort", ["priority", "spend", "orders", "gap"], filters.sort, queueSortLabel)}
       <div class="queue-filter-count"><b>${fmtInt(filteredRows.length)}</b><span>/ ${fmtInt(allRows.length)} 项</span></div>
     </div>`;
@@ -1430,6 +1486,7 @@
   function queueImpactLabel(value) {
     const labels = {
       all: "全部影响",
+      todayFocus: "今日优先",
       highSpend: "高花费优先",
       overTarget: "CPS 超目标",
       hasOrders: "有订单",

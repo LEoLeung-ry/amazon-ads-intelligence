@@ -268,11 +268,13 @@ The homepage action queue is now the primary workflow.
 - The action filter accepts both exact actions and task presets. Presets are `growth` (`放量`, `保留/加预算`), `stop` (`检查否定`, `否定`, `止损`, `降价`), and `structure` (`加精准词`, `加商品定向`).
 - The three action cards should filter the all-product queue through these presets instead of jumping into deep target/search tabs. This keeps new users in the primary execution workflow.
 - If a card has no queue rows for its preset, disable the card button and show `暂无队列`; do not let users click into an empty-looking path.
+- `buildTodayFocusRows(queueRows)` creates the `今日优先` focus set: top 30 pending rows scored by action priority, risk, spend, no-order status, over-target CPS, and negative-conflict risk. It is an onboarding/operations layer for large queues, not a replacement for the full queue.
+- `renderTodayFocus(todayFocusRows, queueRows)` sits between the execution coach and the table. Its `查看今日优先` button sets `state.queueFilters.impact = "todayFocus"` and keeps review status on `pending`, so a new operator can start with a manageable first batch.
 - `buildExecutionCoach(scopedRows, confirmedRows)` creates the lightweight `Next action` strip between the action cards and the table. It compresses thousands of rows into one recommended next step.
 - The execution coach priority is: stop/loss-control first, then growth, then structure. This reflects the operator workflow: protect waste before scaling, then repair structure.
 - The coach uses the current task/risk/impact filter scope but ignores the selected review-status filter for its summary, matching the pending/confirmed summary behavior.
 - The default queue filter is `review: "pending"` so the user starts from unresolved actions only. Confirmed and held actions remain available by switching the status filter to `已确认`, `暂缓`, or `全部状态`.
-- Impact filters are intentionally operator-friendly: `highSpend` means spend is at least `max(3000, targetCps * 4)`, `overTarget` means actual CPS is above target CPS, `hasOrders` means rows with orders, and `noOrders` means rows without orders.
+- Impact filters are intentionally operator-friendly: `todayFocus` means rows inside `state.todayFocusKeys`, `highSpend` means spend is at least `max(3000, targetCps * 4)`, `overTarget` means actual CPS is above target CPS, `hasOrders` means rows with orders, and `noOrders` means rows without orders.
 - Queue sort options are `priority`, `spend`, `orders`, and `gap`; `priority` preserves action priority first and spend second.
 - The default queue is intentionally strict. It should include only real action categories: `止损`, `否定`, `检查否定`, `降价`, `放量`, `加精准词`, `加商品定向`, and `保留/加预算`.
 - Keep `观察`, `无流量`, `保持`, `保留`, `继续积累`, `小幅优化`, and `已否定` out of the default queue. These can still appear in expanded diagnostic tables, but showing them by default makes the homepage feel overwhelming.
@@ -494,6 +496,7 @@ Before opening a PR or merging:
    - Action card buttons filter the queue through task presets: `放量任务`, `止损/否定`, and `结构修复`; they should not force users into deep tabs.
    - If the selected fixture has no structure queue rows, the structure card button shows `暂无队列` and is disabled.
    - Execution coach appears above the queue table. With the real Bulk fixture it should recommend `先保护预算`, preset `stop`, and show the stop/loss-control pending count.
+   - `今日优先` focus strip appears after Bulk import. With the real Bulk fixture it should offer 30 focused rows, and clicking `查看今日优先` should reduce the queue/export count to 30 while preserving full queue access through the impact filter.
    - Action queue filters work for action, risk, impact (`高花费优先`, `CPS 超目标`, `有订单`, `无订单`), and sorting (`按优先级`, `按花费`, `按订单`, `按偏离目标`).
    - `导出当前` respects the active queue filters and current custom column setup.
    - Action queue default columns include `下一步` and `证据`; expert/custom columns can reveal CPS, ACOS, sales, and original rule reason.
