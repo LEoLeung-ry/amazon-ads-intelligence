@@ -96,6 +96,7 @@
       "fileInput",
       "browseBtn",
       "fileStack",
+      "importAssist",
       "defaultTargetCps",
       "naturalCvr",
       "derivedAcos",
@@ -115,6 +116,7 @@
       "workflowStrip",
       "emptyState",
       "focusBand",
+      "metricGuide",
       "actionQueue",
       "tabs",
       "kpiGrid",
@@ -351,7 +353,7 @@
       setLoading(true, `解析 ${file.name}`);
       const text = await readTextSmart(file);
       const rows = parseCsv(text);
-      if (!rows.length) throw new Error("CSV 没有可读内容");
+      if (!rows.length) throw new Error("CSV 没有可读内容，请确认不是空文件");
       const headers = normalizeHeaderRow(rows[0]);
       if (hasAny(headers, ["开始时间", "广告活动名称", "7天总销售额"])) {
         state.hourlyRows = parseHourlyRows(rows);
@@ -359,7 +361,7 @@
         record.type = `每小时报告 · ${state.hourlyRows.length} 行`;
         return;
       }
-      throw new Error("CSV 不是商品推广每小时报告");
+      throw new Error("CSV 不是商品推广每小时报告，需要包含“开始时间、广告活动名称、7天总销售额”等列");
     }
 
     if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
@@ -382,13 +384,14 @@
         state.bulkLoaded = true;
         return;
       }
+      if (!sheetNames.length) throw new Error("工作簿没有可读取的工作表");
       parseMentorWorkbook(workbook);
       record.type = `SciAds 记录 · ${state.mentorRows.length} 条`;
       state.mentorLoaded = true;
       return;
     }
 
-    throw new Error("暂不支持该文件类型");
+    throw new Error("暂不支持该文件类型，请上传 Bulk xlsx/xls 或每小时 CSV");
   }
 
   function notifyKeywordChecker(workbook, campaignSheetName, searchSheetName) {
@@ -708,6 +711,7 @@
   function renderAll() {
     renderStatus();
     renderFileStack();
+    renderImportAssist();
     renderProductSegments();
     renderCampaignList();
     renderRules();
@@ -740,6 +744,31 @@
         </div>`;
       })
       .join("");
+  }
+
+  function renderImportAssist() {
+    if (!els.importAssist) return;
+    const warnFile = state.files.find((file) => file.status === "warn");
+    const loaded = state.files.filter((file) => file.status === "loaded");
+    let tone = "info";
+    let title = "上传顺序";
+    let body = "先导入 Bulk 工作簿；每小时 CSV 和 SciAds 记录是可选增强。文件只在浏览器本地解析。";
+    if (warnFile) {
+      tone = "warn";
+      title = "文件没有识别成功";
+      body = `${warnFile.note || "请检查文件格式"}。请优先上传包含“商品推广活动”和“商品推广搜索词报告”的 Bulk 工作簿。`;
+    } else if (state.bulkLoaded) {
+      tone = "ok";
+      title = "Bulk 已识别";
+      body = state.hourlyLoaded
+        ? "现在可以先看全产品行动队列；每小时报告已用于分时效率。"
+        : "现在可以先看全产品行动队列；如果要看分时效率，再补充每小时 CSV。";
+    } else if (loaded.length) {
+      title = "还缺 Bulk";
+      body = "已读取可选文件，但核心诊断需要 Bulk 工作簿才能生成广告活动、搜索词和行动队列。";
+    }
+    els.importAssist.className = `import-assist ${tone}`;
+    els.importAssist.innerHTML = `<b>${escapeHtml(title)}</b><span>${escapeHtml(body)}</span>`;
   }
 
   function renderProductSegments() {
@@ -845,6 +874,7 @@
         : "按一个产品下的所有广告活动分析，先找放量、控费、承接这三类动作。";
 
     renderKpis(metrics, calculated, selectedCampaigns.length, selectedSearch.length);
+    renderMetricGuide();
     renderBrief(metrics, calculated, selectedTargets, selectedSearch, selectedCampaigns);
     renderActionQueue(metrics, calculated, selectedTargets, selectedSearch, selectedCampaigns);
     renderWorkflow(selectedCampaigns.length, selectedSearch.length);
@@ -872,6 +902,19 @@
     ];
     els.kpiGrid.innerHTML = items
       .map(([label, value, foot]) => `<article class="kpi-card"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div class="kpi-foot">${escapeHtml(foot)}</div></article>`)
+      .join("");
+  }
+
+  function renderMetricGuide() {
+    if (!els.metricGuide) return;
+    const items = [
+      ["CPS", "每出 1 单花了多少钱，是当前主控目标"],
+      ["CVR", "点击变订单的比例，样本少时会结合自然 CVR 平滑"],
+      ["RPC", "每次点击带来的销售额，用于分时和广告位判断"],
+      ["ACOS", "花费 / 销售额，现在作为 CPS 推导后的解释指标"],
+    ];
+    els.metricGuide.innerHTML = items
+      .map(([term, text]) => `<div class="metric-guide-item"><b>${escapeHtml(term)}</b><span>${escapeHtml(text)}</span></div>`)
       .join("");
   }
 

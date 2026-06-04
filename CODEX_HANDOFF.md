@@ -349,6 +349,7 @@ Important UI behavior:
 - First screen is the usable app, not a landing page.
 - The analysis workspace top area includes a compact workflow strip: `导入数据`, `确认目标`, `查看队列`, `确认动作`, `导出结果`. Keep this lightweight and status-driven.
 - The empty state uses business language around turning ad reports into executable actions, and it shows file requirements instead of decorative graphics.
+- The left sidebar includes `#importAssist`, a compact upload guidance/error state. It should explain the required Bulk workbook, optional hourly CSV/SciAds records, and what to do when a file is not recognized.
 - The left sidebar has two separate mode buttons: `广告诊断` and `投放关键词检查`.
 - Left sidebar campaign search appears above upload and goal controls.
 - Left sidebar contains upload, product default target CPS, natural CVR, derived ACOS, actual CPS, target gap, product groups, and campaign list.
@@ -358,6 +359,7 @@ Important UI behavior:
 - Keyword checker should expose KPI cards, math/course brief, risk brief, manual term input, keyword coverage table, ad group table, filters, and CSV export.
 - Target diagnostics and search term decision tables must include the related ad group column (`广告组`) next to campaign (`活动`) so every action is traceable to both campaign and ad group.
 - The analysis workspace uses a quieter focus layout: fixed-order KPI chunks, a stronger primary judgment card, muted support cards, and a plain layered background to reduce cognitive load.
+- After import, show a compact metric guide for CPS, CVR, RPC, and ACOS. This is for new operators; keep it short and operational, not academic.
 - KPI order must remain: 点击, CTR, CVR, 订单, CPC, 花费, 销售额, ACOS, ROAS, 活动.
 - The all-product action queue should stay above deep tab tables after data import.
 - Deep analysis tabs should stay hidden until the user clicks `展开详细分析`.
@@ -438,6 +440,8 @@ Before opening a PR or merging:
    - Campaign CPS override fields save to `amazonAds.goalPrefs.v2` and override target CPS for that campaign.
    - Empty state shows the five-step path and file requirements for required Bulk plus optional hourly CSV/SciAds files.
    - Workflow strip updates from `先上传 Bulk` to campaign/search-term counts after import.
+   - Upload guidance shows the default upload order before import, a clear warning for unsupported/incorrect files, and a success hint after Bulk is recognized.
+   - Metric guide explains CPS, CVR, RPC, and ACOS after import without expanding the page into a tutorial.
    - Action queue rows can be marked `已确认` or `暂缓`; the review summary updates immediately.
    - `导出已确认` is disabled until at least one action is confirmed, then exports only confirmed rows with the current column setup.
    - KPI order is clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaigns.

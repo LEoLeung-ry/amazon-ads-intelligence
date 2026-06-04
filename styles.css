@@ -247,6 +247,36 @@ button {
   white-space: nowrap;
 }
 
+.import-assist {
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.import-assist b {
+  color: #10212b;
+  font-size: 12px;
+}
+
+.import-assist span {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.import-assist.ok {
+  border-color: rgba(34, 197, 94, 0.28);
+  background: #f0fdf4;
+}
+
+.import-assist.warn {
+  border-color: rgba(245, 158, 11, 0.32);
+  background: #fffbeb;
+}
+
 .search-card {
   display: grid;
   gap: 7px;
@@ -927,6 +957,34 @@ body[data-bulk-ready="false"] .campaign-panel {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.metric-guide {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.metric-guide-item {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.metric-guide-item b {
+  color: #0f766e;
+  font-size: 12px;
+}
+
+.metric-guide-item span {
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .brief-grid {
@@ -1742,6 +1800,10 @@ tbody tr:hover {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  .metric-guide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .chart-row,
   .brief-grid,
   .queue-grid {
@@ -1843,6 +1905,7 @@ tbody tr:hover {
   .insight-strip,
   .rules-grid,
   .onboarding-steps,
+  .metric-guide,
   .goal-fields,
   .goal-metrics {
     grid-template-columns: 1fr;
