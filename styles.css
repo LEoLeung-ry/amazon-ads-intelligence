@@ -748,17 +748,17 @@ body[data-bulk-ready="false"] .campaign-panel {
 
 .hero-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
-  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 18px;
   align-items: center;
-  min-height: 190px;
-  padding: 22px;
+  min-height: 0;
+  padding: 18px;
   margin-bottom: 16px;
   overflow: hidden;
   background:
-    linear-gradient(135deg, rgba(15, 32, 42, 0.96), rgba(31, 41, 55, 0.94)),
-    #111827;
-  color: #fff;
+    linear-gradient(180deg, rgba(240, 253, 250, 0.72), rgba(255, 255, 255, 0) 46%),
+    var(--surface);
+  color: var(--ink);
 }
 
 .hero-panel.hidden {
@@ -767,7 +767,7 @@ body[data-bulk-ready="false"] .campaign-panel {
 
 .eyebrow {
   display: inline-block;
-  color: #94e3d8;
+  color: var(--teal);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -776,23 +776,40 @@ body[data-bulk-ready="false"] .campaign-panel {
 .hero-copy h3 {
   margin-top: 8px;
   max-width: 720px;
-  font-size: 25px;
+  font-size: 23px;
   line-height: 1.32;
 }
 
 .hero-copy p {
-  margin-top: 10px;
+  margin-top: 9px;
   max-width: 720px;
-  color: #cbd5e1;
+  color: #475569;
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.62;
+}
+
+.hero-upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.hero-upload-actions .export-btn {
+  height: 36px;
+}
+
+.hero-upload-actions span {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .onboarding-steps {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   gap: 8px;
-  margin-top: 18px;
+  margin-top: 15px;
   max-width: 760px;
 }
 
@@ -800,11 +817,11 @@ body[data-bulk-ready="false"] .campaign-panel {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid #dbe8ee;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
+  background: #fbfdff;
 }
 
 .onboarding-steps b {
@@ -814,25 +831,26 @@ body[data-bulk-ready="false"] .campaign-panel {
   display: grid;
   place-items: center;
   border-radius: 99px;
-  background: #5eead4;
-  color: #0f172a;
+  background: #ccfbf1;
+  color: #0f766e;
   font-size: 12px;
 }
 
 .onboarding-steps span {
   min-width: 0;
-  color: #e2e8f0;
+  color: #334155;
   font-size: 12px;
   line-height: 1.35;
+  font-weight: 700;
 }
 
 .import-guide {
   display: grid;
   gap: 9px;
   padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
+  background: #fbfdff;
 }
 
 .guide-row {
@@ -843,7 +861,7 @@ body[data-bulk-ready="false"] .campaign-panel {
   row-gap: 2px;
   align-items: center;
   padding-bottom: 9px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid var(--line);
 }
 
 .guide-row:last-child {
@@ -857,21 +875,21 @@ body[data-bulk-ready="false"] .campaign-panel {
   justify-content: center;
   padding: 4px 7px;
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.22);
-  color: #e2e8f0;
+  background: #eef2f7;
+  color: #475569;
   font-size: 11px;
 }
 
 .guide-row.required b {
-  background: #5eead4;
-  color: #0f172a;
+  background: #ccfbf1;
+  color: #0f766e;
 }
 
 .guide-row span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #fff;
+  color: #10212b;
   font-size: 13px;
   font-weight: 800;
 }
@@ -880,7 +898,7 @@ body[data-bulk-ready="false"] .campaign-panel {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #cbd5e1;
+  color: var(--muted);
   font-size: 11px;
 }
 
@@ -2048,7 +2066,7 @@ tbody tr:hover {
 
   .guide-row {
     padding-bottom: 9px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid var(--line);
   }
 
   .guide-row:last-child {
@@ -2060,11 +2078,14 @@ tbody tr:hover {
   .metric-strip,
   .insight-strip,
   .rules-grid,
-  .onboarding-steps,
   .metric-guide,
   .goal-fields,
   .goal-metrics {
     grid-template-columns: 1fr;
+  }
+
+  .onboarding-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .execution-summary,

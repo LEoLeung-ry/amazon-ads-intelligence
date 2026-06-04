@@ -102,6 +102,7 @@
       "dropZone",
       "fileInput",
       "browseBtn",
+      "heroBrowseBtn",
       "fileStack",
       "importAssist",
       "defaultTargetCps",
@@ -179,6 +180,7 @@
 
   function bindEvents() {
     els.browseBtn.addEventListener("click", () => els.fileInput.click());
+    els.heroBrowseBtn?.addEventListener("click", () => els.fileInput.click());
     els.fileInput.addEventListener("change", (event) => handleFiles(event.target.files));
     els.dropZone.addEventListener("dragover", (event) => {
       event.preventDefault();
@@ -1568,7 +1570,7 @@
           clicks: row.metrics.clicks,
           orders: row.metrics.orders,
           actualCps: row.calculated.cpa,
-          targetCps: decision.targetCps,
+          targetCps: action.targetCps,
           acos: row.calculated.acos,
           cvr: row.calculated.cvr,
           bid: row.bid,

@@ -228,6 +228,10 @@ Current action categories:
 
 The logic intentionally uses conservative smoothing and small-step changes to avoid overreacting to attribution lag and low sample size.
 
+Implementation note:
+
+- `renderTargetDiagnostics()` stores the result of `targetAction()` in a local variable named `action`. Use `action.targetCps`, not `decision.targetCps`; otherwise Bulk import renders the queue but throws a `decision is not defined` page error when the target table is prepared.
+
 ### Search term diagnostics
 
 Search term actions include:
@@ -383,6 +387,8 @@ Important UI behavior:
 - First screen is the usable app, not a landing page.
 - The analysis workspace top area includes a compact workflow strip: `导入数据`, `确认目标`, `查看队列`, `确认动作`, `导出结果`. Keep this lightweight and status-driven.
 - The empty state uses business language around turning ad reports into executable actions, and it shows file requirements instead of decorative graphics.
+- The empty state should stay light and task-first: white surface, clear Bulk upload CTA in the main workspace, five-step workflow, and a compact required/optional file checklist. Do not turn it back into a heavy marketing hero.
+- `#heroBrowseBtn` is a secondary entry to the same local file picker as the left-sidebar upload button. Keep both paths wired to `#fileInput` so first-time users can start from either the main workspace or sidebar.
 - The left sidebar includes `#importAssist`, a compact upload guidance/error state. It should explain the required Bulk workbook, optional hourly CSV/SciAds records, and what to do when a file is not recognized.
 - The left sidebar has two separate mode buttons: `广告诊断` and `投放关键词检查`.
 - Left sidebar campaign search appears above upload and goal controls.
@@ -473,6 +479,8 @@ Before opening a PR or merging:
    - Editing default CPS or natural CVR updates recommendations.
    - Campaign CPS override fields save to `amazonAds.goalPrefs.v2` and override target CPS for that campaign.
    - Empty state shows the five-step path and file requirements for required Bulk plus optional hourly CSV/SciAds files.
+   - Empty state has a visible main-workspace `选择 Bulk 工作簿` button and remains visually lightweight on desktop and mobile.
+   - Clicking `选择 Bulk 工作簿` opens the same local file picker and successfully imports the real Bulk fixture.
    - Workflow strip updates from `先上传 Bulk` to campaign/search-term counts after import.
    - Upload guidance shows the default upload order before import, a clear warning for unsupported/incorrect files, and a success hint after Bulk is recognized.
    - Metric guide explains CPS, CVR, RPC, and ACOS after import without expanding the page into a tutorial.
@@ -491,6 +499,7 @@ Before opening a PR or merging:
    - Action queue default columns include `下一步` and `证据`; expert/custom columns can reveal CPS, ACOS, sales, and original rule reason.
    - With the real Bulk fixture, queue rows should contain non-empty `nextStep`, `evidence`, and `risk` fields.
    - Activity health table renders after Bulk import and uses campaign-level target CPS from `campaignTargetCps(row.name)`.
+   - Target diagnostics render after Bulk import without browser page errors.
    - KPI order is clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaigns.
    - All-product action queue renders and exports CSV using current columns.
    - The all-product action queue excludes observation/keep/no-flow/already-negated rows by default.
