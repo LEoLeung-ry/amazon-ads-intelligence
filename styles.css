@@ -1315,6 +1315,64 @@ body[data-bulk-ready="false"] .campaign-panel {
   color: #10212b;
 }
 
+.execution-package {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 10px 14px 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(34, 197, 94, 0.24);
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(240, 253, 244, 0.94), #fff 58%);
+}
+
+.execution-package h4,
+.execution-package p {
+  margin: 0;
+}
+
+.execution-package h4 {
+  margin-top: 2px;
+  color: #10212b;
+  font-size: 14px;
+}
+
+.execution-package p {
+  margin-top: 3px;
+  max-width: 680px;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.execution-package-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  min-width: 360px;
+}
+
+.execution-package-metrics span {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.execution-package-metrics b {
+  color: #10212b;
+}
+
 .queue-table-card {
   margin-top: 14px;
 }
@@ -2111,6 +2169,15 @@ tbody tr:hover {
   }
 
   .today-focus-metrics {
+    justify-content: flex-start;
+    min-width: 0;
+  }
+
+  .execution-package {
+    display: grid;
+  }
+
+  .execution-package-metrics {
     justify-content: flex-start;
     min-width: 0;
   }

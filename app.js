@@ -1042,12 +1042,15 @@
     const keywordRisk = sumKeys(keywordSummary.actions || {}, ["缺精准", "竞价倒挂", "重复分散", "正负冲突", "搜索出单未承接"]);
     const targetCps = averageTargetCps(campaigns);
     const queueRows = buildProductActionRows(targetRows, searchDecisionRows);
-    const todayFocusRows = buildTodayFocusRows(queueRows);
-    state.todayFocusKeys = new Set(todayFocusRows.map((row) => row.reviewKey));
+    const candidateTodayFocusRows = buildTodayFocusRows(queueRows);
+    if (shouldRefreshTodayFocus(queueRows)) {
+      state.todayFocusKeys = new Set(candidateTodayFocusRows.map((row) => row.reviewKey));
+    }
     if (state.pendingQueueAutoFocus) {
-      if (todayFocusRows.length && isDefaultQueueView()) state.queueFilters.impact = "todayFocus";
+      if (candidateTodayFocusRows.length && isDefaultQueueView()) state.queueFilters.impact = "todayFocus";
       state.pendingQueueAutoFocus = false;
     }
+    const todayFocusRows = queueRows.filter((row) => state.todayFocusKeys.has(row.reviewKey));
     const filteredQueueRows = filterQueueRows(queueRows);
     const scopedQueueRows = filterQueueRows(queueRows, { review: "all" });
     state.lastQueueCount = filteredQueueRows.length;
@@ -1132,6 +1135,7 @@
           ${reviewSummaryItem("已确认", state.lastReviewCounts.confirmed, "confirmed")}
           ${reviewSummaryItem("暂缓", state.lastReviewCounts.held, "held")}
         </div>
+        ${renderExecutionPackage(confirmedRows)}
         ${renderQueueFilters(queueRows, filteredQueueRows)}
         <div class="table-wrap"><table id="productActionTable"></table></div>
       </div>
@@ -1230,6 +1234,12 @@
       .map((item) => item.row);
   }
 
+  function shouldRefreshTodayFocus(rows) {
+    if (state.queueFilters.impact !== "todayFocus") return true;
+    if (!state.todayFocusKeys.size) return true;
+    return !rows.some((row) => state.todayFocusKeys.has(row.reviewKey));
+  }
+
   function todayFocusScore(row) {
     const priorityScore = Math.max(0, 12 - actionPriority(row.action)) * 100000;
     const riskScore = row.risk === "高风险" ? 65000 : row.risk === "中风险" ? 30000 : 12000;
@@ -1258,6 +1268,28 @@
         ${active
           ? '<button class="secondary-btn" type="button" data-queue-impact="all">查看全部动作</button>'
           : `<button class="export-btn" type="button" data-queue-impact="todayFocus"${rows.length ? "" : " disabled"}>查看今日优先</button>`}
+      </div>
+    </div>`;
+  }
+
+  function renderExecutionPackage(rows) {
+    if (!rows.length) return "";
+    const stopCount = rows.filter((row) => queueActionMatches("stop", row.action)).length;
+    const growthCount = rows.filter((row) => queueActionMatches("growth", row.action)).length;
+    const structureCount = rows.filter((row) => queueActionMatches("structure", row.action)).length;
+    const spend = sumBy(rows, (row) => row.spend);
+    return `<div class="execution-package">
+      <div>
+        <span class="eyebrow">Execution package</span>
+        <h4>已确认 ${fmtInt(rows.length)} 个动作，可以导出执行</h4>
+        <p>这一包已按当前筛选收敛，适合导出后进入 Amazon 后台逐项处理。执行前再复核高风险和否定冲突项。</p>
+      </div>
+      <div class="execution-package-metrics">
+        <span><b>${fmtInt(stopCount)}</b> 止损/否定</span>
+        <span><b>${fmtInt(growthCount)}</b> 放量</span>
+        <span><b>${fmtInt(structureCount)}</b> 承接</span>
+        <span><b>${fmtMoney(spend)}</b> 涉及花费</span>
+        <button class="export-btn" type="button" data-export-confirmed>导出已确认 (${fmtInt(rows.length)})</button>
       </div>
     </div>`;
   }

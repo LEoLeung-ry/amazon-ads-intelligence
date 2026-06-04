@@ -270,6 +270,7 @@ The homepage action queue is now the primary workflow.
 - If a card has no queue rows for its preset, disable the card button and show `暂无队列`; do not let users click into an empty-looking path.
 - `buildTodayFocusRows(queueRows)` creates the `今日优先` focus set: top 30 pending rows scored by action priority, risk, spend, no-order status, over-target CPS, and negative-conflict risk. It is an onboarding/operations layer for large queues, not a replacement for the full queue.
 - On first successful Bulk import, `state.pendingQueueAutoFocus` should switch the default queue view to `todayFocus` only when the user is still in the untouched default queue view and `buildTodayFocusRows()` produced rows. This makes the first post-import table manageable instead of showing thousands of rows.
+- When the queue is actively filtered to `todayFocus`, keep `state.todayFocusKeys` stable while the user confirms or holds rows. Do not recompute the focus set after every confirmation, or confirmed rows may disappear from the current export scope before the user can export them.
 - `renderTodayFocus(todayFocusRows, queueRows)` sits between the execution coach and the table. Its `查看今日优先` button sets `state.queueFilters.impact = "todayFocus"` and keeps review status on `pending`; when already focused, it shows `查看全部动作` so users can return to the complete queue without hunting through the filter dropdown.
 - `buildExecutionCoach(scopedRows, confirmedRows)` creates the lightweight `Next action` strip between the action cards and the table. It compresses thousands of rows into one recommended next step.
 - The execution coach priority is: stop/loss-control first, then growth, then structure. This reflects the operator workflow: protect waste before scaling, then repair structure.
@@ -289,6 +290,7 @@ The homepage action queue is now the primary workflow.
 - Each queue row has a lightweight review status: `待确认`, `已确认`, or `暂缓`. This is stored in memory under `state.actionReviews` because uploaded files are not persisted.
 - Review row keys must be precise enough that confirming one row does not accidentally confirm duplicate-looking rows. Include source/action/campaign/ad group/item plus metrics such as spend/orders/recommended bid.
 - The queue summary shows pending/confirmed/held counts for the current action/risk/impact filters, independent of the selected review-status filter. This keeps confirmed counts visible after rows leave the default `待确认` view.
+- `renderExecutionPackage(confirmedRows)` appears once there are confirmed rows in the current task/risk/impact scope. It summarizes stop/growth/structure counts plus spend and provides a direct `导出已确认` button, closing the loop from analysis to execution.
 - `导出当前` exports the currently filtered queue rows, not the unfiltered queue. `导出已确认` exports confirmed rows matching the current action/risk/impact filters, independent of the selected review-status filter. Keep `productQueueConfirmed` wired to the same columns so current column choices apply to both exports.
 - `确认待处理` bulk-confirms only pending rows inside the currently filtered queue by writing each row's `reviewKey` to `state.actionReviews`.
 - `确认待处理` must be disabled until the queue is narrowed by task/action, risk, or impact. The default all-action queue must not allow one-click confirmation of every row.
@@ -498,6 +500,7 @@ Before opening a PR or merging:
    - If the selected fixture has no structure queue rows, the structure card button shows `暂无队列` and is disabled.
    - Execution coach appears above the queue table. With the real Bulk fixture it should recommend `先保护预算`, preset `stop`, and show the stop/loss-control pending count.
    - `今日优先` focus strip appears after Bulk import. With the real Bulk fixture the first post-import queue view should default to 30 focused rows and `导出当前 (30)`, while `查看全部动作` restores the full 5,927-row queue/export scope.
+   - After clicking `确认待处理` in the default `今日优先` view, the same 30-row focus batch stays stable, the execution package appears, and `导出已确认` remains scoped to those 30 confirmed rows.
    - Action queue filters work for action, risk, impact (`高花费优先`, `CPS 超目标`, `有订单`, `无订单`), and sorting (`按优先级`, `按花费`, `按订单`, `按偏离目标`).
    - `导出当前` respects the active queue filters and current custom column setup.
    - Action queue default columns include `下一步` and `证据`; expert/custom columns can reveal CPS, ACOS, sales, and original rule reason.
