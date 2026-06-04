@@ -256,7 +256,12 @@ The homepage action queue is now the primary workflow.
 - The queue is sorted by action priority first, then spend.
 - The default queue is intentionally strict. It should include only real action categories: `止损`, `否定`, `检查否定`, `降价`, `放量`, `加精准词`, `加商品定向`, and `保留/加预算`.
 - Keep `观察`, `无流量`, `保持`, `保留`, `继续积累`, `小幅优化`, and `已否定` out of the default queue. These can still appear in expanded diagnostic tables, but showing them by default makes the homepage feel overwhelming.
-- It must show review status, action, object, campaign, ad group, current CPS, target CPS, ACOS, recommended bid, and reason.
+- It must show review status, action, object, campaign, ad group, next step, evidence, recommended bid, and optional expert metrics.
+- Default queue columns should be execution-first: `确认`, `动作`, `对象`, `活动`, `广告组`, `下一步`, `证据`, `建议竞价`. Keep `当前 CPS`, `目标 CPS`, `ACOS`, and `原始原因` available as expert/custom columns.
+- `actionGuidance(row)` translates rule output into operator language. It must return `nextStep`, `evidence`, and `risk`.
+- `nextStep` should tell the operator what to do next in Amazon Ads, not merely restate the mathematical rule.
+- `evidence` should summarize spend, clicks, orders, actual CPS, and target CPS in one compact sentence.
+- `risk` is a tag (`低风险`, `中风险`, `高风险`) used for quick scanning and export.
 - Each queue row has a lightweight review status: `待确认`, `已确认`, or `暂缓`. This is stored in memory under `state.actionReviews` because uploaded files are not persisted.
 - Review row keys must be precise enough that confirming one row does not accidentally confirm duplicate-looking rows. Include source/action/campaign/ad group/item plus metrics such as spend/orders/recommended bid.
 - The queue summary shows counts for pending/confirmed/held actions.
@@ -444,6 +449,8 @@ Before opening a PR or merging:
    - Metric guide explains CPS, CVR, RPC, and ACOS after import without expanding the page into a tutorial.
    - Action queue rows can be marked `已确认` or `暂缓`; the review summary updates immediately.
    - `导出已确认` is disabled until at least one action is confirmed, then exports only confirmed rows with the current column setup.
+   - Action queue default columns include `下一步` and `证据`; expert/custom columns can reveal CPS, ACOS, and original rule reason.
+   - With the real Bulk fixture, queue rows should contain non-empty `nextStep`, `evidence`, and `risk` fields.
    - KPI order is clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaigns.
    - All-product action queue renders and exports CSV using current columns.
    - The all-product action queue excludes observation/keep/no-flow/already-negated rows by default.

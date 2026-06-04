@@ -1062,14 +1062,18 @@
       col("对象", "item", "text"),
       col("活动", "campaign", "clip"),
       col("广告组", "adGroup", "clip"),
-      col("当前 CPS", "actualCps", "money"),
-      col("目标 CPS", "targetCps", "money"),
-      col("ACOS", "acos", "pct"),
+      col("下一步", "nextStep", "reason", { width: "340px" }),
+      col("证据", "evidence", "reason", { width: "300px" }),
       col("建议竞价", "recBid", "money"),
-      col("原因", "reason", "reason", { width: "360px" }),
+      col("风险", "risk", "tag", { defaultVisible: false }),
+      col("当前 CPS", "actualCps", "money", { defaultVisible: false }),
+      col("目标 CPS", "targetCps", "money", { defaultVisible: false }),
+      col("ACOS", "acos", "pct", { defaultVisible: false }),
+      col("原始原因", "reason", "reason", { defaultVisible: false, width: "360px" }),
       col("来源", "source", "tag", { defaultVisible: false }),
       col("花费", "spend", "money", { defaultVisible: false }),
       col("订单", "orders", "int", { defaultVisible: false }),
+      col("点击", "clicks", "int", { defaultVisible: false }),
     ];
     state.tableExports.productQueue = { tableId: "productActionTable", columns, rows: queueRows };
     state.tableExports.productQueueConfirmed = { tableId: "productActionTable", columns, rows: confirmedRows };
@@ -1084,6 +1088,7 @@
       campaign: row.campaign,
       adGroup: row.adGroup || "-",
       spend: row.metrics.spend,
+      clicks: row.metrics.clicks,
       orders: row.metrics.orders,
       actualCps: calc(row.metrics).cpa,
       targetCps: decision.targetCps,
@@ -1098,6 +1103,7 @@
       campaign: row.campaign,
       adGroup: row.adGroup || "-",
       spend: row.metrics.spend,
+      clicks: row.metrics.clicks,
       orders: row.metrics.orders,
       actualCps: calc(row.metrics).cpa,
       targetCps: decision.targetCps,
@@ -1109,10 +1115,12 @@
       .filter((row) => isPrimaryQueueAction(row.action))
       .sort((a, b) => actionPriority(a.action) - actionPriority(b.action) || b.spend - a.spend)
       .map((row) => {
+        const guidance = actionGuidance(row);
         const reviewKey = actionRowKey(row);
         const reviewState = state.actionReviews[reviewKey] || "pending";
         return {
           ...row,
+          ...guidance,
           reviewKey,
           reviewState,
           reviewStatus: reviewLabels[reviewState] || reviewLabels.pending,
@@ -1126,6 +1134,58 @@
     } catch (error) {
       return {};
     }
+  }
+
+  function actionGuidance(row) {
+    const spendText = fmtMoney(row.spend);
+    const clickText = `${fmtInt(row.clicks)} 次点击`;
+    const orderText = `${fmtInt(row.orders)} 单`;
+    const cpsText = row.actualCps ? fmtMoney(row.actualCps) : "无订单";
+    const targetText = fmtMoney(row.targetCps);
+    const bidText = row.recBid ? fmtMoney(row.recBid) : "不建议加价";
+    const evidence = `${spendText} 花费 · ${clickText} · ${orderText} · CPS ${cpsText} / 目标 ${targetText}`;
+    const sourceName = row.source === "搜索词" ? "搜索词" : row.source === "ASIN" ? "ASIN" : "标的";
+    const map = {
+      放量: {
+        nextStep: `小步提高竞价或预算，先按建议竞价 ${bidText} 执行；执行后观察 2-3 天订单是否稳定。`,
+        risk: "低风险",
+      },
+      "保留/加预算": {
+        nextStep: `该${sourceName}已有合格转化，保留投放；预算受限时优先给这类词/ASIN。`,
+        risk: "低风险",
+      },
+      降价: {
+        nextStep: `先下调竞价控费，不建议立刻否定；如果降价后仍高 CPS，再进入止损。`,
+        risk: "中风险",
+      },
+      止损: {
+        nextStep: `先降低竞价或暂停观察；如果不是核心战略词，不要继续烧预算。`,
+        risk: "高风险",
+      },
+      否定: {
+        nextStep: `加入否定词候选；确认不相关或非核心后，在同活动/广告组里做否定。`,
+        risk: "高风险",
+      },
+      检查否定: {
+        nextStep: `优先人工复核：该项有订单但被否定覆盖，确认是否误伤有效流量。`,
+        risk: "高风险",
+      },
+      加精准词: {
+        nextStep: `把该搜索词拆到精准匹配承接，并保留探索层继续找新词。`,
+        risk: "中风险",
+      },
+      加商品定向: {
+        nextStep: `把该 ASIN 拆到商品定向承接，用单独竞价控制效率。`,
+        risk: "中风险",
+      },
+    };
+    return {
+      ...(map[row.action] || {
+        nextStep: row.reason || "先观察数据，不做大幅动作。",
+        risk: "观察",
+      }),
+      evidence,
+    };
   }
 
   function actionRowKey(row) {
@@ -2067,6 +2127,9 @@
   }
 
   function tagClass(text) {
+    if (/高风险/.test(text)) return "red";
+    if (/中风险/.test(text)) return "amber";
+    if (/低风险/.test(text)) return "green";
     if (/已否定/.test(text)) return "violet";
     if (/检查否定/.test(text)) return "red";
     if (/放量|健康|保留|加精准|加商品|ASIN|精准|首页/.test(text)) return "green";
