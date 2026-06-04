@@ -18,6 +18,7 @@
     hourlyLoaded: false,
     mentorLoaded: false,
     detailsExpanded: false,
+    lastQueueCount: 0,
     defaultTargetCps: 670,
     naturalCvr: 0.05,
     campaignTargetCpsOverrides: {},
@@ -76,6 +77,7 @@
     },
   ];
   const primaryQueueActions = new Set(["止损", "否定", "检查否定", "降价", "放量", "加精准词", "加商品定向", "保留/加预算"]);
+  const goalPrefsKey = "amazonAds.goalPrefs.v2";
 
   const els = {};
   const currency = new Intl.NumberFormat("ja-JP", {
@@ -107,6 +109,7 @@
       "workspaceTitle",
       "workspaceSubtitle",
       "statusPills",
+      "workflowStrip",
       "emptyState",
       "focusBand",
       "actionQueue",
@@ -226,10 +229,36 @@
   }
 
   function loadGoalPrefs() {
-    state.campaignTargetCpsOverrides = {};
+    try {
+      const prefs = JSON.parse(localStorage.getItem(goalPrefsKey) || "{}") || {};
+      if (Number.isFinite(Number(prefs.defaultTargetCps)) && Number(prefs.defaultTargetCps) > 0) {
+        state.defaultTargetCps = Number(prefs.defaultTargetCps);
+      }
+      if (Number.isFinite(Number(prefs.naturalCvr))) {
+        state.naturalCvr = clamp(Number(prefs.naturalCvr), 0, 1);
+      }
+      if (prefs.campaignTargetCpsOverrides && typeof prefs.campaignTargetCpsOverrides === "object") {
+        state.campaignTargetCpsOverrides = Object.fromEntries(
+          Object.entries(prefs.campaignTargetCpsOverrides)
+            .map(([campaign, value]) => [campaign, Number(value)])
+            .filter(([, value]) => Number.isFinite(value) && value > 0),
+        );
+      }
+    } catch (error) {
+      state.campaignTargetCpsOverrides = {};
+    }
   }
 
   function saveGoalPrefs() {
+    try {
+      localStorage.setItem(goalPrefsKey, JSON.stringify({
+        defaultTargetCps: state.defaultTargetCps,
+        naturalCvr: state.naturalCvr,
+        campaignTargetCpsOverrides: state.campaignTargetCpsOverrides,
+      }));
+    } catch (error) {
+      // Local preferences are optional; parsing and recommendations still work without them.
+    }
   }
 
   function syncGoalInputs() {
@@ -790,16 +819,17 @@
     });
     els.workspaceTitle.textContent = ready
       ? hasSelection ? `${selectedCampaigns.length} 个广告活动正在分析` : "请选择广告活动"
-      : "导入后只看最该处理的动作";
+      : "把广告报表变成可执行动作";
     els.workspaceSubtitle.textContent = hasSelection
       ? analysisSubtitle(selectedCampaigns.length)
       : state.bulkLoaded
         ? "默认分析当前可见活动；需要聚焦时再搜索活动名或勾选固定组合。"
-        : "先拖入完整 Bulk 文件，系统会把建议压缩成放量、止损、结构修复三类。";
+        : "按一个产品下的所有广告活动分析，先找放量、控费、承接这三类动作。";
 
     renderKpis(metrics, calculated, selectedCampaigns.length, selectedSearch.length);
     renderBrief(metrics, calculated, selectedTargets, selectedSearch, selectedCampaigns);
     renderActionQueue(metrics, calculated, selectedTargets, selectedSearch, selectedCampaigns);
+    renderWorkflow(selectedCampaigns.length, selectedSearch.length);
     renderCampaignTable(selectedCampaigns);
     renderTargetDiagnostics(selectedTargets, metrics);
     renderSearchDiagnostics(selectedSearch, metrics);
@@ -873,6 +903,7 @@
   function renderActionQueue(metrics, calculated, targets, searchRows, campaigns = []) {
     if (!state.bulkLoaded) {
       els.actionQueue.innerHTML = "";
+      state.lastQueueCount = 0;
       return;
     }
     const targetRows = targets.map((row) => ({ row, decision: targetAction(row, metrics) }));
@@ -887,6 +918,7 @@
     const keywordRisk = sumKeys(keywordSummary.actions || {}, ["缺精准", "竞价倒挂", "重复分散", "正负冲突", "搜索出单未承接"]);
     const targetCps = averageTargetCps(campaigns);
     const queueRows = buildProductActionRows(targetRows, searchDecisionRows);
+    state.lastQueueCount = queueRows.length;
 
     const cards = [
       {
@@ -931,11 +963,11 @@
     els.actionQueue.innerHTML = `
       <div class="queue-head">
         <div>
-          <span class="eyebrow">Priority queue</span>
-          <h3>先处理这三类动作</h3>
+          <span class="eyebrow">Action queue</span>
+          <h3>今天先处理这三类动作</h3>
         </div>
         <div class="queue-actions">
-          <p>默认稳健增长：先用全产品队列处理真正要动的词、ASIN 和标的。</p>
+          <p>只显示可执行动作；观察、已否定和样本不足项收进详细分析。</p>
           <button class="secondary-btn" type="button" data-toggle-details>${state.detailsExpanded ? "收起详细分析" : "展开详细分析"}</button>
         </div>
       </div>
@@ -1008,6 +1040,41 @@
     } catch (error) {
       return {};
     }
+  }
+
+  function renderWorkflow(campaignCount = 0, searchCount = 0) {
+    if (!els.workflowStrip) return;
+    const ready = state.bulkLoaded;
+    const queueCount = state.lastQueueCount || 0;
+    const steps = [
+      {
+        label: "导入数据",
+        meta: ready ? `${fmtInt(campaignCount)} 活动 · ${fmtInt(searchCount)} 搜索词` : "先上传 Bulk",
+        status: ready ? "done" : "active",
+      },
+      {
+        label: "确认目标",
+        meta: `CPS ${fmtMoney(state.defaultTargetCps)} · 自然 CVR ${fmtPct(state.naturalCvr)}`,
+        status: ready ? "done" : "idle",
+      },
+      {
+        label: "查看队列",
+        meta: ready ? `${fmtInt(queueCount)} 个可执行动作` : "导入后自动生成",
+        status: ready ? "active" : "idle",
+      },
+      {
+        label: "导出执行",
+        meta: ready ? "按当前列导出 CSV" : "确认动作后导出",
+        status: ready && queueCount === 0 ? "done" : "idle",
+      },
+    ];
+    els.workflowStrip.innerHTML = steps
+      .map((step, index) => `<div class="workflow-step ${step.status}">
+        <b>${index + 1}</b>
+        <span>${escapeHtml(step.label)}</span>
+        <small>${escapeHtml(step.meta)}</small>
+      </div>`)
+      .join("");
   }
 
   function actionQueueCard(card) {

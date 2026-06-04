@@ -60,7 +60,9 @@ Important behavior:
 - Manual campaign selection is still supported, but global campaign search takes priority when present.
 - The owner optimizes one product at a time across all of that product's campaigns. The default homepage workflow must therefore stay product-wide first, not campaign-by-campaign first.
 - Campaign-level CPS overrides are optional. Empty override fields inherit the product default CPS.
-- Goal preferences are saved in `localStorage` under `amazonAds.goalPrefs.v1`; uploaded files themselves are never persisted.
+- Goal preferences are saved in `localStorage` under `amazonAds.goalPrefs.v2`; uploaded files themselves are never persisted.
+- The first screen should communicate a task path, not a feature catalog: import data, confirm goals, review the action queue, confirm actions, export execution data.
+- Required file guidance is part of the empty state: Bulk is required; hourly CSV and SciAds records are optional enrichments.
 
 ## 4. Input Files and Expected Columns
 
@@ -168,15 +170,16 @@ The current application is CPS-driven. Do not revert it to target-ACOS-as-primar
 
 Primary state in `app.js`:
 
-- `defaultTargetCps`: product default target CPS. Current default is `400`.
-- `naturalCvr`: manually entered product natural conversion rate. Current default is `0.10`.
+- `defaultTargetCps`: product default target CPS. Current default is `670`.
+- `naturalCvr`: manually entered product natural conversion rate. Current default is `0.05`.
 - `campaignTargetCpsOverrides`: object keyed by campaign name. A positive value overrides the product default for that campaign.
 - `targetAcos`: retained only as a derived/explanatory value for existing ACOS comparisons and UI display.
 
 Local persistence:
 
-- `amazonAds.goalPrefs.v1`
+- `amazonAds.goalPrefs.v2`
 - Stores `defaultTargetCps`, `naturalCvr`, and `campaignTargetCpsOverrides`.
+- Do not read older `amazonAds.goalPrefs.v1` values by default; old local caches may contain obsolete CPS/CVR defaults.
 - When a new Bulk file is loaded, overrides for campaign names that are no longer present are removed.
 
 Required formulas:
@@ -340,6 +343,8 @@ The app should feel like an operational SaaS tool, not a marketing landing page.
 Important UI behavior:
 
 - First screen is the usable app, not a landing page.
+- The analysis workspace top area includes a compact workflow strip: `导入数据`, `确认目标`, `查看队列`, `导出执行`. Keep this lightweight and status-driven.
+- The empty state uses business language around turning ad reports into executable actions, and it shows file requirements instead of decorative graphics.
 - The left sidebar has two separate mode buttons: `广告诊断` and `投放关键词检查`.
 - Left sidebar campaign search appears above upload and goal controls.
 - Left sidebar contains upload, product default target CPS, natural CVR, derived ACOS, actual CPS, target gap, product groups, and campaign list.
@@ -426,7 +431,9 @@ Before opening a PR or merging:
    - Left sidebar shows activity search above upload.
    - Product goal card shows default target CPS, natural CVR, derived ACOS, actual CPS, and target gap.
    - Editing default CPS or natural CVR updates recommendations.
-   - Campaign CPS override fields save to `amazonAds.goalPrefs.v1` and override target CPS for that campaign.
+   - Campaign CPS override fields save to `amazonAds.goalPrefs.v2` and override target CPS for that campaign.
+   - Empty state shows the five-step path and file requirements for required Bulk plus optional hourly CSV/SciAds files.
+   - Workflow strip updates from `先上传 Bulk` to campaign/search-term counts after import.
    - KPI order is clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaigns.
    - All-product action queue renders and exports CSV using current columns.
    - The all-product action queue excludes observation/keep/no-flow/already-negated rows by default.

@@ -92,28 +92,43 @@
       <main class="workspace mode-workspace active" id="analysisWorkspace" data-ready="false">
         <header class="topbar">
           <div>
-            <h2 id="workspaceTitle">等待导入广告数据</h2>
-            <p id="workspaceSubtitle">拖入完整 Bulk 文件后选择多个广告活动；每小时报告会自动联动分时效率。</p>
+            <h2 id="workspaceTitle">把广告报表变成可执行动作</h2>
+            <p id="workspaceSubtitle">按一个产品下的所有广告活动分析，先找放量、控费、承接这三类动作。</p>
           </div>
           <div class="status-pills" id="statusPills"></div>
         </header>
 
+        <section class="workflow-strip" id="workflowStrip" aria-label="分析流程"></section>
+
         <section class="hero-panel" id="emptyState">
           <div class="hero-copy">
-            <span class="eyebrow">Start light</span>
-            <h3>先导入 Bulk，系统只给你下一步最该做的广告动作。</h3>
-            <p>数据只在浏览器本地解析。新手先看行动队列，熟悉后再展开公式、证据和原始字段。</p>
+            <span class="eyebrow">Amazon ads workflow</span>
+            <h3>不用先懂所有指标，先把广告数据压缩成下一步动作。</h3>
+            <p>适合一次优化一个产品下的全部广告活动。导入后先看全产品行动队列，再决定加价、降价、否定、承接或导出执行。</p>
             <div class="onboarding-steps" aria-label="使用步骤">
-              <div><b>1</b><span>导入完整 Bulk</span></div>
-              <div><b>2</b><span>确认目标 CPS 与自然 CVR</span></div>
-              <div><b>3</b><span>处理放量、止损、结构修复</span></div>
+              <div><b>1</b><span>导入数据</span></div>
+              <div><b>2</b><span>确认目标</span></div>
+              <div><b>3</b><span>查看队列</span></div>
+              <div><b>4</b><span>确认动作</span></div>
+              <div><b>5</b><span>导出执行</span></div>
             </div>
           </div>
-          <div class="hero-visual" aria-hidden="true">
-            <div class="visual-bar tall"></div>
-            <div class="visual-bar mid"></div>
-            <div class="visual-bar low"></div>
-            <div class="visual-line"></div>
+          <div class="import-guide" aria-label="导入文件">
+            <div class="guide-row required">
+              <b>必传</b>
+              <span>Bulk 工作簿</span>
+              <small>活动、标的、搜索词</small>
+            </div>
+            <div class="guide-row">
+              <b>可选</b>
+              <span>每小时 CSV</span>
+              <small>分时效率与 RPC</small>
+            </div>
+            <div class="guide-row">
+              <b>可选</b>
+              <span>SciAds 记录</span>
+              <small>课程依据与规则</small>
+            </div>
           </div>
         </section>
 
