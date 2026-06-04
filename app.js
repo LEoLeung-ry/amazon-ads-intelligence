@@ -304,7 +304,8 @@
     if (bulkReviewButton) {
       const status = bulkReviewButton.dataset.reviewCurrent;
       if (!reviewLabels[status]) return;
-      const rows = state.tableExports.productQueueBatchConfirm?.rows || [];
+      const batchKey = status === "pending" ? "productQueueBatchReset" : "productQueueBatchConfirm";
+      const rows = state.tableExports[batchKey]?.rows || [];
       rows.forEach((row) => {
         if (!row.reviewKey) return;
         if (status === "pending") delete state.actionReviews[row.reviewKey];
@@ -1028,7 +1029,9 @@
     const confirmedRows = filterQueueRows(queueRows, { review: "confirmed" });
     const executionCoach = buildExecutionCoach(scopedQueueRows, confirmedRows);
     const batchConfirmRows = filteredQueueRows.filter((row) => (row.reviewState || "pending") === "pending");
+    const batchResetRows = confirmedRows;
     const canBatchConfirm = batchConfirmRows.length && isQueueNarrowedForBatch();
+    const canBatchReset = batchResetRows.length && isQueueNarrowedForBatch();
 
     const cards = [
       {
@@ -1092,6 +1095,7 @@
           </div>
           <div class="queue-export-actions">
             <button class="secondary-btn" type="button" data-review-current="confirmed"${canBatchConfirm ? "" : " disabled title=\"先筛选任务、风险或影响后再批量确认\""}>确认待处理 (${batchConfirmRows.length})</button>
+            <button class="secondary-btn" type="button" data-review-current="pending"${canBatchReset ? "" : " disabled title=\"先筛选任务、风险或影响后再撤回确认\""}>撤回已确认 (${batchResetRows.length})</button>
             <button class="secondary-btn" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>导出已确认 (${confirmedRows.length})</button>
             <button class="export-btn" type="button" data-export-queue>导出当前 (${filteredQueueRows.length})</button>
           </div>
@@ -1128,6 +1132,7 @@
     state.tableExports.productQueue = { tableId: "productActionTable", columns, rows: filteredQueueRows };
     state.tableExports.productQueueConfirmed = { tableId: "productActionTable", columns, rows: confirmedRows };
     state.tableExports.productQueueBatchConfirm = { rows: batchConfirmRows };
+    state.tableExports.productQueueBatchReset = { rows: batchResetRows };
     renderTable("productActionTable", columns, filteredQueueRows.slice(0, 360), "当前筛选下没有行动项。");
   }
 

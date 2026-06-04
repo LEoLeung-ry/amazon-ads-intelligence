@@ -286,6 +286,9 @@ The homepage action queue is now the primary workflow.
 - `确认待处理` bulk-confirms only pending rows inside the currently filtered queue by writing each row's `reviewKey` to `state.actionReviews`.
 - `确认待处理` must be disabled until the queue is narrowed by task/action, risk, or impact. The default all-action queue must not allow one-click confirmation of every row.
 - Bulk confirmation must never overwrite rows already marked `暂缓` or `已确认`, even when the review-status filter is `全部状态`.
+- `撤回已确认` clears only confirmed rows inside the current narrowed task/action, risk, or impact scope by deleting each row's `reviewKey` from `state.actionReviews`.
+- `撤回已确认` must be disabled until the queue is narrowed and there is at least one confirmed row in that narrowed scope. It must never affect rows marked `暂缓`.
+- Batch confirm rows are stored at `state.tableExports.productQueueBatchConfirm`; batch reset rows are stored at `state.tableExports.productQueueBatchReset`. Keep these export-state slices aligned with the visible filter scope used by `renderActionQueue()`.
 - It uses the same column preference system as other tables and exports through `exportTableCsv("productQueue", ...)`.
 - Keep this product-wide queue as the default path so the user does not have to jump through hundreds of campaigns manually.
 - The deeper tabs (`总览`, `标的诊断`, `搜索词`, `分时联动`, `广告位`, `规则库`) are collapsed by default after import and are revealed through the action queue button. This avoids repeating the queue and prevents a dense report wall from appearing before the user asks for details.
@@ -476,6 +479,7 @@ Before opening a PR or merging:
    - Action queue rows can be marked `已确认` or `暂缓`; the review summary updates immediately.
    - `确认待处理` is disabled on the default all-action queue. After filtering to `止损/否定`, it bulk-confirms only pending rows in that filtered set.
    - If one filtered row is already `暂缓`, `确认待处理` preserves it and confirms only the remaining pending rows.
+   - After filtering to `止损/否定`, confirming pending rows, then clicking `撤回已确认`, confirmed rows in that narrowed scope return to `待确认`; any `暂缓` row remains `暂缓`.
    - `导出已确认` is disabled until at least one action is confirmed, then exports only confirmed rows with the current column setup.
    - Action queue starts with the `待确认` status filter, and switching to `全部状态`, `已确认`, or `暂缓` updates rows and summary counts.
    - After confirming a row while the status filter is `待确认`, the row leaves the pending list but the confirmed summary count and `导出已确认` remain available.
