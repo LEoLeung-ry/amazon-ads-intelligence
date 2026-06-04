@@ -609,7 +609,7 @@ body[data-bulk-ready="false"] .campaign-panel {
 
 .workflow-strip {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
   gap: 8px;
   margin: -4px 0 14px;
 }
@@ -1104,6 +1104,66 @@ body[data-bulk-ready="false"] .campaign-panel {
   padding: 10px 14px;
 }
 
+.queue-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.queue-export-actions .secondary-btn,
+.queue-export-actions .export-btn {
+  width: auto;
+  min-height: 30px;
+  padding: 0 11px;
+  font-size: 12px;
+}
+
+.queue-export-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.execution-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px 14px 0;
+}
+
+.review-stat {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.review-stat span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.review-stat b {
+  color: #10212b;
+  font-size: 15px;
+}
+
+.review-stat.confirmed {
+  border-color: rgba(34, 197, 94, 0.28);
+  background: #f0fdf4;
+}
+
+.review-stat.held {
+  border-color: rgba(245, 158, 11, 0.28);
+  background: #fffbeb;
+}
+
 .primary-brief {
   border-left: 4px solid var(--teal);
   background: linear-gradient(90deg, rgba(236, 253, 245, 0.72), #fff 44%);
@@ -1482,6 +1542,54 @@ td.reason-cell {
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: middle;
+}
+
+td.review-cell,
+th.review-cell {
+  min-width: 168px;
+  max-width: 190px;
+}
+
+td.review-cell {
+  vertical-align: middle;
+}
+
+.review-control {
+  display: inline-grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+  width: 156px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.review-control button {
+  min-height: 24px;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.review-control button.active {
+  background: #fff;
+  color: #10212b;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
+}
+
+.review-control button[data-review-status="confirmed"].active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.review-control button[data-review-status="held"].active {
+  background: #fef3c7;
+  color: #b45309;
 }
 
 td.num,

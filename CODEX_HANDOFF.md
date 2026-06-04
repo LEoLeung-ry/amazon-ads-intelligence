@@ -256,7 +256,11 @@ The homepage action queue is now the primary workflow.
 - The queue is sorted by action priority first, then spend.
 - The default queue is intentionally strict. It should include only real action categories: `止损`, `否定`, `检查否定`, `降价`, `放量`, `加精准词`, `加商品定向`, and `保留/加预算`.
 - Keep `观察`, `无流量`, `保持`, `保留`, `继续积累`, `小幅优化`, and `已否定` out of the default queue. These can still appear in expanded diagnostic tables, but showing them by default makes the homepage feel overwhelming.
-- It must show action, object, campaign, ad group, current CPS, target CPS, ACOS, recommended bid, and reason.
+- It must show review status, action, object, campaign, ad group, current CPS, target CPS, ACOS, recommended bid, and reason.
+- Each queue row has a lightweight review status: `待确认`, `已确认`, or `暂缓`. This is stored in memory under `state.actionReviews` because uploaded files are not persisted.
+- Review row keys must be precise enough that confirming one row does not accidentally confirm duplicate-looking rows. Include source/action/campaign/ad group/item plus metrics such as spend/orders/recommended bid.
+- The queue summary shows counts for pending/confirmed/held actions.
+- The queue can export all rows or only `已确认` rows. Keep `productQueueConfirmed` wired to the same columns so current column choices apply to both exports.
 - It uses the same column preference system as other tables and exports through `exportTableCsv("productQueue", ...)`.
 - Keep this product-wide queue as the default path so the user does not have to jump through hundreds of campaigns manually.
 - The deeper tabs (`总览`, `标的诊断`, `搜索词`, `分时联动`, `广告位`, `规则库`) are collapsed by default after import and are revealed through the action queue button. This avoids repeating the queue and prevents a dense report wall from appearing before the user asks for details.
@@ -343,7 +347,7 @@ The app should feel like an operational SaaS tool, not a marketing landing page.
 Important UI behavior:
 
 - First screen is the usable app, not a landing page.
-- The analysis workspace top area includes a compact workflow strip: `导入数据`, `确认目标`, `查看队列`, `导出执行`. Keep this lightweight and status-driven.
+- The analysis workspace top area includes a compact workflow strip: `导入数据`, `确认目标`, `查看队列`, `确认动作`, `导出结果`. Keep this lightweight and status-driven.
 - The empty state uses business language around turning ad reports into executable actions, and it shows file requirements instead of decorative graphics.
 - The left sidebar has two separate mode buttons: `广告诊断` and `投放关键词检查`.
 - Left sidebar campaign search appears above upload and goal controls.
@@ -434,6 +438,8 @@ Before opening a PR or merging:
    - Campaign CPS override fields save to `amazonAds.goalPrefs.v2` and override target CPS for that campaign.
    - Empty state shows the five-step path and file requirements for required Bulk plus optional hourly CSV/SciAds files.
    - Workflow strip updates from `先上传 Bulk` to campaign/search-term counts after import.
+   - Action queue rows can be marked `已确认` or `暂缓`; the review summary updates immediately.
+   - `导出已确认` is disabled until at least one action is confirmed, then exports only confirmed rows with the current column setup.
    - KPI order is clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaigns.
    - All-product action queue renders and exports CSV using current columns.
    - The all-product action queue excludes observation/keep/no-flow/already-negated rows by default.

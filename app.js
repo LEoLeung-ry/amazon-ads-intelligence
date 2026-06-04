@@ -19,6 +19,8 @@
     mentorLoaded: false,
     detailsExpanded: false,
     lastQueueCount: 0,
+    lastReviewCounts: { pending: 0, confirmed: 0, held: 0 },
+    actionReviews: {},
     defaultTargetCps: 670,
     naturalCvr: 0.05,
     campaignTargetCpsOverrides: {},
@@ -77,6 +79,7 @@
     },
   ];
   const primaryQueueActions = new Set(["止损", "否定", "检查否定", "降价", "放量", "加精准词", "加商品定向", "保留/加预算"]);
+  const reviewLabels = { pending: "待确认", confirmed: "已确认", held: "暂缓" };
   const goalPrefsKey = "amazonAds.goalPrefs.v2";
 
   const els = {};
@@ -277,6 +280,16 @@
   }
 
   function handleActionQueueClick(event) {
+    const reviewButton = event.target.closest("[data-review-status]");
+    if (reviewButton) {
+      const key = reviewButton.dataset.reviewKey;
+      const status = reviewButton.dataset.reviewStatus;
+      if (!key || !reviewLabels[status]) return;
+      if (status === "pending") delete state.actionReviews[key];
+      else state.actionReviews[key] = status;
+      renderAnalysis();
+      return;
+    }
     const detailsButton = event.target.closest("[data-toggle-details]");
     if (detailsButton) {
       state.detailsExpanded = !state.detailsExpanded;
@@ -286,6 +299,11 @@
     const exportButton = event.target.closest("[data-export-queue]");
     if (exportButton) {
       exportTableCsv("productQueue", "全产品行动队列.csv");
+      return;
+    }
+    const confirmedExportButton = event.target.closest("[data-export-confirmed]");
+    if (confirmedExportButton) {
+      exportTableCsv("productQueueConfirmed", "已确认行动队列.csv");
       return;
     }
     const button = event.target.closest("[data-queue-tab]");
@@ -919,6 +937,8 @@
     const targetCps = averageTargetCps(campaigns);
     const queueRows = buildProductActionRows(targetRows, searchDecisionRows);
     state.lastQueueCount = queueRows.length;
+    state.lastReviewCounts = countReviewStatuses(queueRows);
+    const confirmedRows = queueRows.filter((row) => row.reviewState === "confirmed");
 
     const cards = [
       {
@@ -976,13 +996,25 @@
       </div>
       <div class="table-card queue-table-card">
         <div class="table-head">
-          <h3>全产品行动队列</h3>
-          <button class="export-btn" type="button" data-export-queue>导出 CSV (${queueRows.length})</button>
+          <div>
+            <h3>全产品行动队列</h3>
+            <span>先确认要执行的动作，再导出给后台调整</span>
+          </div>
+          <div class="queue-export-actions">
+            <button class="secondary-btn" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>导出已确认 (${confirmedRows.length})</button>
+            <button class="export-btn" type="button" data-export-queue>导出全部 (${queueRows.length})</button>
+          </div>
+        </div>
+        <div class="execution-summary">
+          ${reviewSummaryItem("待确认", state.lastReviewCounts.pending, "pending")}
+          ${reviewSummaryItem("已确认", state.lastReviewCounts.confirmed, "confirmed")}
+          ${reviewSummaryItem("暂缓", state.lastReviewCounts.held, "held")}
         </div>
         <div class="table-wrap"><table id="productActionTable"></table></div>
       </div>
     `;
     const columns = [
+      col("确认", "reviewStatus", "review", { width: "170px" }),
       col("动作", "action", "tag"),
       col("对象", "item", "text"),
       col("活动", "campaign", "clip"),
@@ -997,6 +1029,7 @@
       col("订单", "orders", "int", { defaultVisible: false }),
     ];
     state.tableExports.productQueue = { tableId: "productActionTable", columns, rows: queueRows };
+    state.tableExports.productQueueConfirmed = { tableId: "productActionTable", columns, rows: confirmedRows };
     renderTable("productActionTable", columns, queueRows.slice(0, 360), "导入 Bulk 后显示全产品行动队列。");
   }
 
@@ -1031,7 +1064,17 @@
     }));
     return [...targetQueue, ...searchQueue]
       .filter((row) => isPrimaryQueueAction(row.action))
-      .sort((a, b) => actionPriority(a.action) - actionPriority(b.action) || b.spend - a.spend);
+      .sort((a, b) => actionPriority(a.action) - actionPriority(b.action) || b.spend - a.spend)
+      .map((row) => {
+        const reviewKey = actionRowKey(row);
+        const reviewState = state.actionReviews[reviewKey] || "pending";
+        return {
+          ...row,
+          reviewKey,
+          reviewState,
+          reviewStatus: reviewLabels[reviewState] || reviewLabels.pending,
+        };
+      });
   }
 
   function readKeywordCheckerSummary() {
@@ -1042,10 +1085,39 @@
     }
   }
 
+  function actionRowKey(row) {
+    return [
+      row.source,
+      row.action,
+      row.campaign,
+      row.adGroup,
+      row.item,
+      Math.round((Number(row.spend) || 0) * 100) / 100,
+      row.orders || 0,
+      Math.round((Number(row.recBid) || 0) * 100) / 100,
+    ].map((part) => normalizeTerm(part || "-")).join("||");
+  }
+
+  function countReviewStatuses(rows) {
+    return rows.reduce((acc, row) => {
+      const status = row.reviewState || "pending";
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, { pending: 0, confirmed: 0, held: 0 });
+  }
+
+  function reviewSummaryItem(label, value, status) {
+    return `<div class="review-stat ${escapeAttr(status)}">
+      <span>${escapeHtml(label)}</span>
+      <b>${fmtInt(value)}</b>
+    </div>`;
+  }
+
   function renderWorkflow(campaignCount = 0, searchCount = 0) {
     if (!els.workflowStrip) return;
     const ready = state.bulkLoaded;
     const queueCount = state.lastQueueCount || 0;
+    const confirmed = state.lastReviewCounts.confirmed || 0;
     const steps = [
       {
         label: "导入数据",
@@ -1060,12 +1132,17 @@
       {
         label: "查看队列",
         meta: ready ? `${fmtInt(queueCount)} 个可执行动作` : "导入后自动生成",
-        status: ready ? "active" : "idle",
+        status: ready && confirmed ? "done" : ready ? "active" : "idle",
       },
       {
-        label: "导出执行",
-        meta: ready ? "按当前列导出 CSV" : "确认动作后导出",
-        status: ready && queueCount === 0 ? "done" : "idle",
+        label: "确认动作",
+        meta: ready ? `${fmtInt(confirmed)} 个已确认` : "先看队列",
+        status: ready && confirmed ? "active" : "idle",
+      },
+      {
+        label: "导出结果",
+        meta: confirmed ? "导出已确认 CSV" : ready ? "确认后导出" : "确认动作后导出",
+        status: confirmed ? "active" : ready && queueCount === 0 ? "done" : "idle",
       },
     ];
     els.workflowStrip.innerHTML = steps
@@ -1747,6 +1824,7 @@
     if (type === "signedPct") return fmtSignedPct(value);
     if (type === "int") return Math.round(Number(value) || 0);
     if (type === "num") return fmtNumber(value, 1);
+    if (type === "review") return value || reviewLabels.pending;
     return value ?? "";
   }
 
@@ -1765,6 +1843,7 @@
     if (column.type === "clip") cls += " clip-cell";
     if (column.type === "small") cls += " small-text";
     if (column.type === "reason") cls += " reason-cell";
+    if (column.type === "review") cls += " review-cell";
     let html = "";
     if (column.type === "money") html = fmtMoney(value);
     else if (column.type === "pct") html = fmtPct(value);
@@ -1772,9 +1851,24 @@
     else if (column.type === "int") html = fmtInt(value);
     else if (column.type === "num") html = fmtNumber(value, 2);
     else if (column.type === "tag") html = tag(value);
+    else if (column.type === "review") html = reviewControl(row);
     else html = escapeHtml(value ?? "");
     const title = ["clip", "full", "text", "small", "reason"].includes(column.type) ? ` title="${escapeAttr(value ?? "")}"` : "";
     return `<td class="${cls.trim()}"${title}>${html}</td>`;
+  }
+
+  function reviewControl(row) {
+    const current = row.reviewState || "pending";
+    const key = escapeAttr(row.reviewKey || actionRowKey(row));
+    return `<div class="review-control" aria-label="动作确认状态">
+      ${reviewButton(key, current, "pending", "待")}
+      ${reviewButton(key, current, "confirmed", "确认")}
+      ${reviewButton(key, current, "held", "暂缓")}
+    </div>`;
+  }
+
+  function reviewButton(key, current, status, label) {
+    return `<button class="${current === status ? "active" : ""}" type="button" data-review-status="${status}" data-review-key="${key}" title="${escapeAttr(reviewLabels[status])}">${escapeHtml(label)}</button>`;
   }
 
   function col(label, key, type = "text", tooltip = "", options = {}) {
@@ -1782,7 +1876,7 @@
       options = tooltip;
       tooltip = "";
     }
-    const cls = type === "text" ? "text-cell" : type === "small" ? "small-text" : type === "reason" ? "reason-cell" : type === "full" ? "full-cell" : type === "clip" ? "clip-cell" : "";
+    const cls = type === "text" ? "text-cell" : type === "small" ? "small-text" : type === "reason" ? "reason-cell" : type === "full" ? "full-cell" : type === "clip" ? "clip-cell" : type === "review" ? "review-cell" : "";
     return {
       label,
       key,
