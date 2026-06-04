@@ -283,8 +283,9 @@ The homepage action queue is now the primary workflow.
 - Review row keys must be precise enough that confirming one row does not accidentally confirm duplicate-looking rows. Include source/action/campaign/ad group/item plus metrics such as spend/orders/recommended bid.
 - The queue summary shows pending/confirmed/held counts for the current action/risk/impact filters, independent of the selected review-status filter. This keeps confirmed counts visible after rows leave the default `待确认` view.
 - `导出当前` exports the currently filtered queue rows, not the unfiltered queue. `导出已确认` exports confirmed rows matching the current action/risk/impact filters, independent of the selected review-status filter. Keep `productQueueConfirmed` wired to the same columns so current column choices apply to both exports.
-- `确认当前` bulk-confirms the currently filtered queue rows by writing each row's `reviewKey` to `state.actionReviews`.
-- `确认当前` must be disabled until the queue is narrowed by task/action, risk, or impact. The default all-action queue must not allow one-click confirmation of every row.
+- `确认待处理` bulk-confirms only pending rows inside the currently filtered queue by writing each row's `reviewKey` to `state.actionReviews`.
+- `确认待处理` must be disabled until the queue is narrowed by task/action, risk, or impact. The default all-action queue must not allow one-click confirmation of every row.
+- Bulk confirmation must never overwrite rows already marked `暂缓` or `已确认`, even when the review-status filter is `全部状态`.
 - It uses the same column preference system as other tables and exports through `exportTableCsv("productQueue", ...)`.
 - Keep this product-wide queue as the default path so the user does not have to jump through hundreds of campaigns manually.
 - The deeper tabs (`总览`, `标的诊断`, `搜索词`, `分时联动`, `广告位`, `规则库`) are collapsed by default after import and are revealed through the action queue button. This avoids repeating the queue and prevents a dense report wall from appearing before the user asks for details.
@@ -473,7 +474,8 @@ Before opening a PR or merging:
    - Upload guidance shows the default upload order before import, a clear warning for unsupported/incorrect files, and a success hint after Bulk is recognized.
    - Metric guide explains CPS, CVR, RPC, and ACOS after import without expanding the page into a tutorial.
    - Action queue rows can be marked `已确认` or `暂缓`; the review summary updates immediately.
-   - `确认当前` is disabled on the default all-action queue. After filtering to `止损/否定`, it bulk-confirms only the filtered rows.
+   - `确认待处理` is disabled on the default all-action queue. After filtering to `止损/否定`, it bulk-confirms only pending rows in that filtered set.
+   - If one filtered row is already `暂缓`, `确认待处理` preserves it and confirms only the remaining pending rows.
    - `导出已确认` is disabled until at least one action is confirmed, then exports only confirmed rows with the current column setup.
    - Action queue starts with the `待确认` status filter, and switching to `全部状态`, `已确认`, or `暂缓` updates rows and summary counts.
    - After confirming a row while the status filter is `待确认`, the row leaves the pending list but the confirmed summary count and `导出已确认` remain available.
