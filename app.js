@@ -32,6 +32,13 @@
       searchCampaign: "",
       searchAction: "all",
     },
+    queueFilters: {
+      action: "all",
+      risk: "all",
+      review: "pending",
+      impact: "all",
+      sort: "priority",
+    },
     tableExports: {
       target: { columns: [], rows: [] },
       search: { columns: [], rows: [] },
@@ -224,6 +231,7 @@
       renderAll();
     });
     els.actionQueue.addEventListener("click", handleActionQueueClick);
+    els.actionQueue.addEventListener("change", handleActionQueueChange);
     document.addEventListener("click", handleColumnControlClick);
     document.addEventListener("change", handleColumnControlChange);
     els.tabs.addEventListener("click", (event) => {
@@ -320,6 +328,15 @@
       els.searchActionFilter.value = button.dataset.searchAction;
     }
     activateTab(tab);
+    renderAnalysis();
+  }
+
+  function handleActionQueueChange(event) {
+    const control = event.target.closest("[data-queue-filter]");
+    if (!control) return;
+    const key = control.dataset.queueFilter;
+    if (!Object.prototype.hasOwnProperty.call(state.queueFilters, key)) return;
+    state.queueFilters[key] = control.value;
     renderAnalysis();
   }
 
@@ -979,9 +996,11 @@
     const keywordRisk = sumKeys(keywordSummary.actions || {}, ["缺精准", "竞价倒挂", "重复分散", "正负冲突", "搜索出单未承接"]);
     const targetCps = averageTargetCps(campaigns);
     const queueRows = buildProductActionRows(targetRows, searchDecisionRows);
-    state.lastQueueCount = queueRows.length;
-    state.lastReviewCounts = countReviewStatuses(queueRows);
-    const confirmedRows = queueRows.filter((row) => row.reviewState === "confirmed");
+    const filteredQueueRows = filterQueueRows(queueRows);
+    const scopedQueueRows = filterQueueRows(queueRows, { review: "all" });
+    state.lastQueueCount = filteredQueueRows.length;
+    state.lastReviewCounts = countReviewStatuses(scopedQueueRows);
+    const confirmedRows = filterQueueRows(queueRows, { review: "confirmed" });
 
     const cards = [
       {
@@ -1045,7 +1064,7 @@
           </div>
           <div class="queue-export-actions">
             <button class="secondary-btn" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>导出已确认 (${confirmedRows.length})</button>
-            <button class="export-btn" type="button" data-export-queue>导出全部 (${queueRows.length})</button>
+            <button class="export-btn" type="button" data-export-queue>导出当前 (${filteredQueueRows.length})</button>
           </div>
         </div>
         <div class="execution-summary">
@@ -1053,6 +1072,7 @@
           ${reviewSummaryItem("已确认", state.lastReviewCounts.confirmed, "confirmed")}
           ${reviewSummaryItem("暂缓", state.lastReviewCounts.held, "held")}
         </div>
+        ${renderQueueFilters(queueRows, filteredQueueRows)}
         <div class="table-wrap"><table id="productActionTable"></table></div>
       </div>
     `;
@@ -1075,9 +1095,9 @@
       col("订单", "orders", "int", { defaultVisible: false }),
       col("点击", "clicks", "int", { defaultVisible: false }),
     ];
-    state.tableExports.productQueue = { tableId: "productActionTable", columns, rows: queueRows };
+    state.tableExports.productQueue = { tableId: "productActionTable", columns, rows: filteredQueueRows };
     state.tableExports.productQueueConfirmed = { tableId: "productActionTable", columns, rows: confirmedRows };
-    renderTable("productActionTable", columns, queueRows.slice(0, 360), "导入 Bulk 后显示全产品行动队列。");
+    renderTable("productActionTable", columns, filteredQueueRows.slice(0, 360), "当前筛选下没有行动项。");
   }
 
   function buildProductActionRows(targetRows, searchDecisionRows) {
@@ -1207,6 +1227,79 @@
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, { pending: 0, confirmed: 0, held: 0 });
+  }
+
+  function filterQueueRows(rows, overrides = {}) {
+    const filters = { ...state.queueFilters, ...overrides };
+    const filtered = rows.filter((row) => {
+      const actionOk = filters.action === "all" || row.action === filters.action;
+      const riskOk = filters.risk === "all" || row.risk === filters.risk;
+      const reviewOk = filters.review === "all" || row.reviewState === filters.review;
+      const impactOk = filters.impact === "all"
+        || (filters.impact === "highSpend" && row.spend >= Math.max(3000, (Number(row.targetCps) || 0) * 4))
+        || (filters.impact === "hasOrders" && row.orders > 0)
+        || (filters.impact === "noOrders" && row.orders === 0)
+        || (filters.impact === "overTarget" && row.actualCps && row.targetCps && row.actualCps > row.targetCps);
+      return actionOk && riskOk && reviewOk && impactOk;
+    });
+    return sortQueueRows(filtered, filters.sort);
+  }
+
+  function sortQueueRows(rows, sortKey) {
+    return [...rows].sort((a, b) => {
+      if (sortKey === "spend") return b.spend - a.spend || actionPriority(a.action) - actionPriority(b.action);
+      if (sortKey === "orders") return b.orders - a.orders || b.spend - a.spend;
+      if (sortKey === "gap") return queueGap(b) - queueGap(a) || b.spend - a.spend;
+      return actionPriority(a.action) - actionPriority(b.action) || b.spend - a.spend;
+    });
+  }
+
+  function queueGap(row) {
+    if (!row.actualCps || !row.targetCps) return row.spend || 0;
+    return Math.abs(row.actualCps / row.targetCps - 1);
+  }
+
+  function renderQueueFilters(allRows, filteredRows) {
+    const actionOptions = ["all", "检查否定", "否定", "止损", "降价", "放量", "保留/加预算", "加精准词", "加商品定向"];
+    const filters = state.queueFilters;
+    return `<div class="queue-filter-bar">
+      ${queueSelect("动作", "action", actionOptions, filters.action, (value) => value === "all" ? "全部动作" : value)}
+      ${queueSelect("风险", "risk", ["all", "高风险", "中风险", "低风险"], filters.risk, (value) => value === "all" ? "全部风险" : value)}
+      ${queueSelect("状态", "review", ["pending", "confirmed", "held", "all"], filters.review, (value) => value === "all" ? "全部状态" : reviewLabels[value])}
+      ${queueSelect("影响", "impact", ["all", "highSpend", "overTarget", "hasOrders", "noOrders"], filters.impact, queueImpactLabel)}
+      ${queueSelect("排序", "sort", ["priority", "spend", "orders", "gap"], filters.sort, queueSortLabel)}
+      <div class="queue-filter-count"><b>${fmtInt(filteredRows.length)}</b><span>/ ${fmtInt(allRows.length)} 项</span></div>
+    </div>`;
+  }
+
+  function queueSelect(label, key, options, value, labeler) {
+    return `<label class="queue-filter">
+      <span>${escapeHtml(label)}</span>
+      <select data-queue-filter="${escapeAttr(key)}">
+        ${options.map((option) => `<option value="${escapeAttr(option)}"${option === value ? " selected" : ""}>${escapeHtml(labeler(option))}</option>`).join("")}
+      </select>
+    </label>`;
+  }
+
+  function queueImpactLabel(value) {
+    const labels = {
+      all: "全部影响",
+      highSpend: "高花费优先",
+      overTarget: "CPS 超目标",
+      hasOrders: "有订单",
+      noOrders: "无订单",
+    };
+    return labels[value] || value;
+  }
+
+  function queueSortLabel(value) {
+    const labels = {
+      priority: "按优先级",
+      spend: "按花费",
+      orders: "按订单",
+      gap: "按偏离目标",
+    };
+    return labels[value] || value;
   }
 
   function reviewSummaryItem(label, value, status) {

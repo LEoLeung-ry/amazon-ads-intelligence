@@ -254,6 +254,10 @@ The homepage action queue is now the primary workflow.
 - `renderActionQueue()` shows three summary cards plus the `productActionTable`.
 - `buildProductActionRows()` mixes target rows and search term rows into one product-wide queue.
 - The queue is sorted by action priority first, then spend.
+- `state.queueFilters` controls the lightweight execution filter bar: `action`, `risk`, `review`, `impact`, and `sort`.
+- The default queue filter is `review: "pending"` so the user starts from unresolved actions only. Confirmed and held actions remain available by switching the status filter to `已确认`, `暂缓`, or `全部状态`.
+- Impact filters are intentionally operator-friendly: `highSpend` means spend is at least `max(3000, targetCps * 4)`, `overTarget` means actual CPS is above target CPS, `hasOrders` means rows with orders, and `noOrders` means rows without orders.
+- Queue sort options are `priority`, `spend`, `orders`, and `gap`; `priority` preserves action priority first and spend second.
 - The default queue is intentionally strict. It should include only real action categories: `止损`, `否定`, `检查否定`, `降价`, `放量`, `加精准词`, `加商品定向`, and `保留/加预算`.
 - Keep `观察`, `无流量`, `保持`, `保留`, `继续积累`, `小幅优化`, and `已否定` out of the default queue. These can still appear in expanded diagnostic tables, but showing them by default makes the homepage feel overwhelming.
 - It must show review status, action, object, campaign, ad group, next step, evidence, recommended bid, and optional expert metrics.
@@ -264,8 +268,8 @@ The homepage action queue is now the primary workflow.
 - `risk` is a tag (`低风险`, `中风险`, `高风险`) used for quick scanning and export.
 - Each queue row has a lightweight review status: `待确认`, `已确认`, or `暂缓`. This is stored in memory under `state.actionReviews` because uploaded files are not persisted.
 - Review row keys must be precise enough that confirming one row does not accidentally confirm duplicate-looking rows. Include source/action/campaign/ad group/item plus metrics such as spend/orders/recommended bid.
-- The queue summary shows counts for pending/confirmed/held actions.
-- The queue can export all rows or only `已确认` rows. Keep `productQueueConfirmed` wired to the same columns so current column choices apply to both exports.
+- The queue summary shows pending/confirmed/held counts for the current action/risk/impact filters, independent of the selected review-status filter. This keeps confirmed counts visible after rows leave the default `待确认` view.
+- `导出当前` exports the currently filtered queue rows, not the unfiltered queue. `导出已确认` exports confirmed rows matching the current action/risk/impact filters, independent of the selected review-status filter. Keep `productQueueConfirmed` wired to the same columns so current column choices apply to both exports.
 - It uses the same column preference system as other tables and exports through `exportTableCsv("productQueue", ...)`.
 - Keep this product-wide queue as the default path so the user does not have to jump through hundreds of campaigns manually.
 - The deeper tabs (`总览`, `标的诊断`, `搜索词`, `分时联动`, `广告位`, `规则库`) are collapsed by default after import and are revealed through the action queue button. This avoids repeating the queue and prevents a dense report wall from appearing before the user asks for details.
@@ -449,6 +453,10 @@ Before opening a PR or merging:
    - Metric guide explains CPS, CVR, RPC, and ACOS after import without expanding the page into a tutorial.
    - Action queue rows can be marked `已确认` or `暂缓`; the review summary updates immediately.
    - `导出已确认` is disabled until at least one action is confirmed, then exports only confirmed rows with the current column setup.
+   - Action queue starts with the `待确认` status filter, and switching to `全部状态`, `已确认`, or `暂缓` updates rows and summary counts.
+   - After confirming a row while the status filter is `待确认`, the row leaves the pending list but the confirmed summary count and `导出已确认` remain available.
+   - Action queue filters work for action, risk, impact (`高花费优先`, `CPS 超目标`, `有订单`, `无订单`), and sorting (`按优先级`, `按花费`, `按订单`, `按偏离目标`).
+   - `导出当前` respects the active queue filters and current custom column setup.
    - Action queue default columns include `下一步` and `证据`; expert/custom columns can reveal CPS, ACOS, and original rule reason.
    - With the real Bulk fixture, queue rows should contain non-empty `nextStep`, `evidence`, and `risk` fields.
    - KPI order is clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaigns.
