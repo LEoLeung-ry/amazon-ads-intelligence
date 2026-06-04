@@ -269,7 +269,8 @@ The homepage action queue is now the primary workflow.
 - The three action cards should filter the all-product queue through these presets instead of jumping into deep target/search tabs. This keeps new users in the primary execution workflow.
 - If a card has no queue rows for its preset, disable the card button and show `暂无队列`; do not let users click into an empty-looking path.
 - `buildTodayFocusRows(queueRows)` creates the `今日优先` focus set: top 30 pending rows scored by action priority, risk, spend, no-order status, over-target CPS, and negative-conflict risk. It is an onboarding/operations layer for large queues, not a replacement for the full queue.
-- `renderTodayFocus(todayFocusRows, queueRows)` sits between the execution coach and the table. Its `查看今日优先` button sets `state.queueFilters.impact = "todayFocus"` and keeps review status on `pending`, so a new operator can start with a manageable first batch.
+- On first successful Bulk import, `state.pendingQueueAutoFocus` should switch the default queue view to `todayFocus` only when the user is still in the untouched default queue view and `buildTodayFocusRows()` produced rows. This makes the first post-import table manageable instead of showing thousands of rows.
+- `renderTodayFocus(todayFocusRows, queueRows)` sits between the execution coach and the table. Its `查看今日优先` button sets `state.queueFilters.impact = "todayFocus"` and keeps review status on `pending`; when already focused, it shows `查看全部动作` so users can return to the complete queue without hunting through the filter dropdown.
 - `buildExecutionCoach(scopedRows, confirmedRows)` creates the lightweight `Next action` strip between the action cards and the table. It compresses thousands of rows into one recommended next step.
 - The execution coach priority is: stop/loss-control first, then growth, then structure. This reflects the operator workflow: protect waste before scaling, then repair structure.
 - The coach uses the current task/risk/impact filter scope but ignores the selected review-status filter for its summary, matching the pending/confirmed summary behavior.
@@ -496,7 +497,7 @@ Before opening a PR or merging:
    - Action card buttons filter the queue through task presets: `放量任务`, `止损/否定`, and `结构修复`; they should not force users into deep tabs.
    - If the selected fixture has no structure queue rows, the structure card button shows `暂无队列` and is disabled.
    - Execution coach appears above the queue table. With the real Bulk fixture it should recommend `先保护预算`, preset `stop`, and show the stop/loss-control pending count.
-   - `今日优先` focus strip appears after Bulk import. With the real Bulk fixture it should offer 30 focused rows, and clicking `查看今日优先` should reduce the queue/export count to 30 while preserving full queue access through the impact filter.
+   - `今日优先` focus strip appears after Bulk import. With the real Bulk fixture the first post-import queue view should default to 30 focused rows and `导出当前 (30)`, while `查看全部动作` restores the full 5,927-row queue/export scope.
    - Action queue filters work for action, risk, impact (`高花费优先`, `CPS 超目标`, `有订单`, `无订单`), and sorting (`按优先级`, `按花费`, `按订单`, `按偏离目标`).
    - `导出当前` respects the active queue filters and current custom column setup.
    - Action queue default columns include `下一步` and `证据`; expert/custom columns can reveal CPS, ACOS, sales, and original rule reason.

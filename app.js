@@ -22,6 +22,7 @@
     lastReviewCounts: { pending: 0, confirmed: 0, held: 0 },
     actionReviews: {},
     todayFocusKeys: new Set(),
+    pendingQueueAutoFocus: false,
     defaultTargetCps: 670,
     naturalCvr: 0.05,
     campaignTargetCpsOverrides: {},
@@ -384,6 +385,7 @@
   async function handleFiles(fileList) {
     const files = Array.from(fileList || []);
     if (!files.length) return;
+    const hadBulkBefore = state.bulkLoaded;
     setLoading(true, "读取上传文件...");
     for (const file of files) {
       const record = { name: file.name, status: "loading", type: "识别中" };
@@ -401,6 +403,9 @@
       renderFileStack();
     }
     finalizeDefaultSelection();
+    if (!hadBulkBefore && state.bulkLoaded && isDefaultQueueView()) {
+      state.pendingQueueAutoFocus = true;
+    }
     setLoading(false);
     renderAll();
   }
@@ -1039,6 +1044,10 @@
     const queueRows = buildProductActionRows(targetRows, searchDecisionRows);
     const todayFocusRows = buildTodayFocusRows(queueRows);
     state.todayFocusKeys = new Set(todayFocusRows.map((row) => row.reviewKey));
+    if (state.pendingQueueAutoFocus) {
+      if (todayFocusRows.length && isDefaultQueueView()) state.queueFilters.impact = "todayFocus";
+      state.pendingQueueAutoFocus = false;
+    }
     const filteredQueueRows = filterQueueRows(queueRows);
     const scopedQueueRows = filterQueueRows(queueRows, { review: "all" });
     state.lastQueueCount = filteredQueueRows.length;
@@ -1246,7 +1255,9 @@
         <span><b>${fmtMoney(spend)}</b> 涉及花费</span>
         <span><b>${fmtInt(highRisk)}</b> 高风险</span>
         <span><b>${fmtInt(noOrders)}</b> 无订单</span>
-        <button class="export-btn" type="button" data-queue-impact="todayFocus"${rows.length ? "" : " disabled"}>${active ? "正在查看" : "查看今日优先"}</button>
+        ${active
+          ? '<button class="secondary-btn" type="button" data-queue-impact="all">查看全部动作</button>'
+          : `<button class="export-btn" type="button" data-queue-impact="todayFocus"${rows.length ? "" : " disabled"}>查看今日优先</button>`}
       </div>
     </div>`;
   }
@@ -1378,6 +1389,14 @@
 
   function isQueueNarrowedForBatch() {
     return state.queueFilters.action !== "all" || state.queueFilters.risk !== "all" || state.queueFilters.impact !== "all";
+  }
+
+  function isDefaultQueueView() {
+    return state.queueFilters.action === "all"
+      && state.queueFilters.risk === "all"
+      && state.queueFilters.review === "pending"
+      && state.queueFilters.impact === "all"
+      && state.queueFilters.sort === "priority";
   }
 
   function buildExecutionCoach(scopedRows, confirmedRows) {
