@@ -1013,6 +1013,7 @@
     state.lastQueueCount = filteredQueueRows.length;
     state.lastReviewCounts = countReviewStatuses(scopedQueueRows);
     const confirmedRows = filterQueueRows(queueRows, { review: "confirmed" });
+    const executionCoach = buildExecutionCoach(scopedQueueRows, confirmedRows);
 
     const cards = [
       {
@@ -1067,6 +1068,7 @@
       <div class="queue-grid">
         ${cards.map((card) => actionQueueCard(card)).join("")}
       </div>
+      ${renderExecutionCoach(executionCoach)}
       <div class="table-card queue-table-card">
         <div class="table-head">
           <div>
@@ -1103,6 +1105,7 @@
       col("原始原因", "reason", "reason", { defaultVisible: false, width: "360px" }),
       col("来源", "source", "tag", { defaultVisible: false }),
       col("花费", "spend", "money", { defaultVisible: false }),
+      col("销售额", "sales", "money", { defaultVisible: false }),
       col("订单", "orders", "int", { defaultVisible: false }),
       col("点击", "clicks", "int", { defaultVisible: false }),
     ];
@@ -1119,6 +1122,7 @@
       campaign: row.campaign,
       adGroup: row.adGroup || "-",
       spend: row.metrics.spend,
+      sales: row.metrics.sales,
       clicks: row.metrics.clicks,
       orders: row.metrics.orders,
       actualCps: calc(row.metrics).cpa,
@@ -1134,6 +1138,7 @@
       campaign: row.campaign,
       adGroup: row.adGroup || "-",
       spend: row.metrics.spend,
+      sales: row.metrics.sales,
       clicks: row.metrics.clicks,
       orders: row.metrics.orders,
       actualCps: calc(row.metrics).cpa,
@@ -1289,6 +1294,87 @@
       structure: "结构修复",
     };
     return labels[value] || value;
+  }
+
+  function buildExecutionCoach(scopedRows, confirmedRows) {
+    const pendingRows = scopedRows.filter((row) => (row.reviewState || "pending") === "pending");
+    const confirmedCount = confirmedRows.length;
+    const baseMeta = `待确认 ${fmtInt(pendingRows.length)} · 已确认 ${fmtInt(confirmedCount)}`;
+    const groups = [
+      {
+        preset: "stop",
+        tone: "red",
+        rows: pendingRows.filter((row) => queueActionMatches("stop", row.action)),
+        title: "先保护预算",
+        metric: (rows) => `涉及花费 ${fmtMoney(sumBy(rows, (row) => row.spend))}`,
+        body: "先处理止损、否定和误否定冲突，避免预算继续流向低质量流量。",
+        button: "筛选止损",
+      },
+      {
+        preset: "growth",
+        tone: "green",
+        rows: pendingRows.filter((row) => queueActionMatches("growth", row.action)),
+        title: "再看放量机会",
+        metric: (rows) => `关联销售额 ${fmtMoney(sumBy(rows, (row) => row.sales))}`,
+        body: "优先处理已有订单且 CPS 合格的词、ASIN 或标的，用小步竞价承接更多订单。",
+        button: "筛选放量",
+      },
+      {
+        preset: "structure",
+        tone: "blue",
+        rows: pendingRows.filter((row) => queueActionMatches("structure", row.action)),
+        title: "补上结构承接",
+        metric: (rows) => `承接动作 ${fmtInt(rows.length)} 个`,
+        body: "把已证明能转化的搜索词或 ASIN 从探索层拆出来，让后续竞价和否定更清楚。",
+        button: "筛选承接",
+      },
+    ];
+    const focus = groups.find((group) => group.rows.length);
+    if (focus) {
+      return {
+        tone: focus.tone,
+        title: focus.title,
+        body: `${focus.body} ${focus.metric(focus.rows)}。`,
+        meta: `${baseMeta} · 当前建议 ${fmtInt(focus.rows.length)} 个`,
+        button: focus.button,
+        preset: focus.preset,
+      };
+    }
+    if (confirmedCount) {
+      return {
+        tone: "green",
+        title: "动作已确认，可以导出",
+        body: "当前筛选下没有待确认动作，已确认的动作可以直接导出给广告后台执行。",
+        meta: baseMeta,
+        button: "导出已确认",
+        exportConfirmed: true,
+      };
+    }
+    return {
+      tone: "neutral",
+      title: "当前筛选下没有待执行动作",
+      body: "可以切换任务、状态或影响筛选；如果仍为空，说明这组活动暂时没有达到执行阈值的动作。",
+      meta: baseMeta,
+    };
+  }
+
+  function renderExecutionCoach(coach) {
+    const button = coach.exportConfirmed
+      ? `<button class="export-btn" type="button" data-export-confirmed>${escapeHtml(coach.button)}</button>`
+      : coach.preset
+        ? `<button type="button" data-queue-action-preset="${escapeAttr(coach.preset)}">${escapeHtml(coach.button)}</button>`
+        : "";
+    return `<div class="execution-coach ${escapeAttr(coach.tone)}">
+      <div>
+        <span class="eyebrow">Next action</span>
+        <h4>${escapeHtml(coach.title)}</h4>
+        <p>${escapeHtml(coach.body)}</p>
+      </div>
+      <div class="execution-coach-side">
+        <span>${escapeHtml(coach.meta)}</span>
+        ${button}
+      </div>
+    </div>`;
   }
 
   function renderQueueFilters(allRows, filteredRows) {

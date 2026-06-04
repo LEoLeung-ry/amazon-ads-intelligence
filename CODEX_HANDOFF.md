@@ -264,6 +264,9 @@ The homepage action queue is now the primary workflow.
 - The action filter accepts both exact actions and task presets. Presets are `growth` (`放量`, `保留/加预算`), `stop` (`检查否定`, `否定`, `止损`, `降价`), and `structure` (`加精准词`, `加商品定向`).
 - The three action cards should filter the all-product queue through these presets instead of jumping into deep target/search tabs. This keeps new users in the primary execution workflow.
 - If a card has no queue rows for its preset, disable the card button and show `暂无队列`; do not let users click into an empty-looking path.
+- `buildExecutionCoach(scopedRows, confirmedRows)` creates the lightweight `Next action` strip between the action cards and the table. It compresses thousands of rows into one recommended next step.
+- The execution coach priority is: stop/loss-control first, then growth, then structure. This reflects the operator workflow: protect waste before scaling, then repair structure.
+- The coach uses the current task/risk/impact filter scope but ignores the selected review-status filter for its summary, matching the pending/confirmed summary behavior.
 - The default queue filter is `review: "pending"` so the user starts from unresolved actions only. Confirmed and held actions remain available by switching the status filter to `已确认`, `暂缓`, or `全部状态`.
 - Impact filters are intentionally operator-friendly: `highSpend` means spend is at least `max(3000, targetCps * 4)`, `overTarget` means actual CPS is above target CPS, `hasOrders` means rows with orders, and `noOrders` means rows without orders.
 - Queue sort options are `priority`, `spend`, `orders`, and `gap`; `priority` preserves action priority first and spend second.
@@ -271,6 +274,7 @@ The homepage action queue is now the primary workflow.
 - Keep `观察`, `无流量`, `保持`, `保留`, `继续积累`, `小幅优化`, and `已否定` out of the default queue. These can still appear in expanded diagnostic tables, but showing them by default makes the homepage feel overwhelming.
 - It must show review status, action, object, campaign, ad group, next step, evidence, recommended bid, and optional expert metrics.
 - Default queue columns should be execution-first: `确认`, `动作`, `对象`, `活动`, `广告组`, `下一步`, `证据`, `建议竞价`. Keep `当前 CPS`, `目标 CPS`, `ACOS`, and `原始原因` available as expert/custom columns.
+- Queue rows include `sales`; it is hidden by default as the expert/custom column `销售额`, mainly for growth opportunity exports and future impact scoring.
 - `actionGuidance(row)` translates rule output into operator language. It must return `nextStep`, `evidence`, and `risk`.
 - `nextStep` should tell the operator what to do next in Amazon Ads, not merely restate the mathematical rule.
 - `evidence` should summarize spend, clicks, orders, actual CPS, and target CPS in one compact sentence.
@@ -472,9 +476,10 @@ Before opening a PR or merging:
    - After confirming a row while the status filter is `待确认`, the row leaves the pending list but the confirmed summary count and `导出已确认` remain available.
    - Action card buttons filter the queue through task presets: `放量任务`, `止损/否定`, and `结构修复`; they should not force users into deep tabs.
    - If the selected fixture has no structure queue rows, the structure card button shows `暂无队列` and is disabled.
+   - Execution coach appears above the queue table. With the real Bulk fixture it should recommend `先保护预算`, preset `stop`, and show the stop/loss-control pending count.
    - Action queue filters work for action, risk, impact (`高花费优先`, `CPS 超目标`, `有订单`, `无订单`), and sorting (`按优先级`, `按花费`, `按订单`, `按偏离目标`).
    - `导出当前` respects the active queue filters and current custom column setup.
-   - Action queue default columns include `下一步` and `证据`; expert/custom columns can reveal CPS, ACOS, and original rule reason.
+   - Action queue default columns include `下一步` and `证据`; expert/custom columns can reveal CPS, ACOS, sales, and original rule reason.
    - With the real Bulk fixture, queue rows should contain non-empty `nextStep`, `evidence`, and `risk` fields.
    - Activity health table renders after Bulk import and uses campaign-level target CPS from `campaignTargetCps(row.name)`.
    - KPI order is clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaigns.
