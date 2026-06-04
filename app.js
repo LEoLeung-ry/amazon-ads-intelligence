@@ -316,6 +316,18 @@
       exportTableCsv("productQueueConfirmed", "已确认行动队列.csv");
       return;
     }
+    const presetButton = event.target.closest("[data-queue-action-preset]");
+    if (presetButton) {
+      state.queueFilters.action = presetButton.dataset.queueActionPreset || "all";
+      state.queueFilters.review = "pending";
+      state.queueFilters.sort = "priority";
+      renderAnalysis();
+      requestAnimationFrame(() => {
+        const tableCard = els.actionQueue.querySelector(".queue-table-card");
+        if (tableCard) tableCard.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
+      return;
+    }
     const button = event.target.closest("[data-queue-tab]");
     if (!button) return;
     const tab = button.dataset.queueTab;
@@ -1011,9 +1023,9 @@
         meta: `可放量销售额 ${fmtMoney(sumBy(growthTargets, (item) => item.row.metrics.sales) + sumBy(growthSearch, (item) => item.row.metrics.sales))}`,
         body: "有订单且实际 CPS 低于目标 CPS 的标的，优先小步加价，避免一次性把学习期打乱。",
         proof: `建议 bid = 目标 CPS × 平滑 CVR；当前平均目标 CPS 约 ${fmtMoney(targetCps)}，自然 CVR ${fmtPct(state.naturalCvr)} 参与小样本平滑。`,
-        button: "查看放量",
-        tab: "targets",
-        targetAction: "放量",
+        button: "筛选放量",
+        queueAction: "growth",
+        queueCount: growthTargets.length + growthSearch.length,
       },
       {
         tone: "red",
@@ -1023,10 +1035,9 @@
         meta: `待保护花费 ${fmtMoney(sumBy(stopTargets, (item) => item.row.metrics.spend) + sumBy(stopSearch, (item) => item.row.metrics.spend) + sumBy(negativeConflictSearch, (item) => item.row.metrics.spend))}`,
         body: "无订单且点击或花费达到阈值时先控费；搜索词层面优先否定不相关或低质量流量。",
         proof: "样本不足先观察；达到点击/花费阈值仍无订单，才进入止损或否定，避免误伤归因期。",
-        button: negativeConflictSearch.length ? "查看冲突" : stopSearch.length > stopTargets.length ? "查看否定" : "查看止损",
-        tab: negativeConflictSearch.length || stopSearch.length > stopTargets.length ? "search" : "targets",
-        targetAction: negativeConflictSearch.length || stopSearch.length > stopTargets.length ? "" : "止损",
-        searchAction: negativeConflictSearch.length ? "检查否定" : stopSearch.length > stopTargets.length ? "否定" : "",
+        button: "筛选止损",
+        queueAction: "stop",
+        queueCount: stopTargets.length + stopSearch.length + negativeConflictSearch.length,
       },
       {
         tone: "blue",
@@ -1036,9 +1047,9 @@
         meta: `承接机会 ${structureSearch.length} 个 · 结构风险 ${keywordRisk} 个`,
         body: "搜索词或 ASIN 已经证明能转化时，应拆出来承接，用精准/商品定向做控制位。",
         proof: "课程逻辑不是机械找词，而是把有效流量从探索层转到效率层，再用否定词做流量切分。",
-        button: "查看承接",
-        tab: "search",
-        searchAction: structureSearch.some((item) => item.decision.action === "加精准词") ? "加精准词" : "加商品定向",
+        button: "筛选承接",
+        queueAction: "structure",
+        queueCount: structureSearch.length,
       },
     ];
 
@@ -1232,7 +1243,7 @@
   function filterQueueRows(rows, overrides = {}) {
     const filters = { ...state.queueFilters, ...overrides };
     const filtered = rows.filter((row) => {
-      const actionOk = filters.action === "all" || row.action === filters.action;
+      const actionOk = queueActionMatches(filters.action, row.action);
       const riskOk = filters.risk === "all" || row.risk === filters.risk;
       const reviewOk = filters.review === "all" || row.reviewState === filters.review;
       const impactOk = filters.impact === "all"
@@ -1259,11 +1270,32 @@
     return Math.abs(row.actualCps / row.targetCps - 1);
   }
 
+  function queueActionMatches(filterValue, action) {
+    const groups = {
+      growth: ["放量", "保留/加预算"],
+      stop: ["检查否定", "否定", "止损", "降价"],
+      structure: ["加精准词", "加商品定向"],
+    };
+    if (filterValue === "all") return true;
+    if (groups[filterValue]) return groups[filterValue].includes(action);
+    return action === filterValue;
+  }
+
+  function queueActionLabel(value) {
+    const labels = {
+      all: "全部任务",
+      growth: "放量任务",
+      stop: "止损/否定",
+      structure: "结构修复",
+    };
+    return labels[value] || value;
+  }
+
   function renderQueueFilters(allRows, filteredRows) {
-    const actionOptions = ["all", "检查否定", "否定", "止损", "降价", "放量", "保留/加预算", "加精准词", "加商品定向"];
+    const actionOptions = ["all", "growth", "stop", "structure", "检查否定", "否定", "止损", "降价", "放量", "保留/加预算", "加精准词", "加商品定向"];
     const filters = state.queueFilters;
     return `<div class="queue-filter-bar">
-      ${queueSelect("动作", "action", actionOptions, filters.action, (value) => value === "all" ? "全部动作" : value)}
+      ${queueSelect("任务/动作", "action", actionOptions, filters.action, queueActionLabel)}
       ${queueSelect("风险", "risk", ["all", "高风险", "中风险", "低风险"], filters.risk, (value) => value === "all" ? "全部风险" : value)}
       ${queueSelect("状态", "review", ["pending", "confirmed", "held", "all"], filters.review, (value) => value === "all" ? "全部状态" : reviewLabels[value])}
       ${queueSelect("影响", "impact", ["all", "highSpend", "overTarget", "hasOrders", "noOrders"], filters.impact, queueImpactLabel)}
@@ -1364,7 +1396,7 @@
           <summary>公式和依据</summary>
           <p>${escapeHtml(card.proof)}</p>
         </details>
-        <button type="button" data-queue-tab="${escapeAttr(card.tab)}"${card.targetAction ? ` data-target-action="${escapeAttr(card.targetAction)}"` : ""}${card.searchAction ? ` data-search-action="${escapeAttr(card.searchAction)}"` : ""}>${escapeHtml(card.button)}</button>
+        <button type="button" data-queue-action-preset="${escapeAttr(card.queueAction)}"${card.queueCount ? "" : " disabled"}>${escapeHtml(card.queueCount ? card.button : "暂无队列")}</button>
       </article>
     `;
   }
@@ -1385,7 +1417,7 @@
           clicks: row.metrics.clicks,
           orders: row.metrics.orders,
           actualCps: row.calculated.cpa,
-          targetCps: action.targetCps,
+          targetCps: campaignTargetCps(row.name),
           acos: row.calculated.acos,
           cvr: row.calculated.cvr,
           rpc: row.calculated.rpc,

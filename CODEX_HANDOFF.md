@@ -255,6 +255,9 @@ The homepage action queue is now the primary workflow.
 - `buildProductActionRows()` mixes target rows and search term rows into one product-wide queue.
 - The queue is sorted by action priority first, then spend.
 - `state.queueFilters` controls the lightweight execution filter bar: `action`, `risk`, `review`, `impact`, and `sort`.
+- The action filter accepts both exact actions and task presets. Presets are `growth` (`放量`, `保留/加预算`), `stop` (`检查否定`, `否定`, `止损`, `降价`), and `structure` (`加精准词`, `加商品定向`).
+- The three action cards should filter the all-product queue through these presets instead of jumping into deep target/search tabs. This keeps new users in the primary execution workflow.
+- If a card has no queue rows for its preset, disable the card button and show `暂无队列`; do not let users click into an empty-looking path.
 - The default queue filter is `review: "pending"` so the user starts from unresolved actions only. Confirmed and held actions remain available by switching the status filter to `已确认`, `暂缓`, or `全部状态`.
 - Impact filters are intentionally operator-friendly: `highSpend` means spend is at least `max(3000, targetCps * 4)`, `overTarget` means actual CPS is above target CPS, `hasOrders` means rows with orders, and `noOrders` means rows without orders.
 - Queue sort options are `priority`, `spend`, `orders`, and `gap`; `priority` preserves action priority first and spend second.
@@ -273,6 +276,12 @@ The homepage action queue is now the primary workflow.
 - It uses the same column preference system as other tables and exports through `exportTableCsv("productQueue", ...)`.
 - Keep this product-wide queue as the default path so the user does not have to jump through hundreds of campaigns manually.
 - The deeper tabs (`总览`, `标的诊断`, `搜索词`, `分时联动`, `广告位`, `规则库`) are collapsed by default after import and are revealed through the action queue button. This avoids repeating the queue and prevents a dense report wall from appearing before the user asks for details.
+
+### Campaign health table
+
+- `renderCampaignTable()` must use `campaignTargetCps(row.name)` for the campaign `目标 CPS` column.
+- Do not reference target/search `decision` objects in the campaign table; campaign rows need the product default CPS or per-campaign override CPS.
+- This table is inside the collapsed detail area, but it still must be safe after Bulk import because `renderAnalysis()` renders it even when details are hidden.
 
 ### Keyword coverage checker
 
@@ -455,10 +464,13 @@ Before opening a PR or merging:
    - `导出已确认` is disabled until at least one action is confirmed, then exports only confirmed rows with the current column setup.
    - Action queue starts with the `待确认` status filter, and switching to `全部状态`, `已确认`, or `暂缓` updates rows and summary counts.
    - After confirming a row while the status filter is `待确认`, the row leaves the pending list but the confirmed summary count and `导出已确认` remain available.
+   - Action card buttons filter the queue through task presets: `放量任务`, `止损/否定`, and `结构修复`; they should not force users into deep tabs.
+   - If the selected fixture has no structure queue rows, the structure card button shows `暂无队列` and is disabled.
    - Action queue filters work for action, risk, impact (`高花费优先`, `CPS 超目标`, `有订单`, `无订单`), and sorting (`按优先级`, `按花费`, `按订单`, `按偏离目标`).
    - `导出当前` respects the active queue filters and current custom column setup.
    - Action queue default columns include `下一步` and `证据`; expert/custom columns can reveal CPS, ACOS, and original rule reason.
    - With the real Bulk fixture, queue rows should contain non-empty `nextStep`, `evidence`, and `risk` fields.
+   - Activity health table renders after Bulk import and uses campaign-level target CPS from `campaignTargetCps(row.name)`.
    - KPI order is clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaigns.
    - All-product action queue renders and exports CSV using current columns.
    - The all-product action queue excludes observation/keep/no-flow/already-negated rows by default.

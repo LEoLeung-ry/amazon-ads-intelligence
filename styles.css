@@ -1154,6 +1154,13 @@ body[data-bulk-ready="false"] .campaign-panel {
   color: var(--teal);
 }
 
+.action-card button:disabled {
+  cursor: not-allowed;
+  border-color: var(--line);
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
 .queue-table-card {
   margin-top: 14px;
 }
