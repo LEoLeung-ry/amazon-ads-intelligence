@@ -18,8 +18,8 @@
     hourlyLoaded: false,
     mentorLoaded: false,
     detailsExpanded: false,
-    defaultTargetCps: 400,
-    naturalCvr: 0.1,
+    defaultTargetCps: 670,
+    naturalCvr: 0.05,
     campaignTargetCpsOverrides: {},
     targetAcos: 0.3,
     optimizationMode: "steadyGrowth",
@@ -226,32 +226,10 @@
   }
 
   function loadGoalPrefs() {
-    try {
-      const prefs = JSON.parse(localStorage.getItem("amazonAds.goalPrefs.v1") || "{}") || {};
-      if (Number.isFinite(Number(prefs.defaultTargetCps)) && Number(prefs.defaultTargetCps) > 0) {
-        state.defaultTargetCps = Number(prefs.defaultTargetCps);
-      }
-      if (Number.isFinite(Number(prefs.naturalCvr))) {
-        state.naturalCvr = clamp(Number(prefs.naturalCvr), 0, 1);
-      }
-      if (prefs.campaignTargetCpsOverrides && typeof prefs.campaignTargetCpsOverrides === "object") {
-        state.campaignTargetCpsOverrides = Object.fromEntries(
-          Object.entries(prefs.campaignTargetCpsOverrides)
-            .map(([campaign, value]) => [campaign, Number(value)])
-            .filter(([, value]) => Number.isFinite(value) && value > 0),
-        );
-      }
-    } catch (error) {
-      state.campaignTargetCpsOverrides = {};
-    }
+    state.campaignTargetCpsOverrides = {};
   }
 
   function saveGoalPrefs() {
-    localStorage.setItem("amazonAds.goalPrefs.v1", JSON.stringify({
-      defaultTargetCps: state.defaultTargetCps,
-      naturalCvr: state.naturalCvr,
-      campaignTargetCpsOverrides: state.campaignTargetCpsOverrides,
-    }));
   }
 
   function syncGoalInputs() {
