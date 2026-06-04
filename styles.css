@@ -1294,10 +1294,10 @@ thead th {
 
 th,
 td {
-  padding: 10px 11px;
+  padding: 7px 10px;
   border-bottom: 1px solid #edf2f7;
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
   white-space: nowrap;
 }
 
@@ -1305,39 +1305,43 @@ td {
 #targetTable td,
 #searchTable th,
 #searchTable td {
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding-top: 7px;
+  padding-bottom: 7px;
 }
 
 td.text-cell,
 th.text-cell {
-  min-width: 210px;
-  max-width: 360px;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  min-width: 180px;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 td.full-cell,
 th.full-cell {
-  min-width: 420px;
-  max-width: 760px;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  min-width: 360px;
+  max-width: 620px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 td.clip-cell,
 th.clip-cell {
-  min-width: 240px;
-  max-width: 320px;
+  min-width: 190px;
+  max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 td.small-text {
-  max-width: 260px;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  min-width: 160px;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: #475569;
 }
 
@@ -1367,8 +1371,8 @@ tbody tr:hover {
 .tag {
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
-  padding: 0 8px;
+  min-height: 20px;
+  padding: 0 7px;
   border-radius: 999px;
   background: #eef2f7;
   color: #334155;
