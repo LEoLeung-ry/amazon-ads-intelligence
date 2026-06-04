@@ -28,6 +28,12 @@ Tracked files should stay small and deployment-safe:
 - `.nojekyll`: prevents GitHub Pages/Jekyll interference with static assets.
 - `.gitignore`: blocks real ad data and local verification artifacts.
 
+Deployment cache rule:
+
+- When changing `app.js`, `styles.css`, `keyword-checker.js`, or `keyword-checker.css`, also bump the query version in `index.html`.
+- GitHub Pages may serve old cached assets for unchanged query strings even after the repository has the new file content.
+- After push, verify the production URL with the new query string and confirm the changed asset contains a unique new marker.
+
 Do not commit:
 
 - Real Amazon ad reports: `*.csv`, `*.xlsx`, `*.xls`.
