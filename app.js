@@ -300,6 +300,19 @@
       renderAnalysis();
       return;
     }
+    const bulkReviewButton = event.target.closest("[data-review-current]");
+    if (bulkReviewButton) {
+      const status = bulkReviewButton.dataset.reviewCurrent;
+      if (!reviewLabels[status]) return;
+      const rows = state.tableExports.productQueue?.rows || [];
+      rows.forEach((row) => {
+        if (!row.reviewKey) return;
+        if (status === "pending") delete state.actionReviews[row.reviewKey];
+        else state.actionReviews[row.reviewKey] = status;
+      });
+      renderAnalysis();
+      return;
+    }
     const detailsButton = event.target.closest("[data-toggle-details]");
     if (detailsButton) {
       state.detailsExpanded = !state.detailsExpanded;
@@ -1014,6 +1027,7 @@
     state.lastReviewCounts = countReviewStatuses(scopedQueueRows);
     const confirmedRows = filterQueueRows(queueRows, { review: "confirmed" });
     const executionCoach = buildExecutionCoach(scopedQueueRows, confirmedRows);
+    const canBatchConfirm = filteredQueueRows.length && isQueueNarrowedForBatch();
 
     const cards = [
       {
@@ -1076,6 +1090,7 @@
             <span>先确认要执行的动作，再导出给后台调整</span>
           </div>
           <div class="queue-export-actions">
+            <button class="secondary-btn" type="button" data-review-current="confirmed"${canBatchConfirm ? "" : " disabled title=\"先筛选任务、风险或影响后再批量确认\""}>确认当前 (${filteredQueueRows.length})</button>
             <button class="secondary-btn" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>导出已确认 (${confirmedRows.length})</button>
             <button class="export-btn" type="button" data-export-queue>导出当前 (${filteredQueueRows.length})</button>
           </div>
@@ -1294,6 +1309,10 @@
       structure: "结构修复",
     };
     return labels[value] || value;
+  }
+
+  function isQueueNarrowedForBatch() {
+    return state.queueFilters.action !== "all" || state.queueFilters.risk !== "all" || state.queueFilters.impact !== "all";
   }
 
   function buildExecutionCoach(scopedRows, confirmedRows) {
