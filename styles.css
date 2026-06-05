@@ -3646,6 +3646,12 @@ tbody tr:hover {
     display: none;
   }
 
+  .queue-export-actions .queue-confirmed-export,
+  .execution-package .package-export-btn,
+  .export-receipt .receipt-export-btn {
+    display: none;
+  }
+
   .execution-coach {
     display: grid;
   }

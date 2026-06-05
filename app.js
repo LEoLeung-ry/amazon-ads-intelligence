@@ -1583,7 +1583,7 @@
           <div class="queue-export-actions">
             <button class="${confirmCurrentClass}" type="button" data-review-current="confirmed"${canBatchConfirm ? "" : " disabled title=\"先筛选任务、风险或影响后再批量确认\""}>${confirmCurrentLabel} (${batchConfirmRows.length})</button>
             <button class="secondary-btn" type="button" data-review-current="pending"${canBatchReset ? "" : " disabled title=\"先筛选任务、风险或影响后再撤回确认\""}>撤回已确认 (${batchResetRows.length})</button>
-            <button class="${confirmedExportClass}" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>${confirmedExportLabel} (${confirmedRows.length})</button>
+            <button class="${confirmedExportClass} queue-confirmed-export" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>${confirmedExportLabel} (${confirmedRows.length})</button>
             <button class="${currentExportClass}" type="button" data-export-queue title="仅导出当前筛选快照，不等于已确认执行包"${filteredQueueRows.length ? "" : " disabled"}>${exportCurrentLabel} (${filteredQueueRows.length})</button>
           </div>
         </div>
@@ -1861,7 +1861,7 @@
         <span><b>${fmtInt(growthCount)}</b> 放量</span>
         <span><b>${fmtInt(structureCount)}</b> 承接</span>
         <span><b>${fmtMoney(spend)}</b> 涉及花费</span>
-        <button class="export-btn" type="button" data-export-confirmed>${exported ? "重新导出已确认" : "导出已确认"} (${fmtInt(rows.length)})</button>
+        <button class="export-btn package-export-btn" type="button" data-export-confirmed>${exported ? "重新导出已确认" : "导出已确认"} (${fmtInt(rows.length)})</button>
       </div>
     </div>`;
   }
@@ -1875,7 +1875,7 @@
       ? "CSV 已按当前列设置生成。进入 Amazon 后台时，先按执行顺序处理，再用后台定位和后台动作逐项调整。"
       : "这是当前筛选视图的完整快照，适合复盘或交给同事复核；真正执行前建议先确认动作，再导出已确认。";
     const action = confirmed
-      ? '<button class="export-btn" type="button" data-export-confirmed>重新导出已确认</button>'
+      ? '<button class="export-btn receipt-export-btn" type="button" data-export-confirmed>重新导出已确认</button>'
       : '<button class="secondary-btn" type="button" data-scroll-action-queue>继续确认动作</button>';
     return `<div class="export-receipt ${confirmed ? "confirmed" : "current"}">
       <div>
