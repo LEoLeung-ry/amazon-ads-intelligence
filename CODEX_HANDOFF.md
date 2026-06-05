@@ -21,6 +21,7 @@ This push preserves the current production app code and refreshes this handoff s
 
 Latest implementation note for this release:
 
+- Confirmed export receipts now include `export-next-steps`: backend execution order, execution-status note taking, and a 2-3 day Bulk reimport review loop. This is intentionally shown after CSV export so the operator understands how the downloaded file turns into Amazon Ads backend changes.
 - Import errors are intentionally louder than the compact imported sidebar. `renderFileStack()` now prints `file.note` for failed files, and mobile compact rules exclude `.import-assist.warn` so a wrong CSV/XLSX still shows the reason, the three checks, and recovery buttons even after Bulk is already loaded.
 - Imported analysis is now decision-first in DOM and visual order: `actionQueue` sits before `focusBand`, so the operator sees the all-product execution queue before KPI/background context. Preserve this ordering unless a future design provides an even stronger first action surface.
 - On narrow screens after Bulk import, the sidebar switches to a compact imported state: upload buttons stay available in one row, the import assist card keeps only the receipt plus primary queue jump, goal inputs remain editable, and repeated helper text is hidden. This keeps mobile from spending the whole first screen on setup after data is already loaded.

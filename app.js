@@ -1781,6 +1781,7 @@
         <span class="eyebrow">Export receipt</span>
         <h4>${escapeHtml(title)}</h4>
         <p>${escapeHtml(body)}</p>
+        ${renderExportNextSteps(confirmed)}
       </div>
       <div class="export-receipt-side">
         <span><b>${fmtInt(last.rows || 0)}</b> 行</span>
@@ -1788,6 +1789,21 @@
         <small>${escapeHtml(last.filename || "CSV")}</small>
         ${action}
       </div>
+    </div>`;
+  }
+
+  function renderExportNextSteps(confirmed) {
+    const steps = confirmed
+      ? [
+          ["后台执行", "按 CSV 执行顺序处理；先止损/否定，再竞价和承接。"],
+          ["留下痕迹", "处理完在 CSV 旁标注已执行、跳过或需要二次复核。"],
+          ["下轮复盘", "2-3 天后重新导入 Bulk，对照 CPS、订单和花费变化。"],
+        ]
+      : [
+          ["当前快照", "这份 CSV 适合复核；真正调整前先确认动作再导出执行包。"],
+        ];
+    return `<div class="export-next-steps">
+      ${steps.map(([label, text]) => `<span><b>${escapeHtml(label)}</b>${escapeHtml(text)}</span>`).join("")}
     </div>`;
   }
 

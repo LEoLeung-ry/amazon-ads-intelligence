@@ -2070,6 +2070,41 @@ body[data-bulk-ready="false"] .campaign-panel {
   line-height: 1.45;
 }
 
+.export-next-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+  max-width: 780px;
+}
+
+.export-next-steps span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 7px 8px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.export-receipt.current .export-next-steps {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 560px;
+}
+
+.export-receipt.current .export-next-steps span {
+  border-color: rgba(37, 99, 235, 0.16);
+}
+
+.export-next-steps b {
+  color: #0f766e;
+  font-size: 11px;
+}
+
 .export-receipt > div:first-child {
   min-width: 0;
 }
@@ -3496,6 +3531,10 @@ tbody tr:hover {
 
   .export-receipt {
     display: grid;
+  }
+
+  .export-next-steps {
+    grid-template-columns: 1fr;
   }
 
   .export-receipt-side {
