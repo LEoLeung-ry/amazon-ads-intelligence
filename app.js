@@ -2557,7 +2557,8 @@
     const pending = state.lastReviewCounts.pending || 0;
     const held = state.lastReviewCounts.held || 0;
     const activeExport = activeQueueExport();
-    const exportedRows = activeExport ? activeExport.rows : 0;
+    const confirmedExport = activeExport?.key === "productQueueConfirmed" ? activeExport : null;
+    const snapshotExport = activeExport?.key === "productQueue" ? activeExport : null;
     let tone = "upload";
     let step = "第 1 步";
     let title = "先上传 Bulk 工作簿";
@@ -2568,16 +2569,32 @@
       <button class="secondary-btn" type="button" data-workflow-demo>体验示例</button>
     `;
 
-    if (ready && exportedRows) {
+    if (ready && confirmedExport) {
       tone = "done";
       step = "第 5 步";
-      title = `已导出 ${fmtInt(exportedRows)} 行执行数据`;
+      title = `已导出 ${fmtInt(confirmedExport.rows || 0)} 行执行数据`;
       body = "这一轮已经形成可执行文件。进入 Amazon 后台前，再按执行顺序复核高风险否定和大额调价项。";
-      meta = `${activeExport.filename || "CSV"} · ${fmtInt(activeExport.columns || 0)} 列`;
+      meta = `${confirmedExport.filename || "CSV"} · ${fmtInt(confirmedExport.columns || 0)} 列`;
       actions = `
         <button class="secondary-btn" type="button" data-scroll-action-queue>回到队列</button>
         <button class="export-btn" type="button" data-workflow-export-confirmed>重新导出已确认</button>
       `;
+    } else if (ready && snapshotExport) {
+      tone = confirmed ? "export" : "queue";
+      step = confirmed ? "第 4 步" : "第 3 步";
+      title = "已导出当前视图快照，执行前还要确认动作";
+      body = confirmed
+        ? `刚导出的是复核快照，不是后台执行包。已有 ${fmtInt(confirmed)} 个动作确认，可以继续导出已确认 CSV。`
+        : `这份 CSV 适合复核或转交同事，不等于后台执行包。还有 ${fmtInt(pending)} 个待确认，先确认动作再导出已确认。`;
+      meta = `${snapshotExport.filename || "CSV"} · ${fmtInt(snapshotExport.rows || 0)} 行快照`;
+      actions = confirmed
+        ? `
+          <button class="secondary-btn" type="button" data-scroll-action-queue>继续确认</button>
+          <button class="export-btn" type="button" data-workflow-export-confirmed>导出已确认</button>
+        `
+        : `
+          <button class="export-btn" type="button" data-scroll-action-queue>回到本轮确认</button>
+        `;
     } else if (ready && confirmed) {
       tone = "export";
       step = "第 4 步";
