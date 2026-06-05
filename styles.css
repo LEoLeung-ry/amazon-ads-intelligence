@@ -3458,7 +3458,7 @@ tbody tr:hover {
 
   body[data-bulk-ready="true"] .drop-actions {
     grid-column: 1;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   body[data-bulk-ready="true"] .drop-card .secondary-btn {
@@ -3466,6 +3466,10 @@ tbody tr:hover {
     height: 32px;
     padding: 0 7px;
     font-size: 12px;
+  }
+
+  body[data-bulk-ready="true"] .drop-card .secondary-btn:not(#browseBtn) {
+    display: none;
   }
 
   body[data-bulk-ready="true"] .import-assist:not(.warn) {
@@ -3552,6 +3556,15 @@ tbody tr:hover {
     display: grid;
   }
 
+  body[data-bulk-ready="true"] .topbar {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  body[data-bulk-ready="true"] .topbar p {
+    display: none;
+  }
+
   .status-pills {
     justify-content: flex-start;
     min-width: 0;
@@ -3561,9 +3574,34 @@ tbody tr:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  body[data-bulk-ready="true"] .workflow-strip {
+    grid-template-columns: 1fr;
+    margin: -2px 0 8px;
+  }
+
+  body[data-bulk-ready="true"] .workflow-step.idle,
+  body[data-bulk-ready="true"] .workflow-step.done:not(:last-child) {
+    display: none;
+  }
+
+  body[data-bulk-ready="true"] .workflow-step {
+    padding: 8px 10px;
+  }
+
   .workflow-compass {
     grid-template-columns: 1fr;
     align-items: start;
+  }
+
+  body[data-bulk-ready="true"] .workflow-compass {
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+  }
+
+  body[data-bulk-ready="true"] .workflow-compass-copy p,
+  body[data-bulk-ready="true"] .workflow-compass-side small {
+    display: none;
   }
 
   .workflow-compass-side {
@@ -3679,6 +3717,11 @@ tbody tr:hover {
 
   body[data-bulk-ready="false"] .goal-fields input {
     height: 34px;
+  }
+
+  body[data-bulk-ready="true"] .sidebar .goal-metrics,
+  body[data-bulk-ready="true"] .sidebar .goal-helper {
+    display: none;
   }
 
   .goal-change-notice {

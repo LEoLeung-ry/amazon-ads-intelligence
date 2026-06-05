@@ -1065,6 +1065,10 @@
 
   function renderStatus() {
     document.body.dataset.bulkReady = state.bulkLoaded ? "true" : "false";
+    if (els.browseBtn) {
+      els.browseBtn.textContent = state.bulkLoaded ? "补充文件" : "选择文件";
+      els.browseBtn.title = state.bulkLoaded ? "补充每小时 CSV 或重新选择 Bulk" : "选择 Bulk 工作簿";
+    }
     const pills = [
       { text: state.bulkLoaded ? "Bulk 已加载" : "Bulk 待导入", cls: state.bulkLoaded ? "ok" : "warn" },
       { text: state.hourlyLoaded ? "小时报告已联动" : "小时报告待导入", cls: state.hourlyLoaded ? "ok" : "warn" },
