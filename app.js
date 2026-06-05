@@ -1337,6 +1337,7 @@
         </div>
       </div>
       ${renderExecutionCoach(executionCoach)}
+      ${renderGoalCheckpoint(calculated, campaigns)}
       ${renderTodayFocus(todayFocusRows, queueRows)}
       <div class="task-rail" aria-label="行动任务筛选">
         ${cards.map((card) => actionTaskChip(card)).join("")}
@@ -1495,6 +1496,27 @@
         ${active
           ? '<button class="secondary-btn" type="button" data-queue-impact="all">查看全部动作</button>'
           : `<button class="export-btn" type="button" data-queue-impact="todayFocus"${rows.length ? "" : " disabled"}>查看今日优先</button>`}
+      </div>
+    </div>`;
+  }
+
+  function renderGoalCheckpoint(calculated, campaigns = []) {
+    const targetCps = averageTargetCps(campaigns);
+    const actualCps = calculated.cpa;
+    const derivedAcos = calculated.aov ? targetCps / calculated.aov : 0;
+    const overrideCount = campaigns.filter((row) => Number.isFinite(state.campaignTargetCpsOverrides[row.name])).length;
+    const gap = actualCps && targetCps ? actualCps / targetCps - 1 : 0;
+    const tone = !actualCps ? "" : gap <= 0 ? "good" : gap <= 0.2 ? "warn" : "bad";
+    return `<div class="goal-checkpoint ${tone}">
+      <div>
+        <span class="eyebrow">Goal checkpoint</span>
+        <h4>本轮建议按目标 CPS ${fmtMoney(targetCps)} 计算</h4>
+      </div>
+      <div class="goal-checkpoint-metrics">
+        <span><b>${fmtPct(state.naturalCvr)}</b> 自然 CVR</span>
+        <span><b>${derivedAcos ? fmtPct(derivedAcos) : "待计算"}</b> 推导 ACOS</span>
+        <span><b>${actualCps ? fmtMoney(actualCps) : "无订单"}</b> 实际 CPS</span>
+        <span><b>${fmtInt(overrideCount)}</b> 活动覆盖</span>
       </div>
     </div>`;
   }

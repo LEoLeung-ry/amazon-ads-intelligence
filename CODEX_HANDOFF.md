@@ -278,6 +278,7 @@ The homepage action queue is now the primary workflow.
 - `buildExecutionCoach(scopedRows, confirmedRows)` creates the lightweight `Next action` strip above the task rail. It compresses thousands of rows into one recommended next step before the user sees category counts.
 - The execution coach priority is: stop/loss-control first, then growth, then structure. This reflects the operator workflow: protect waste before scaling, then repair structure.
 - The coach uses the current task/risk/impact filter scope but ignores the selected review-status filter for its summary, matching the pending/confirmed summary behavior.
+- `renderGoalCheckpoint(calculated, campaigns)` sits directly under the execution coach. It repeats the calculation assumptions driving the queue: average target CPS, natural CVR, derived ACOS, actual CPS, and campaign CPS override count. Keep it compact; it is a confidence check, not a second goal editor.
 - The default queue filter is `review: "pending"` so the user starts from unresolved actions only. Confirmed and held actions remain available by switching the status filter to `已确认`, `暂缓`, or `全部状态`.
 - Impact filters are intentionally operator-friendly: `todayFocus` means rows inside `state.todayFocusKeys`, `highSpend` means spend is at least `max(3000, targetCps * 4)`, `overTarget` means actual CPS is above target CPS, `hasOrders` means rows with orders, and `noOrders` means rows without orders.
 - Queue sort options are `priority`, `spend`, `orders`, and `gap`; `priority` preserves action priority first and spend second.
@@ -509,6 +510,7 @@ Before opening a PR or merging:
    - Workflow strip updates from `先上传 Bulk` to campaign/search-term counts after import.
    - Upload guidance shows the default upload order before import, a clear warning for unsupported/incorrect files, and a success hint after Bulk is recognized.
    - Metric guide explains CPS, CVR, RPC, and ACOS after import without expanding the page into a tutorial.
+   - Goal checkpoint appears above the action queue after import and reflects default target CPS, natural CVR, derived ACOS, actual CPS, and campaign override count.
    - Action queue rows can be marked `已确认` or `暂缓`; the review summary updates immediately.
    - `确认待处理` is disabled on the default all-action queue. After filtering to `止损/否定`, it bulk-confirms only pending rows in that filtered set.
    - If one filtered row is already `暂缓`, `确认待处理` preserves it and confirms only the remaining pending rows.

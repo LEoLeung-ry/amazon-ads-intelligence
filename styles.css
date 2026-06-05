@@ -1349,6 +1349,63 @@ body[data-bulk-ready="false"] .campaign-panel {
   color: var(--teal);
 }
 
+.goal-checkpoint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--blue);
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.goal-checkpoint.good {
+  border-left-color: var(--green);
+}
+
+.goal-checkpoint.warn {
+  border-left-color: var(--amber);
+}
+
+.goal-checkpoint.bad {
+  border-left-color: var(--red);
+}
+
+.goal-checkpoint h4 {
+  margin: 2px 0 0;
+  color: #10212b;
+  font-size: 14px;
+}
+
+.goal-checkpoint-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 360px;
+}
+
+.goal-checkpoint-metrics span {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.goal-checkpoint-metrics b {
+  color: #10212b;
+}
+
 .today-focus {
   display: flex;
   align-items: center;
@@ -2422,6 +2479,15 @@ tbody tr:hover {
 
   .execution-coach-side {
     justify-items: start;
+    min-width: 0;
+  }
+
+  .goal-checkpoint {
+    display: grid;
+  }
+
+  .goal-checkpoint-metrics {
+    justify-content: flex-start;
     min-width: 0;
   }
 
