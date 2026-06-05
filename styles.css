@@ -1730,6 +1730,123 @@ body[data-bulk-ready="false"] .campaign-panel {
   background: #fffbeb;
 }
 
+.lead-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.45fr);
+  gap: 14px;
+  margin: 10px 14px 0;
+  padding: 13px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-left: 4px solid var(--teal);
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(248, 250, 252, 0.96), #fff 44%);
+}
+
+.lead-action.high {
+  border-left-color: var(--red);
+}
+
+.lead-action.mid {
+  border-left-color: var(--amber);
+}
+
+.lead-action.low {
+  border-left-color: var(--green);
+}
+
+.lead-action.empty {
+  display: block;
+  border-left-color: #94a3b8;
+  background: #fbfdff;
+}
+
+.lead-action-main,
+.lead-action-side {
+  min-width: 0;
+}
+
+.lead-action-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.lead-rank {
+  min-width: 34px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.lead-risk {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.lead-action h4,
+.lead-action p {
+  margin: 0;
+}
+
+.lead-action h4 {
+  margin-top: 8px;
+  color: #10212b;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.lead-action p {
+  margin-top: 6px;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.lead-action small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.lead-action-side {
+  display: grid;
+  gap: 8px;
+}
+
+.lead-action-side > div:not(.review-control) {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.lead-action-side span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.lead-action-side b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #10212b;
+  font-size: 13px;
+}
+
+.lead-bid b {
+  color: #0f766e;
+}
+
 .queue-filter-bar {
   display: grid;
   grid-template-columns: repeat(5, minmax(118px, 150px)) minmax(84px, 1fr);
@@ -2636,6 +2753,10 @@ tbody tr:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .lead-action {
+    grid-template-columns: 1fr;
+  }
+
   .mobile-action-cards {
     display: grid;
     gap: 8px;
@@ -2698,6 +2819,18 @@ tbody tr:hover {
   .execution-summary,
   .queue-filter-bar {
     grid-template-columns: 1fr;
+  }
+
+  .lead-action {
+    margin-inline: 10px;
+  }
+
+  .lead-action-side .review-control {
+    width: 100%;
+  }
+
+  .lead-action-side .review-control button {
+    min-height: 32px;
   }
 
   .topbar h2 {

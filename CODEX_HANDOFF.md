@@ -288,6 +288,7 @@ The homepage action queue is now the primary workflow.
 - Default queue columns should be execution-first: `执行顺序`, `确认`, `动作`, `后台动作`, `对象`, `活动`, `广告组`, `下一步`, `证据`, `建议竞价`. Keep `当前 CPS`, `目标 CPS`, `ACOS`, and `原始原因` available as expert/custom columns.
 - `withExecutionOrder(rows)` annotates the current filtered/sorted queue scope with `executionOrder: index + 1`. Recompute this after filtering and sorting so on-screen order, mobile cards, `导出当前`, and `导出已确认` all agree.
 - Queue rows include `sales`; it is hidden by default as the expert/custom column `销售额`, mainly for growth opportunity exports and future impact scoring.
+- `renderLeadAction(filteredQueueRows)` appears above queue filters and the table. It translates the current filtered row #1 into one operator-facing action card with execution action, next step, evidence, object, campaign/ad group, recommended bid, and the same review controls as the row. This is meant to reduce table-reading burden; keep it synced with current filters and execution order.
 - `actionGuidance(row)` translates rule output into operator language. It must return `nextStep`, `evidence`, and `risk`.
 - `nextStep` should tell the operator what to do next in Amazon Ads, not merely restate the mathematical rule.
 - `executionAction` should stay short and operational for exports, e.g. `调高竞价到 ¥X`, `加入否定候选`, `拆出精准词`, or `复核否定冲突`.
@@ -516,6 +517,7 @@ Before opening a PR or merging:
    - Metric guide explains CPS, CVR, RPC, and ACOS after import without expanding the page into a tutorial.
    - The judgment/support `briefGrid` is hidden on the first imported view and appears only after clicking `展开解释和详细分析`; the action queue should move higher than the old report-heavy layout.
    - Goal checkpoint appears above the action queue after import and reflects default target CPS, natural CVR, derived ACOS, actual CPS, and campaign override count.
+   - Lead action preview appears above queue filters, mirrors the first currently filtered queue row, and its review buttons update the same row state as the table.
    - Action queue rows can be marked `已确认` or `暂缓`; the review summary updates immediately.
    - `确认待处理` is disabled on the default all-action queue. After filtering to `止损/否定`, it bulk-confirms only pending rows in that filtered set.
    - If one filtered row is already `暂缓`, `确认待处理` preserves it and confirms only the remaining pending rows.

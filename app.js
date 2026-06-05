@@ -1380,6 +1380,7 @@
           ${reviewSummaryItem("暂缓", state.lastReviewCounts.held, "held")}
         </div>
         ${renderExecutionPackage(confirmedRows)}
+        ${renderLeadAction(filteredQueueRows)}
         ${renderQueueFilters(queueRows, filteredQueueRows)}
         ${renderMobileActionCards(filteredQueueRows)}
         <div class="table-wrap"><table id="productActionTable"></table></div>
@@ -1839,6 +1840,44 @@
       <div class="execution-coach-side">
         <span>${escapeHtml(coach.meta)}</span>
         ${button}
+      </div>
+    </div>`;
+  }
+
+  function renderLeadAction(rows) {
+    const row = rows[0];
+    if (!row) {
+      return `<div class="lead-action empty">
+        <span class="eyebrow">Lead action</span>
+        <h4>当前筛选下没有待处理动作</h4>
+        <p>切换任务、风险、状态或影响筛选后，这里会展示当前范围的第一条执行建议。</p>
+      </div>`;
+    }
+    return `<div class="lead-action ${escapeAttr((row.risk || "").includes("高") ? "high" : (row.risk || "").includes("中") ? "mid" : "low")}">
+      <div class="lead-action-main">
+        <div class="lead-action-top">
+          <span class="lead-rank">#${fmtInt(row.executionOrder || 1)}</span>
+          ${tag(row.action)}
+          <span class="lead-risk">${escapeHtml(row.risk || "待判断")}</span>
+        </div>
+        <h4>${escapeHtml(row.executionAction || "人工复核")}</h4>
+        <p>${escapeHtml(row.nextStep || row.reason || "先复核数据，再决定是否执行。")}</p>
+        <small>${escapeHtml(row.evidence || "")}</small>
+      </div>
+      <div class="lead-action-side">
+        <div>
+          <span>对象</span>
+          <b title="${escapeAttr(row.item)}">${escapeHtml(shorten(row.item, 40))}</b>
+        </div>
+        <div>
+          <span>活动 / 广告组</span>
+          <b title="${escapeAttr(`${row.campaign} / ${row.adGroup}`)}">${escapeHtml(shorten(row.campaign, 26))} / ${escapeHtml(shorten(row.adGroup, 22))}</b>
+        </div>
+        <div class="lead-bid">
+          <span>建议竞价</span>
+          <b>${row.recBid ? fmtMoney(row.recBid) : "不加价"}</b>
+        </div>
+        ${reviewControl(row)}
       </div>
     </div>`;
   }
