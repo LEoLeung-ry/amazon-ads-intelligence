@@ -373,7 +373,7 @@
         reason: "已进入精准控制位；如果需要拓量，再补词组/广泛并设置更低探索竞价。",
       };
     }
-    return { action: "观察", score: clampScore(score), reason: "结构暂未触发强动作，继续结合点击、订单和 ACOS 判断。" };
+    return { action: "观察", score: clampScore(score), reason: "结构暂未触发强动作，继续结合点击、订单和结构参考 ACOS 判断。" };
   }
 
   function buildAdGroupSummaries() {
@@ -478,15 +478,15 @@
       .map(([label, value, foot]) => `<article class="kpi-card"><div class="kpi-label">${escapeHtml(label)}</div><div class="kpi-value">${escapeHtml(value)}</div><div class="kpi-foot">${escapeHtml(foot)}</div></article>`)
       .join("");
     els.keywordMathBrief.textContent = state.loaded
-      ? `本模块采用课程里可验证的思想：把广告看作 Max(订单) 且受预算、库存、目标 CPS 与参考 ACOS 约束的优化问题；关键词结构用精准承接效率，用广泛/词组探索流量。`
-      : "等待 Bulk 文件。这里会按“最大化订单，受预算、库存、目标 CPS 与参考 ACOS 约束”的思路检查投放结构。";
+      ? `本模块仍把目标 CPS 作为主控；结构参考 ACOS 只用来辅助判断出单搜索词是否值得承接。关键词结构用精准承接效率，用广泛/词组探索流量。`
+      : "等待 Bulk 文件。这里仍以目标 CPS 为主；结构参考 ACOS 只用来判断出单搜索词是否值得承接。";
     const riskCount = sumKeys(actionCounts, ["缺精准", "竞价倒挂", "重复分散", "正负冲突", "搜索出单未承接"]);
     els.keywordRiskBadge.textContent = state.loaded ? `${riskCount} 个风险` : "未加载";
     els.keywordRiskBadge.className = riskCount ? "badge-warn" : state.loaded ? "badge-good" : "";
     els.keywordRiskBrief.textContent = state.loaded
       ? `当前优先处理：缺精准 ${actionCounts["缺精准"] || 0}，竞价倒挂 ${actionCounts["竞价倒挂"] || 0}，重复分散 ${actionCounts["重复分散"] || 0}，搜索出单未承接 ${actionCounts["搜索出单未承接"] || 0}。`
       : "重点找缺精准、竞价倒挂、重复分散、正负冲突和出单搜索词未承接。";
-    els.keywordCourseBrief.textContent = "判断结果只吸收课程中可落地、可验证的部分：漏斗指标、CPS/ACOS 约束、精准/探索/否定分工；不把无法验证的经验句子当成硬规则。";
+    els.keywordCourseBrief.textContent = "判断结果只吸收课程中可落地、可验证的部分：CPS 主控、ACOS 复核、精准/探索/否定分工；不把无法验证的经验句子当成硬规则。";
     renderKeywordInsights(actionCounts);
   }
 

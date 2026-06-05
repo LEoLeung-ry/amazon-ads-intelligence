@@ -2714,6 +2714,12 @@ body[data-bulk-ready="false"] .campaign-panel {
   font-size: 12px;
 }
 
+.tool-hint {
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
 .tool-field input,
 .tool-field select {
   height: 34px;

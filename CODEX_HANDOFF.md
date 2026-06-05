@@ -24,6 +24,7 @@ Latest implementation note for this release:
 - The empty state now relies on the top `workflow-strip` as the only five-step path. Do not duplicate the same five steps inside the hero panel; the hero should stay focused on the Bulk upload CTA, the two analysis entrances, and the required/optional file checklist.
 - The visible first-layer module labels now use Chinese operator language instead of decorative English labels. Keep these labels business-facing: `行动队列`, `下一步`, `本轮重点`, `目标校验`, `执行包`, `导出记录`, `分析范围`, `确认规则`. Do not reintroduce visible labels such as `Action queue`, `Next action`, `Goal checkpoint`, `Today focus`, or `Export receipt` in the main workflow; this app is for Chinese Amazon operators and new staff who need immediate task comprehension.
 - The `投放关键词检查` empty state now uses Chinese operator language (`关键词结构体检`) and includes its own `选择 Bulk 工作簿` and demo buttons wired through the global workflow actions. A new operator who enters this mode first should not need to hunt back through the left sidebar to start.
+- The keyword checker now labels its ACOS input as `结构参考 ACOS` and shows `仅判断承接，不替代 CPS`. Preserve this distinction: product-level CPS remains the primary steering goal; the keyword checker uses ACOS only as a secondary structure/reference line for deciding whether converting search terms deserve positive keyword carryover.
 - After a confirmed execution package is exported, `buildExecutionCoach()`, `renderExecutionPackage()`, `renderReviewGuide()`, and the queue table header now read `activeQueueExport()` and switch from "ready to export" wording to "exported, go execute in Amazon" wording. Review Rule should show `下一步：后台执行`, and the table-head button should read `重新导出已确认` while the export receipt exists. Keep local queue copy aligned with the Step 5 workflow state; the UI should not continue asking for a first export after an export receipt exists.
 - Batch review actions now switch the visible review filter to the new state: `确认本轮` shows the 30 confirmed rows instead of an empty pending view; `撤回已确认` returns to pending. Once confirmed rows exist, `导出已确认` becomes the primary button and `导出当前视图` is secondary.
 - Any row-level or batch review-status change calls `clearQueueExportState()`, removing stale product-queue export receipts and Step 5 workflow state. Do not leave an old exported CSV receipt visible after the operator confirms, holds, or withdraws actions.
@@ -408,7 +409,7 @@ Course logic assessment:
 
 Current keyword checker actions:
 
-- `搜索出单未承接`: search term has orders and acceptable ACOS but no positive keyword coverage.
+- `搜索出单未承接`: search term has orders and acceptable structure-reference ACOS but no positive keyword coverage. Do not describe this as an ACOS steering target; product CPS remains the main target.
 - `缺精准`: phrase/broad exists but exact is missing.
 - `竞价倒挂`: exact average bid is lower than phrase or broad, against the intended `exact >= phrase >= broad` hierarchy.
 - `重复分散`: same term is spread across many campaign/ad group/match combinations.
@@ -491,6 +492,7 @@ Important UI behavior:
 - Top status pills show Bulk/hourly/SciAds load status.
 - `投放关键词检查` must remain a separate workspace, not merged into the original tab set.
 - The keyword-checker empty state must speak in Chinese operator terms and offer a direct Bulk CTA (`data-workflow-upload`) plus demo entry (`data-workflow-demo`), because first-time users may enter this mode before importing anything.
+- Keyword checker controls should say `结构参考 ACOS`, with a compact hint that it only judges carryover/structure and does not replace CPS. Avoid reintroducing a plain `参考 ACOS` label that looks like a second main goal.
 - Keyword checker should expose KPI cards, math/course brief, risk brief, manual term input, keyword coverage table, ad group table, filters, and CSV export.
 - Target diagnostics and search term decision tables must include the related ad group column (`广告组`) next to campaign (`活动`) so every action is traceable to both campaign and ad group.
 - The analysis workspace uses a quieter focus layout: fixed-order KPI chunks, a stronger primary judgment card, muted support cards, and a plain layered background to reduce cognitive load.
@@ -631,6 +633,7 @@ Before opening a PR or merging:
    - Placement summary cards render.
    - `投放关键词检查` mode appears as a separate entry.
    - In `投放关键词检查` before import, the empty state shows `关键词结构体检`, a visible `选择 Bulk 工作簿` button, and no visible `Keyword coverage` label.
+   - In `投放关键词检查`, the ACOS input label reads `结构参考 ACOS` and the visible hint says it does not replace CPS.
    - After loading Bulk, keyword checker produces keyword rows and ad group rows.
    - Manual keyword input returns both found and not-found terms.
    - Keyword checker CSV export produces filtered rows.
