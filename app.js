@@ -1391,6 +1391,7 @@
       col("确认", "reviewStatus", "review", { width: "170px" }),
       col("动作", "action", "tag"),
       col("后台动作", "executionAction", "text"),
+      col("后台定位", "backendPath", "clip", { width: "220px" }),
       col("对象", "item", "text"),
       col("活动", "campaign", "clip"),
       col("广告组", "adGroup", "clip"),
@@ -1671,7 +1672,22 @@
         risk: "观察",
       }),
       evidence,
+      backendPath: backendPathForAction(row.action, row.source),
     };
+  }
+
+  function backendPathForAction(action, source) {
+    if (action === "否定") return "活动 > 广告组 > 否定关键词";
+    if (action === "检查否定") return "活动 > 广告组 > 否定关键词 / 已投放词";
+    if (action === "加精准词") return "活动 > 广告组 > 关键词 > 精准匹配";
+    if (action === "加商品定向") return "活动 > 广告组 > 商品定向";
+    if (action === "保留/加预算") return "广告活动 > 预算 / 当前投放";
+    if (["放量", "降价", "止损"].includes(action)) {
+      if (source === "ASIN") return "活动 > 广告组 > 商品定向 > 竞价";
+      if (source === "搜索词") return "活动 > 广告组 > 承接词或否定词";
+      return "活动 > 广告组 > 关键词/商品定向 > 竞价";
+    }
+    return "活动 > 广告组 > 人工复核";
   }
 
   function actionRowKey(row) {
@@ -1876,6 +1892,10 @@
         <div>
           <span>活动 / 广告组</span>
           <b title="${escapeAttr(`${row.campaign} / ${row.adGroup}`)}">${escapeHtml(shorten(row.campaign, 26))} / ${escapeHtml(shorten(row.adGroup, 22))}</b>
+        </div>
+        <div>
+          <span>后台定位</span>
+          <b title="${escapeAttr(row.backendPath || "")}">${escapeHtml(row.backendPath || "活动 > 广告组")}</b>
         </div>
         <div class="lead-bid">
           <span>建议竞价</span>
