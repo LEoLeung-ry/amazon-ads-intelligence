@@ -2646,8 +2646,7 @@
       body = "这一轮已经形成可执行文件。进入 Amazon 后台前，再按执行顺序复核高风险否定和大额调价项。";
       meta = `${confirmedExport.filename || "CSV"} · ${fmtInt(confirmedExport.columns || 0)} 列`;
       actions = `
-        <button class="secondary-btn" type="button" data-scroll-action-queue>回到队列</button>
-        <button class="export-btn" type="button" data-workflow-export-confirmed>重新导出已确认</button>
+        <button class="export-btn" type="button" data-scroll-action-queue>回到执行包</button>
       `;
     } else if (ready && snapshotExport) {
       tone = confirmed ? "export" : "queue";
@@ -2659,8 +2658,7 @@
       meta = `${snapshotExport.filename || "CSV"} · ${fmtInt(snapshotExport.rows || 0)} 行快照`;
       actions = confirmed
         ? `
-          <button class="secondary-btn" type="button" data-scroll-action-queue>继续确认</button>
-          <button class="export-btn" type="button" data-workflow-export-confirmed>导出已确认</button>
+          <button class="export-btn" type="button" data-scroll-action-queue>去导出执行包</button>
         `
         : `
           <button class="export-btn" type="button" data-scroll-action-queue>回到本轮确认</button>
@@ -2672,8 +2670,7 @@
       body = `已确认项会按后台动作分组并带执行顺序。还有 ${fmtInt(pending)} 个待确认、${fmtInt(held)} 个暂缓，不需要一次处理完整张表。`;
       meta = "导出已确认 CSV 后即可进入后台逐项操作";
       actions = `
-        <button class="secondary-btn" type="button" data-scroll-action-queue>继续确认</button>
-        <button class="export-btn" type="button" data-workflow-export-confirmed>导出已确认</button>
+        <button class="export-btn" type="button" data-scroll-action-queue>去导出执行包</button>
       `;
     } else if (ready && queueCount) {
       tone = "queue";

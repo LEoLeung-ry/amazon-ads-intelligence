@@ -2248,6 +2248,12 @@ body[data-bulk-ready="false"] #emptyState .hero-upload-actions {
   opacity: 0.45;
 }
 
+.queue-export-actions .queue-confirmed-export,
+.execution-package .package-export-btn,
+.export-receipt .receipt-export-btn {
+  display: none;
+}
+
 .execution-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3643,12 +3649,6 @@ tbody tr:hover {
   }
 
   .queue-export-actions button:disabled {
-    display: none;
-  }
-
-  .queue-export-actions .queue-confirmed-export,
-  .execution-package .package-export-btn,
-  .export-receipt .receipt-export-btn {
     display: none;
   }
 
