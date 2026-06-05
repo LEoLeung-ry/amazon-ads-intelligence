@@ -1801,7 +1801,7 @@
     const last = activeQueueExport();
     if (!last) return "";
     const confirmed = last.key === "productQueueConfirmed";
-    const title = confirmed ? "已导出确认后的执行包" : "已导出当前队列视图";
+    const title = confirmed ? "已导出确认后的执行包" : "已导出当前视图快照";
     const body = confirmed
       ? "CSV 已按当前列设置生成。进入 Amazon 后台时，先按执行顺序处理，再用后台定位和后台动作逐项调整。"
       : "这是当前筛选视图的完整快照，适合复盘或交给同事复核；真正执行前建议先确认动作，再导出已确认。";
@@ -3315,7 +3315,7 @@
   }
 
   function queueExportFilename(key) {
-    const kind = key === "productQueueConfirmed" ? "已确认执行包" : "当前行动队列";
+    const kind = key === "productQueueConfirmed" ? "已确认执行包" : "当前视图快照";
     return `Amazon广告_${exportScopeLabel()}_${kind}_${timestampForFilename()}.csv`;
   }
 
