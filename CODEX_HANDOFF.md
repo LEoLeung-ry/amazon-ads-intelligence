@@ -27,6 +27,7 @@ Latest implementation note for this release:
 - The action queue includes a lightweight `review-guide` strip after the pending/confirmed/held summary. It explains that `确认` means "ready for export", `暂缓` means "keep but do not export", and batch confirmation should only happen after narrowing by task/risk/impact. Keep this visible because it reduces fear of mis-clicking for first-time operators.
 - After exporting `productQueue` or `productQueueConfirmed`, `renderExportReceipt()` shows a local receipt inside the action queue. It distinguishes a current-view snapshot from a confirmed execution package and repeats row/column counts plus the filename, so the operator knows exactly what was just produced. Keep `导出当前` disabled when the current queue scope has zero rows to avoid silent no-op clicks.
 - The empty state includes an `analysis-paths` strip explaining the two analysis entrances: default `广告诊断` for the all-product action queue and supplemental `关键词检查` for Bulk structure coverage. Keep it compact; it exists to help first-time users choose the right mode without reading the whole app.
+- After import, `renderMetricGuide()` should explain KPI cards by operator reading order: traffic (`点击/CTR`), conversion (`CVR/订单`), cost (`CPC/CPS/花费`), and return (`销售额/ACOS/ROAS`). Keep this as a compact guide for new operators, not a full glossary.
 - Keep these recovery paths lightweight; they are meant to reduce fatigue and preserve task flow, not add another analysis module.
 
 Non-regression rules for future maintainers:

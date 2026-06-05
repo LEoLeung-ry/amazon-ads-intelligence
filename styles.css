@@ -1317,6 +1317,7 @@ body[data-bulk-ready="false"] .campaign-panel {
 .metric-guide-item b {
   color: #0f766e;
   font-size: 12px;
+  line-height: 1.25;
 }
 
 .metric-guide-item span {

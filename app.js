@@ -1351,10 +1351,10 @@
   function renderMetricGuide() {
     if (!els.metricGuide) return;
     const items = [
-      ["CPS", "每出 1 单花了多少钱，是当前主控目标"],
-      ["CVR", "点击变订单的比例，样本少时会结合自然 CVR 平滑"],
-      ["RPC", "每次点击带来的销售额，用于分时和广告位判断"],
-      ["ACOS", "花费 / 销售额，现在作为 CPS 推导后的解释指标"],
+      ["流量：点击 / CTR", "先看有没有足够点击；CTR 低说明曝光没有吸引点击。"],
+      ["转化：CVR / 订单", "再看点击能不能变订单；样本少时用自然 CVR 保护判断。"],
+      ["成本：CPC / CPS / 花费", "CPC 是每次点击成本；CPS 是每单成本，是当前主控目标。"],
+      ["回报：销售额 / ACOS / ROAS", "ACOS 与 ROAS 是回报解释指标，用 CPS 和 AOV 推导目标线。"],
     ];
     els.metricGuide.innerHTML = items
       .map(([term, text]) => `<div class="metric-guide-item"><b>${escapeHtml(term)}</b><span>${escapeHtml(text)}</span></div>`)
