@@ -1492,6 +1492,8 @@
     const currentExportClass = "secondary-btn";
     const confirmedExported = hasConfirmedRows && activeQueueExport()?.key === "productQueueConfirmed";
     const confirmedExportLabel = confirmedExported ? "重新导出已确认" : "导出已确认";
+    const showExecutionCoach = hasConfirmedRows || !filteredQueueRows.length;
+    const showTodayFocus = state.detailsExpanded || !isTodayBatch;
     const taskScopeLabel = isTodayBatch ? "本轮" : "当前范围";
     const taskRowsFor = (action) => filterQueueRows(queueRows, { action });
     const growthTaskRows = taskRowsFor("growth");
@@ -1561,10 +1563,10 @@
         filteredRows: filteredQueueRows,
         confirmedRows,
       })}
-      ${renderExecutionCoach(executionCoach)}
+      ${showExecutionCoach ? renderExecutionCoach(executionCoach) : ""}
       ${renderGoalCheckpoint(calculated, campaigns)}
       ${renderGoalChangeNotice()}
-      ${renderTodayFocus(todayFocusRows, queueRows)}
+      ${showTodayFocus ? renderTodayFocus(todayFocusRows, queueRows) : ""}
       <div class="task-rail" aria-label="行动任务筛选">
         ${cards.map((card) => actionTaskChip(card)).join("")}
       </div>
