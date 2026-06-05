@@ -2050,6 +2050,15 @@ td.review-cell {
   white-space: nowrap;
 }
 
+.mobile-card-top .mobile-card-rank {
+  min-width: 34px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #0f766e;
+  text-align: center;
+}
+
 .mobile-action-card h4,
 .mobile-action-card p,
 .mobile-action-card small {

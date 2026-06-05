@@ -1099,11 +1099,11 @@
       state.pendingQueueAutoFocus = false;
     }
     const todayFocusRows = queueRows.filter((row) => state.todayFocusKeys.has(row.reviewKey));
-    const filteredQueueRows = filterQueueRows(queueRows);
+    const filteredQueueRows = withExecutionOrder(filterQueueRows(queueRows));
     const scopedQueueRows = filterQueueRows(queueRows, { review: "all" });
     state.lastQueueCount = filteredQueueRows.length;
     state.lastReviewCounts = countReviewStatuses(scopedQueueRows);
-    const confirmedRows = filterQueueRows(queueRows, { review: "confirmed" });
+    const confirmedRows = withExecutionOrder(filterQueueRows(queueRows, { review: "confirmed" }));
     const executionCoach = buildExecutionCoach(scopedQueueRows, confirmedRows);
     const batchConfirmRows = filteredQueueRows.filter((row) => (row.reviewState || "pending") === "pending");
     const batchResetRows = confirmedRows;
@@ -1190,6 +1190,7 @@
       </div>
     `;
     const columns = [
+      col("执行顺序", "executionOrder", "int", { width: "86px" }),
       col("确认", "reviewStatus", "review", { width: "170px" }),
       col("动作", "action", "tag"),
       col("后台动作", "executionAction", "text"),
@@ -1452,6 +1453,10 @@
     });
   }
 
+  function withExecutionOrder(rows) {
+    return rows.map((row, index) => ({ ...row, executionOrder: index + 1 }));
+  }
+
   function queueGap(row) {
     if (!row.actualCps || !row.targetCps) return row.spend || 0;
     return Math.abs(row.actualCps / row.targetCps - 1);
@@ -1591,6 +1596,7 @@
     return `<div class="mobile-action-cards" aria-label="移动端行动卡">
       ${cards.map((row) => `<article class="mobile-action-card">
         <div class="mobile-card-top">
+          <span class="mobile-card-rank">#${fmtInt(row.executionOrder || 0)}</span>
           ${tag(row.action)}
           <span>${escapeHtml(row.risk || "待判断")}</span>
         </div>
