@@ -1608,6 +1608,7 @@
           </div>`).join("")}
         </div>
         ${renderExecutionGuardrails(guardrails)}
+        ${renderExecutionHandoff()}
       </div>
       <div class="execution-package-metrics">
         <span><b>${fmtInt(stopCount)}</b> 止损/否定</span>
@@ -1616,6 +1617,17 @@
         <span><b>${fmtMoney(spend)}</b> 涉及花费</span>
         <button class="export-btn" type="button" data-export-confirmed>导出已确认 (${fmtInt(rows.length)})</button>
       </div>
+    </div>`;
+  }
+
+  function renderExecutionHandoff() {
+    const steps = [
+      ["1 按执行顺序", "从第 1 行开始处理；先复核高风险和否定冲突"],
+      ["2 看后台定位", "用“后台定位 + 后台动作”找到活动、广告组、关键词或商品定向"],
+      ["3 留观察期", "竞价/预算变更后观察 2-3 天，再导入下一轮 Bulk"],
+    ];
+    return `<div class="execution-handoff" aria-label="导出后后台执行方式">
+      ${steps.map(([label, text]) => `<span><b>${escapeHtml(label)}</b>${escapeHtml(text)}</span>`).join("")}
     </div>`;
   }
 

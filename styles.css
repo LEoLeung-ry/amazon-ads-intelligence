@@ -1735,6 +1735,31 @@ body[data-bulk-ready="false"] .campaign-panel {
   background: #f0fdf4;
 }
 
+.execution-handoff {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.execution-handoff span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 7px 8px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.execution-handoff b {
+  color: #0f766e;
+  font-size: 11px;
+}
+
 .execution-package-metrics {
   display: flex;
   flex-wrap: wrap;
@@ -2958,6 +2983,10 @@ tbody tr:hover {
 
   .execution-guardrails span {
     white-space: normal;
+  }
+
+  .execution-handoff {
+    grid-template-columns: 1fr;
   }
 
   .execution-package-metrics {
