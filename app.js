@@ -1583,6 +1583,9 @@
       col("销售额", "sales", "money", { defaultVisible: false }),
       col("订单", "orders", "int", { defaultVisible: false }),
       col("点击", "clicks", "int", { defaultVisible: false }),
+      col("执行状态", "executionStatus", "text", { defaultVisible: false, description: "导出执行包后手动标记：已执行、跳过、需复核。" }),
+      col("执行备注", "executionNote", "text", { defaultVisible: false, description: "记录后台实际处理结果、跳过原因或二次复核说明。" }),
+      col("复盘日期", "reviewDate", "text", { defaultVisible: false, description: "建议填写 2-3 天后的复盘日期。" }),
     ];
     state.tableExports.productQueue = { tableId: "productActionTable", columns, rows: filteredQueueRows };
     state.tableExports.productQueueConfirmed = { tableId: "productActionTable", columns, rows: confirmedRows };
@@ -2038,8 +2041,17 @@
     return rows.map((row) => ({ ...row, priorityReason: leadPriorityReason(row) }));
   }
 
+  function withExecutionTracking(rows) {
+    return rows.map((row) => ({
+      ...row,
+      executionStatus: row.executionStatus || "待执行",
+      executionNote: row.executionNote || "",
+      reviewDate: row.reviewDate || "",
+    }));
+  }
+
   function prepareQueueRowsForExport(rows) {
-    return withPriorityReasons(withExecutionGroups(withExecutionOrder(rows)));
+    return withExecutionTracking(withPriorityReasons(withExecutionGroups(withExecutionOrder(rows))));
   }
 
   function queueGap(row) {
@@ -3189,9 +3201,9 @@
   function exportTableCsv(key, filename) {
     const table = state.tableExports[key];
     if (!table || !table.rows.length) return;
-    const columns = getVisibleColumns(table.tableId || key, table.columns);
+    const columns = exportColumnsForKey(key, table);
     const header = columns.map((column) => column.label);
-    const body = table.rows.map((row) => columns.map((column) => formatForExport(row[column.key], column.type)));
+    const body = table.rows.map((row) => columns.map((column) => formatForExport(exportCellValue(row, column), column.type)));
     const csv = [header, ...body]
       .map((line) => line.map(csvEscape).join(","))
       .join("\r\n");
@@ -3214,6 +3226,29 @@
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  }
+
+  function exportColumnsForKey(key, table) {
+    const columns = getVisibleColumns(table.tableId || key, table.columns);
+    if (key !== "productQueueConfirmed") return columns;
+    const existing = new Set(columns.map((column) => column.key));
+    const tracking = executionTrackingColumns().filter((column) => !existing.has(column.key));
+    return [...columns, ...tracking];
+  }
+
+  function executionTrackingColumns() {
+    return [
+      col("执行状态", "executionStatus", "text"),
+      col("执行备注", "executionNote", "text"),
+      col("复盘日期", "reviewDate", "text"),
+    ];
+  }
+
+  function exportCellValue(row, column) {
+    if (column.key === "executionStatus") return row.executionStatus || "待执行";
+    if (column.key === "executionNote") return row.executionNote || "";
+    if (column.key === "reviewDate") return row.reviewDate || "";
+    return row[column.key];
   }
 
   function downloadFieldChecklist() {
