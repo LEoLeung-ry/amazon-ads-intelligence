@@ -21,6 +21,7 @@ This push preserves the current production app code and refreshes this handoff s
 
 Latest implementation note for this release:
 
+- Confirmed execution-package exports now append export context columns (`导出时间`, `分析范围`, `产品默认 CPS`, `自然 CVR`) plus hidden metric columns (`目标 CPS`, `当前 CPS`, `ACOS`) through `exportColumnsForKey()`. This keeps the visible table light while making forwarded CSVs self-explanatory for another operator.
 - Queue exports now use `queueExportFilename()` so current-queue and confirmed execution-package CSV filenames include analysis scope plus local timestamp, e.g. all-product/search/selected/product-group context. Keep fixed generic filenames out of queue exports because operators may produce multiple execution packages in one day.
 - Confirmed action exports automatically append execution tracking columns (`执行状态`, `执行备注`, `复盘日期`) through `exportColumnsForKey()`, even when those columns are hidden in the on-screen table. This preserves the lightweight queue UI while making the CSV usable as an execution log in Amazon Ads backend work.
 - Confirmed export receipts now include `export-next-steps`: backend execution order, execution-status note taking, and a 2-3 day Bulk reimport review loop. This is intentionally shown after CSV export so the operator understands how the downloaded file turns into Amazon Ads backend changes.

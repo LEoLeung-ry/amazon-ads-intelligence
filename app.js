@@ -3201,9 +3201,10 @@
   function exportTableCsv(key, filename) {
     const table = state.tableExports[key];
     if (!table || !table.rows.length) return;
-    const columns = exportColumnsForKey(key, table);
+    const context = exportContextForKey(key);
+    const columns = exportColumnsForKey(key, table, context);
     const header = columns.map((column) => column.label);
-    const body = table.rows.map((row) => columns.map((column) => formatForExport(exportCellValue(row, column), column.type)));
+    const body = table.rows.map((row) => columns.map((column) => formatForExport(exportCellValue(row, column, context), column.type)));
     const csv = [header, ...body]
       .map((line) => line.map(csvEscape).join(","))
       .join("\r\n");
@@ -3212,6 +3213,8 @@
       filename,
       rows: table.rows.length,
       columns: columns.length,
+      scope: context.scopeLabel,
+      exportedAt: context.exportedAt,
       sample: csv.slice(0, 160),
     };
     state.goalChangeNotice = null;
@@ -3233,12 +3236,16 @@
     return `Amazon广告_${exportScopeLabel()}_${kind}_${timestampForFilename()}.csv`;
   }
 
-  function exportScopeLabel() {
+  function analysisScopeLabel() {
     const campaigns = getAnalysisCampaigns();
-    if (state.search) return safeFilenamePart(`搜索-${state.search}-${campaigns.length}活动`);
-    if (state.selectedCampaigns.size) return safeFilenamePart(`勾选-${campaigns.length}活动`);
-    if (state.productFilter !== "全部") return safeFilenamePart(`产品组-${state.productFilter}-${campaigns.length}活动`);
-    return safeFilenamePart(`全产品-${campaigns.length}活动`);
+    if (state.search) return `搜索 ${state.search} · ${campaigns.length} 活动`;
+    if (state.selectedCampaigns.size) return `勾选活动 · ${campaigns.length} 活动`;
+    if (state.productFilter !== "全部") return `产品组 ${state.productFilter} · ${campaigns.length} 活动`;
+    return `全产品 · ${campaigns.length} 活动`;
+  }
+
+  function exportScopeLabel() {
+    return safeFilenamePart(analysisScopeLabel().replace(/\s*·\s*/g, "-"));
   }
 
   function timestampForFilename(date = new Date()) {
@@ -3259,12 +3266,45 @@
     return cleaned.slice(0, 52) || "scope";
   }
 
-  function exportColumnsForKey(key, table) {
+  function exportContextForKey(key) {
+    return {
+      key,
+      scopeLabel: analysisScopeLabel(),
+      exportedAt: exportTimestampLabel(),
+      defaultTargetCps: state.defaultTargetCps,
+      naturalCvr: state.naturalCvr,
+    };
+  }
+
+  function exportTimestampLabel(date = new Date()) {
+    const pad = (value) => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  function exportColumnsForKey(key, table, context) {
     const columns = getVisibleColumns(table.tableId || key, table.columns);
     if (key !== "productQueueConfirmed") return columns;
     const existing = new Set(columns.map((column) => column.key));
-    const tracking = executionTrackingColumns().filter((column) => !existing.has(column.key));
-    return [...columns, ...tracking];
+    const append = [
+      ...confirmedExportMetricColumns(table.columns),
+      ...executionContextColumns(context),
+      ...executionTrackingColumns(),
+    ].filter((column) => !existing.has(column.key));
+    return [...columns, ...append];
+  }
+
+  function confirmedExportMetricColumns(columns) {
+    const byKey = new Map(columns.map((column) => [column.key, column]));
+    return ["targetCps", "actualCps", "acos"].map((key) => byKey.get(key)).filter(Boolean);
+  }
+
+  function executionContextColumns() {
+    return [
+      col("导出时间", "_exportedAt", "text"),
+      col("分析范围", "_analysisScope", "text"),
+      col("产品默认 CPS", "_defaultTargetCps", "money"),
+      col("自然 CVR", "_naturalCvr", "pct"),
+    ];
   }
 
   function executionTrackingColumns() {
@@ -3275,7 +3315,11 @@
     ];
   }
 
-  function exportCellValue(row, column) {
+  function exportCellValue(row, column, context = {}) {
+    if (column.key === "_exportedAt") return context.exportedAt || "";
+    if (column.key === "_analysisScope") return context.scopeLabel || "";
+    if (column.key === "_defaultTargetCps") return context.defaultTargetCps || state.defaultTargetCps;
+    if (column.key === "_naturalCvr") return Number.isFinite(context.naturalCvr) ? context.naturalCvr : state.naturalCvr;
     if (column.key === "executionStatus") return row.executionStatus || "待执行";
     if (column.key === "executionNote") return row.executionNote || "";
     if (column.key === "reviewDate") return row.reviewDate || "";
