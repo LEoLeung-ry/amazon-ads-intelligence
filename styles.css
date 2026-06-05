@@ -186,6 +186,13 @@ button {
   text-overflow: ellipsis;
 }
 
+.drop-actions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .secondary-btn {
   grid-column: 1 / -1;
   height: 34px;
@@ -194,6 +201,10 @@ button {
   background: #fff;
   color: var(--ink);
   font-size: 13px;
+}
+
+.drop-actions .secondary-btn {
+  grid-column: auto;
 }
 
 .secondary-btn:hover,
@@ -874,6 +885,12 @@ body[data-bulk-ready="false"] .campaign-panel {
 
 .hero-upload-actions .export-btn {
   height: 36px;
+}
+
+.hero-upload-actions .secondary-btn {
+  grid-column: auto;
+  height: 36px;
+  padding: 0 12px;
 }
 
 .hero-upload-actions span {
@@ -2279,6 +2296,10 @@ tbody tr:hover {
   body[data-bulk-ready="true"] .activity-controls,
   body[data-bulk-ready="true"] .campaign-panel {
     display: none;
+  }
+
+  body[data-bulk-ready="true"] .drop-actions {
+    grid-column: 1;
   }
 
   body[data-bulk-ready="true"] .drop-card .secondary-btn {

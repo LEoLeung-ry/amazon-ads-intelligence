@@ -398,6 +398,7 @@ Important UI behavior:
 - The empty state uses business language around turning ad reports into executable actions, and it shows file requirements instead of decorative graphics.
 - The empty state should stay light and task-first: white surface, clear Bulk upload CTA in the main workspace, five-step workflow, and a compact required/optional file checklist. Do not turn it back into a heavy marketing hero.
 - `#heroBrowseBtn` is a secondary entry to the same local file picker as the left-sidebar upload button. Keep both paths wired to `#fileInput` so first-time users can start from either the main workspace or sidebar.
+- `#fieldChecklistBtn` and `#heroFieldChecklistBtn` both call `downloadFieldChecklist()`. This generates a local CSV field checklist for Bulk/hourly/SciAds inputs. It is not a sample ad report and must not contain real advertising data.
 - The left sidebar includes `#importAssist`, a compact upload guidance/error state. It should explain the required Bulk workbook, optional hourly CSV/SciAds records, and what to do when a file is not recognized.
 - `renderImportAssist()` must stay structured, not a single vague sentence. It renders title, body, and a three-row checklist for the current state: default upload order, wrong/unrecognized file, optional-file-loaded-but-Bulk-missing, or Bulk-loaded success.
 - Wrong-file guidance should name the failed file, tell the user to check Bulk `xlsx/xls`, required sheet names (`商品推广活动` / `Sponsored Products Campaigns`), the search term sheet, and clarify that hourly CSV cannot replace Bulk.

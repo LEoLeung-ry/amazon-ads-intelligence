@@ -104,7 +104,9 @@
       "dropZone",
       "fileInput",
       "browseBtn",
+      "fieldChecklistBtn",
       "heroBrowseBtn",
+      "heroFieldChecklistBtn",
       "fileStack",
       "importAssist",
       "defaultTargetCps",
@@ -183,6 +185,8 @@
   function bindEvents() {
     els.browseBtn.addEventListener("click", () => els.fileInput.click());
     els.heroBrowseBtn?.addEventListener("click", () => els.fileInput.click());
+    els.fieldChecklistBtn?.addEventListener("click", downloadFieldChecklist);
+    els.heroFieldChecklistBtn?.addEventListener("click", downloadFieldChecklist);
     els.fileInput.addEventListener("change", (event) => handleFiles(event.target.files));
     els.dropZone.addEventListener("dragover", (event) => {
       event.preventDefault();
@@ -2332,6 +2336,49 @@
     const link = document.createElement("a");
     link.href = url;
     link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadFieldChecklist() {
+    const rows = [
+      ["文件类型", "工作表/报表", "字段", "必要性", "用途"],
+      ["Bulk xlsx/xls", "商品推广活动 / Sponsored Products Campaigns", "广告活动名称（仅供参考）", "必需", "识别活动"],
+      ["Bulk xlsx/xls", "商品推广活动 / Sponsored Products Campaigns", "广告组名称", "必需", "定位到广告组"],
+      ["Bulk xlsx/xls", "商品推广活动 / Sponsored Products Campaigns", "投放类型", "必需", "区分关键词、ASIN、自动定向"],
+      ["Bulk xlsx/xls", "商品推广活动 / Sponsored Products Campaigns", "匹配类型", "建议", "判断精准、词组、广泛或否定"],
+      ["Bulk xlsx/xls", "商品推广活动 / Sponsored Products Campaigns", "竞价", "必需", "计算建议 bid 和调价幅度"],
+      ["Bulk xlsx/xls", "商品推广活动 / Sponsored Products Campaigns", "展示量", "建议", "识别无曝光或曝光高无点击"],
+      ["Bulk xlsx/xls", "商品推广活动 / Sponsored Products Campaigns", "点击量", "必需", "计算 CTR、CVR、CPC"],
+      ["Bulk xlsx/xls", "商品推广活动 / Sponsored Products Campaigns", "花费", "必需", "计算 CPS、ACOS 和止损阈值"],
+      ["Bulk xlsx/xls", "商品推广活动 / Sponsored Products Campaigns", "销售额", "必需", "计算 ACOS、ROAS、AOV"],
+      ["Bulk xlsx/xls", "商品推广活动 / Sponsored Products Campaigns", "订单数量", "必需", "计算 CPS 和 CVR"],
+      ["Bulk xlsx/xls", "商品推广活动 / Sponsored Products Campaigns", "关键词文本 / 商品投放 ID / ASIN（仅供参考）", "至少一个", "识别具体标的"],
+      ["Bulk xlsx/xls", "商品推广搜索词报告 / Sponsored Products Search Term", "广告活动名称（仅供参考）", "建议", "把搜索词归到活动"],
+      ["Bulk xlsx/xls", "商品推广搜索词报告 / Sponsored Products Search Term", "广告组名称（仅供参考）", "建议", "把搜索词归到广告组"],
+      ["Bulk xlsx/xls", "商品推广搜索词报告 / Sponsored Products Search Term", "客户搜索词", "建议", "生成加词、否定和承接建议"],
+      ["Bulk xlsx/xls", "商品推广搜索词报告 / Sponsored Products Search Term", "点击量 / 花费 / 销售额 / 订单数量", "建议", "判断搜索词质量和动作"],
+      ["每小时 CSV", "商品推广每小时报告", "开始日期 / 开始时间", "可选", "做分时效率分析"],
+      ["每小时 CSV", "商品推广每小时报告", "广告活动名称", "可选", "匹配到导入的活动"],
+      ["每小时 CSV", "商品推广每小时报告", "展示量 / 点击量 / 花费", "可选", "判断小时流量和消耗"],
+      ["每小时 CSV", "商品推广每小时报告", "7天总订单数(#) / 7天总销售额", "可选", "计算小时 CVR、RPC、ACOS"],
+      ["SciAds 记录", "任意第一张工作表", "课程或陪跑文字记录", "可选", "补充规则库和解释依据"],
+    ];
+    const csv = rows.map((line) => line.map(csvEscape).join(",")).join("\r\n");
+    document.body.dataset.lastExport = JSON.stringify({
+      key: "fieldChecklist",
+      filename: "Amazon广告字段检查清单.csv",
+      rows: rows.length - 1,
+      columns: rows[0].length,
+      sample: csv.slice(0, 160),
+    });
+    const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "Amazon广告字段检查清单.csv";
     document.body.appendChild(link);
     link.click();
     link.remove();
