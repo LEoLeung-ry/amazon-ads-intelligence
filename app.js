@@ -811,27 +811,60 @@
 
   function renderImportAssist() {
     if (!els.importAssist) return;
-    const warnFile = state.files.find((file) => file.status === "warn");
+    const latestFile = state.files[0];
+    const warnFile = latestFile?.status === "warn" ? latestFile : null;
     const loaded = state.files.filter((file) => file.status === "loaded");
     let tone = "info";
     let title = "上传顺序";
     let body = "先导入 Bulk 工作簿；每小时 CSV 和 SciAds 记录是可选增强。文件只在浏览器本地解析。";
+    let checklist = [
+      ["必传", "Bulk 工作簿", "含“商品推广活动”或 Sponsored Products Campaigns"],
+      ["最好有", "搜索词工作表", "含“商品推广搜索词报告”，用于加词和否定"],
+      ["可选", "每小时 CSV", "含开始时间、广告活动名称、7天总销售额"],
+    ];
     if (warnFile) {
       tone = "warn";
       title = "文件没有识别成功";
-      body = `${warnFile.note || "请检查文件格式"}。请优先上传包含“商品推广活动”和“商品推广搜索词报告”的 Bulk 工作簿。`;
+      body = `${warnFile.name}：${warnFile.note || "请检查文件格式"}。请按下面三项确认后重新上传。`;
+      checklist = [
+        ["检查 1", "上传 Bulk xlsx/xls", "工作簿里要有商品推广活动 / Sponsored Products Campaigns"],
+        ["检查 2", "搜索词报告", "商品推广搜索词报告用于生成加词、否定和承接建议"],
+        ["检查 3", "CSV 不是 Bulk", "每小时 CSV 只用于分时效率；不能单独生成行动队列"],
+      ];
     } else if (state.bulkLoaded) {
       tone = "ok";
       title = "Bulk 已识别";
       body = state.hourlyLoaded
         ? "现在可以先看全产品行动队列；每小时报告已用于分时效率。"
         : "现在可以先看全产品行动队列；如果要看分时效率，再补充每小时 CSV。";
+      checklist = [
+        ["下一步", "查看今日优先", "先确认最值得执行的一批动作"],
+        ["可补充", "每小时 CSV", "用于判断哪些时段 RPC/CVR 更稳"],
+        ["可展开", "详细分析", "标的、搜索词、分时和广告位都在二级层"],
+      ];
     } else if (loaded.length) {
       title = "还缺 Bulk";
       body = "已读取可选文件，但核心诊断需要 Bulk 工作簿才能生成广告活动、搜索词和行动队列。";
+      checklist = [
+        ["现在补", "Bulk 工作簿", "它负责活动、标的、搜索词和行动队列"],
+        ["已读取", "可选增强文件", "小时 CSV 或 SciAds 会在 Bulk 后一起参与解释"],
+        ["不用担心", "不会上传服务器", "所有文件只在当前浏览器本地解析"],
+      ];
     }
     els.importAssist.className = `import-assist ${tone}`;
-    els.importAssist.innerHTML = `<b>${escapeHtml(title)}</b><span>${escapeHtml(body)}</span>`;
+    els.importAssist.innerHTML = `
+      <b>${escapeHtml(title)}</b>
+      <span>${escapeHtml(body)}</span>
+      <div class="assist-checklist">
+        ${checklist.map(([tag, label, text]) => `<div class="assist-row">
+          <em>${escapeHtml(tag)}</em>
+          <div>
+            <strong>${escapeHtml(label)}</strong>
+            <small>${escapeHtml(text)}</small>
+          </div>
+        </div>`).join("")}
+      </div>
+    `;
   }
 
   function renderProductSegments() {

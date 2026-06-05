@@ -397,6 +397,10 @@ Important UI behavior:
 - The empty state should stay light and task-first: white surface, clear Bulk upload CTA in the main workspace, five-step workflow, and a compact required/optional file checklist. Do not turn it back into a heavy marketing hero.
 - `#heroBrowseBtn` is a secondary entry to the same local file picker as the left-sidebar upload button. Keep both paths wired to `#fileInput` so first-time users can start from either the main workspace or sidebar.
 - The left sidebar includes `#importAssist`, a compact upload guidance/error state. It should explain the required Bulk workbook, optional hourly CSV/SciAds records, and what to do when a file is not recognized.
+- `renderImportAssist()` must stay structured, not a single vague sentence. It renders title, body, and a three-row checklist for the current state: default upload order, wrong/unrecognized file, optional-file-loaded-but-Bulk-missing, or Bulk-loaded success.
+- Wrong-file guidance should name the failed file, tell the user to check Bulk `xlsx/xls`, required sheet names (`商品推广活动` / `Sponsored Products Campaigns`), the search term sheet, and clarify that hourly CSV cannot replace Bulk.
+- Only the latest uploaded file should drive the warning state. If a user uploads a wrong file and then successfully uploads Bulk, the assist panel must switch to the Bulk-loaded success state instead of keeping an old warning alive.
+- After Bulk is loaded, the same assist panel should point to the product action queue / today focus first, with hourly CSV and detailed analysis as optional next layers.
 - The left sidebar has two separate mode buttons: `广告诊断` and `投放关键词检查`.
 - Left sidebar campaign search appears above upload and goal controls.
 - Left sidebar contains upload, product default target CPS, natural CVR, derived ACOS, actual CPS, target gap, product groups, and campaign list.
