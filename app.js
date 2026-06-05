@@ -3485,8 +3485,8 @@
     const current = row.reviewState || "pending";
     const key = escapeAttr(row.reviewKey || actionRowKey(row));
     return `<div class="review-control" aria-label="动作确认状态">
-      ${reviewButton(key, current, "pending", "待")}
-      ${reviewButton(key, current, "confirmed", "确认")}
+      ${reviewButton(key, current, "pending", "待确认")}
+      ${reviewButton(key, current, "confirmed", "已确认")}
       ${reviewButton(key, current, "held", "暂缓")}
     </div>`;
   }
