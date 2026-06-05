@@ -1443,6 +1443,46 @@ body[data-bulk-ready="false"] .campaign-panel {
   line-height: 1.45;
 }
 
+.execution-package-body {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.execution-plan {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.execution-step {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 7px 8px;
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.execution-step b,
+.execution-step span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.execution-step b {
+  color: #10212b;
+  font-size: 12px;
+}
+
+.execution-step span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .execution-package-metrics {
   display: flex;
   flex-wrap: wrap;
@@ -2396,6 +2436,10 @@ tbody tr:hover {
 
   .execution-package {
     display: grid;
+  }
+
+  .execution-plan {
+    grid-template-columns: 1fr;
   }
 
   .execution-package-metrics {

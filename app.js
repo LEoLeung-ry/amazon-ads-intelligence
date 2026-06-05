@@ -1505,11 +1505,18 @@
     const growthCount = rows.filter((row) => queueActionMatches("growth", row.action)).length;
     const structureCount = rows.filter((row) => queueActionMatches("structure", row.action)).length;
     const spend = sumBy(rows, (row) => row.spend);
+    const plan = buildExecutionPlan(rows);
     return `<div class="execution-package">
-      <div>
+      <div class="execution-package-body">
         <span class="eyebrow">Execution package</span>
         <h4>已确认 ${fmtInt(rows.length)} 个动作，可以导出执行</h4>
         <p>这一包已按当前筛选收敛，适合导出后进入 Amazon 后台逐项处理。执行前再复核高风险和否定冲突项。</p>
+        <div class="execution-plan" aria-label="执行路线图">
+          ${plan.map((item, index) => `<div class="execution-step">
+            <b>${fmtInt(index + 1)}. ${escapeHtml(item.label)}</b>
+            <span>${fmtInt(item.count)} 项 · ${fmtMoney(item.spend)} · ${escapeHtml(item.sample)}</span>
+          </div>`).join("")}
+        </div>
       </div>
       <div class="execution-package-metrics">
         <span><b>${fmtInt(stopCount)}</b> 止损/否定</span>
@@ -1519,6 +1526,49 @@
         <button class="export-btn" type="button" data-export-confirmed>导出已确认 (${fmtInt(rows.length)})</button>
       </div>
     </div>`;
+  }
+
+  function buildExecutionPlan(rows) {
+    const groups = new Map();
+    rows.forEach((row) => {
+      const label = executionPlanLabel(row);
+      if (!groups.has(label)) {
+        groups.set(label, {
+          label,
+          count: 0,
+          spend: 0,
+          maxSpend: Number(row.spend) || 0,
+          priority: actionPriority(row.action),
+          sample: `${shorten(row.campaign, 22)} · ${shorten(row.item, 28)}`,
+        });
+      }
+      const group = groups.get(label);
+      const rowSpend = Number(row.spend) || 0;
+      group.count += 1;
+      group.spend += rowSpend;
+      group.priority = Math.min(group.priority, actionPriority(row.action));
+      if (rowSpend > group.maxSpend) {
+        group.maxSpend = rowSpend;
+        group.sample = `${shorten(row.campaign, 22)} · ${shorten(row.item, 28)}`;
+      }
+    });
+    return Array.from(groups.values())
+      .sort((a, b) => a.priority - b.priority || b.spend - a.spend)
+      .slice(0, 4);
+  }
+
+  function executionPlanLabel(row) {
+    const labels = {
+      放量: "按建议竞价小步加价",
+      "保留/加预算": "保留投放，优先预算",
+      降价: "下调竞价控费",
+      止损: "降价或暂停观察",
+      否定: "加入否定候选",
+      检查否定: "复核否定冲突",
+      加精准词: "拆出精准词",
+      加商品定向: "拆出商品定向",
+    };
+    return labels[row.action] || row.executionAction || "人工复核";
   }
 
   function actionGuidance(row) {

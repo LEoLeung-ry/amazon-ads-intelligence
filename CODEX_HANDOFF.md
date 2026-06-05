@@ -298,6 +298,8 @@ The homepage action queue is now the primary workflow.
 - Review row keys must be precise enough that confirming one row does not accidentally confirm duplicate-looking rows. Include source/action/campaign/ad group/item plus metrics such as spend/orders/recommended bid.
 - The queue summary shows pending/confirmed/held counts for the current action/risk/impact filters, independent of the selected review-status filter. This keeps confirmed counts visible after rows leave the default `待确认` view.
 - `renderExecutionPackage(confirmedRows)` appears once there are confirmed rows in the current task/risk/impact scope. It summarizes stop/growth/structure counts plus spend and provides a direct `导出已确认` button, closing the loop from analysis to execution.
+- The execution package also renders a compact execution plan via `buildExecutionPlan(rows)`, grouping confirmed rows by backend action family and sorting by action priority plus spend. This is the final pre-export route map for less experienced operators.
+- `executionPlanLabel(row)` intentionally groups bid-change variants such as `调高竞价到 ¥X` under `按建议竞价小步加价`; otherwise a growth batch with different bids becomes visually fragmented.
 - `导出当前` exports the currently filtered queue rows, not the unfiltered queue. `导出已确认` exports confirmed rows matching the current action/risk/impact filters, independent of the selected review-status filter. Both exports include the recalculated `执行顺序` column so the CSV can be used as an ordered execution sheet. Keep `productQueueConfirmed` wired to the same columns so current column choices apply to both exports.
 - `确认待处理` bulk-confirms only pending rows inside the currently filtered queue by writing each row's `reviewKey` to `state.actionReviews`.
 - `确认待处理` must be disabled until the queue is narrowed by task/action, risk, or impact. The default all-action queue must not allow one-click confirmation of every row.
@@ -512,6 +514,7 @@ Before opening a PR or merging:
    - If one filtered row is already `暂缓`, `确认待处理` preserves it and confirms only the remaining pending rows.
    - After filtering to `止损/否定`, confirming pending rows, then clicking `撤回已确认`, confirmed rows in that narrowed scope return to `待确认`; any `暂缓` row remains `暂缓`.
    - `导出已确认` is disabled until at least one action is confirmed, then exports only confirmed rows with the current column setup.
+   - Once actions are confirmed, the execution package shows an execution plan with grouped backend action families such as `复核否定冲突`, `加入否定候选`, `拆出精准词`, or `按建议竞价小步加价`.
    - Action queue starts with the `待确认` status filter, and switching to `全部状态`, `已确认`, or `暂缓` updates rows and summary counts.
    - After confirming a row while the status filter is `待确认`, the row leaves the pending list but the confirmed summary count and `导出已确认` remain available.
    - Action card buttons filter the queue through task presets: `放量任务`, `止损/否定`, and `结构修复`; they should not force users into deep tabs.
