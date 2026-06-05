@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Amazon Ads Intelligence Workbench</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="./styles.css?v=export-receipt-20260605" />
+    <link rel="stylesheet" href="./styles.css?v=analysis-paths-20260606" />
     <link rel="stylesheet" href="./keyword-checker.css?v=goal-helper-20260605" />
   </head>
   <body>
@@ -124,6 +124,16 @@
               <div><b>3</b><span>查看队列</span></div>
               <div><b>4</b><span>确认动作</span></div>
               <div><b>5</b><span>导出执行</span></div>
+            </div>
+            <div class="analysis-paths" aria-label="分析入口说明">
+              <div>
+                <b>默认：广告诊断</b>
+                <span>上传 Bulk 后先看全产品行动队列，确认加价、降价、否定和承接动作。</span>
+              </div>
+              <div>
+                <b>补充：关键词检查</b>
+                <span>同一份 Bulk 可再做结构体检，检查匹配类型、否定冲突、竞价倒挂和覆盖缺口。</span>
+              </div>
             </div>
           </div>
           <div class="import-guide" aria-label="导入文件">
@@ -396,7 +406,7 @@
 
     <script src="./assets/xlsx.full.min.js"></script>
     <script src="./assets/echarts.min.js"></script>
-    <script src="./app.js?v=export-receipt-20260605"></script>
+    <script src="./app.js?v=analysis-paths-20260606"></script>
     <script src="./keyword-checker.js?v=goal-helper-20260605"></script>
   </body>
 </html>

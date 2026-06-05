@@ -1135,6 +1135,35 @@ body[data-bulk-ready="false"] .campaign-panel {
   font-weight: 700;
 }
 
+.analysis-paths {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 9px;
+  max-width: 760px;
+}
+
+.analysis-paths div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.analysis-paths b {
+  color: #0f766e;
+  font-size: 12px;
+}
+
+.analysis-paths span {
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .import-guide {
   display: grid;
   gap: 9px;
@@ -3303,6 +3332,7 @@ tbody tr:hover {
   .insight-strip,
   .rules-grid,
   .onboarding-steps,
+  .analysis-paths,
   .goal-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3471,6 +3501,10 @@ tbody tr:hover {
 
   .onboarding-steps {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .analysis-paths {
+    grid-template-columns: 1fr;
   }
 
   .workflow-compass-side > div,
