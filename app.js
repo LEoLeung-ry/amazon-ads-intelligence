@@ -22,6 +22,7 @@
     lastReviewCounts: { pending: 0, confirmed: 0, held: 0 },
     lastExport: null,
     actionReviews: {},
+    goalChangeNotice: null,
     todayFocusKeys: new Set(),
     pendingQueueAutoFocus: false,
     defaultTargetCps: 670,
@@ -209,11 +210,13 @@
     });
     els.defaultTargetCps.addEventListener("input", () => {
       state.defaultTargetCps = Math.max(1, toNumber(els.defaultTargetCps.value) || 1);
+      invalidateExecutionState("产品默认 CPS 已更新");
       saveGoalPrefs();
       renderAnalysis();
     });
     els.naturalCvr.addEventListener("input", () => {
       state.naturalCvr = clamp(toNumber(els.naturalCvr.value) / 100, 0, 1);
+      invalidateExecutionState("自然 CVR 已更新");
       saveGoalPrefs();
       renderAnalysis();
     });
@@ -297,6 +300,28 @@
     if (els.naturalCvr) els.naturalCvr.value = fmtNumber(state.naturalCvr * 100, 1).replace(/\.0$/, "");
   }
 
+  function invalidateExecutionState(reason) {
+    if (!state.bulkLoaded) return;
+    const reviewCount = Object.keys(state.actionReviews || {}).length;
+    const queueExported = state.lastExport && ["productQueue", "productQueueConfirmed"].includes(state.lastExport.key);
+    const exportRows = queueExported ? state.lastExport.rows || 0 : 0;
+    state.actionReviews = {};
+    state.todayFocusKeys = new Set();
+    state.pendingQueueAutoFocus = true;
+    if (state.queueFilters.review !== "pending") state.queueFilters.review = "pending";
+    if (queueExported) {
+      state.lastExport = null;
+      delete document.body.dataset.lastExport;
+    }
+    if (reviewCount || exportRows) {
+      state.goalChangeNotice = { reason, reviewCount, exportRows };
+    } else if (state.goalChangeNotice) {
+      state.goalChangeNotice = { ...state.goalChangeNotice, reason };
+    } else {
+      state.goalChangeNotice = null;
+    }
+  }
+
   function activateTab(tabName) {
     document.querySelectorAll("#analysisWorkspace .tab").forEach((tab) => {
       tab.classList.toggle("active", tab.dataset.tab === tabName);
@@ -361,6 +386,7 @@
       if (!key || !reviewLabels[status]) return;
       if (status === "pending") delete state.actionReviews[key];
       else state.actionReviews[key] = status;
+      state.goalChangeNotice = null;
       renderAnalysis();
       return;
     }
@@ -375,6 +401,7 @@
         if (status === "pending") delete state.actionReviews[row.reviewKey];
         else state.actionReviews[row.reviewKey] = status;
       });
+      state.goalChangeNotice = null;
       renderAnalysis();
       return;
     }
@@ -887,6 +914,8 @@
     state.productFilter = "全部";
     state.selectedCampaigns.clear();
     state.actionReviews = {};
+    state.lastExport = null;
+    state.goalChangeNotice = null;
     state.todayFocusKeys = new Set();
     state.queueFilters = { action: "all", risk: "all", review: "pending", impact: "all", sort: "priority" };
     state.tableFilters = { targetCampaign: "", targetAction: "all", searchCampaign: "", searchAction: "all" };
@@ -1215,6 +1244,7 @@
         const value = toNumber(input.value);
         if (value > 0) state.campaignTargetCpsOverrides[campaign] = value;
         else delete state.campaignTargetCpsOverrides[campaign];
+        invalidateExecutionState("活动目标 CPS 已更新");
         saveGoalPrefs();
         renderAll();
       });
@@ -1494,6 +1524,7 @@
       </div>
       ${renderExecutionCoach(executionCoach)}
       ${renderGoalCheckpoint(calculated, campaigns)}
+      ${renderGoalChangeNotice()}
       ${renderTodayFocus(todayFocusRows, queueRows)}
       <div class="task-rail" aria-label="行动任务筛选">
         ${cards.map((card) => actionTaskChip(card)).join("")}
@@ -1682,6 +1713,22 @@
         <span><b>${actualCps ? fmtMoney(actualCps) : "无订单"}</b> 实际 CPS</span>
         <span><b>${fmtInt(overrideCount)}</b> 活动覆盖</span>
       </div>
+    </div>`;
+  }
+
+  function renderGoalChangeNotice() {
+    const notice = state.goalChangeNotice;
+    if (!notice) return "";
+    const parts = [];
+    if (notice.reviewCount) parts.push(`${fmtInt(notice.reviewCount)} 个确认/暂缓已撤回`);
+    if (notice.exportRows) parts.push(`${fmtInt(notice.exportRows)} 行旧导出已失效`);
+    return `<div class="goal-change-notice">
+      <div>
+        <span class="eyebrow">Goal updated</span>
+        <h4>${escapeHtml(notice.reason || "目标已更新")}，行动队列已重新计算</h4>
+        <p>建议 bid、止损阈值和优先级会随目标变化。请重新确认动作后再导出执行包。</p>
+      </div>
+      <span>${escapeHtml(parts.length ? parts.join(" · ") : "已按新目标刷新")}</span>
     </div>`;
   }
 
@@ -3138,6 +3185,7 @@
       columns: columns.length,
       sample: csv.slice(0, 160),
     };
+    state.goalChangeNotice = null;
     document.body.dataset.lastExport = JSON.stringify(state.lastExport);
     refreshWorkflowAfterQueueExport(key);
     const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });

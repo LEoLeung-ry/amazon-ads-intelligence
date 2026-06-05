@@ -1737,6 +1737,55 @@ body[data-bulk-ready="false"] .campaign-panel {
   color: #10212b;
 }
 
+.goal-change-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 14px 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 8px;
+  background: #fffbeb;
+}
+
+.goal-change-notice > div {
+  min-width: 0;
+}
+
+.goal-change-notice h4,
+.goal-change-notice p {
+  margin: 0;
+}
+
+.goal-change-notice h4 {
+  margin-top: 2px;
+  color: #10212b;
+  font-size: 13px;
+}
+
+.goal-change-notice p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.goal-change-notice > span {
+  flex: 0 0 auto;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 999px;
+  background: #fff;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .today-focus {
   display: flex;
   align-items: center;
@@ -3357,6 +3406,14 @@ tbody tr:hover {
 
   .goal-checkpoint {
     display: grid;
+  }
+
+  .goal-change-notice {
+    display: grid;
+  }
+
+  .goal-change-notice > span {
+    width: fit-content;
   }
 
   .scope-summary {

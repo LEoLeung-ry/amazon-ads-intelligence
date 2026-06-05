@@ -5,7 +5,7 @@ Read it before modifying code or advertising logic.
 
 ## 0. Latest Push Snapshot
 
-Last maintained for the 2026-06-05 GitHub push at the user's request.
+Last maintained for the 2026-06-06 GitHub push at the user's request.
 
 This push preserves the current production app code and refreshes this handoff so another AI can identify the product architecture without guessing. The current product direction is:
 
@@ -21,6 +21,7 @@ This push preserves the current production app code and refreshes this handoff s
 
 Latest implementation note for this release:
 
+- Changing product default CPS, natural CVR, or any campaign-level CPS override calls `invalidateExecutionState()`. This clears stale queue confirmations, resets the queue to pending focus, removes stale product-queue export receipts, and shows `goal-change-notice` so the operator understands that bids, stop-loss thresholds, and priorities have been recalculated and must be reconfirmed before export.
 - `targetTable` and `searchTable` use a wider `decision-reason` column for the reason/explanation field. It is intentionally a single-line summary cell with full text in the native title tooltip, so long Chinese explanations do not inflate row height.
 - Queue filters now have an empty-result recovery strip. When filters return no action rows, the UI offers `data-reset-queue-filters` instead of leaving the operator at a dead end.
 - Campaign search with zero matches uses `scope-summary.empty` and keeps `data-clear-campaign-search` visible, so a new user can recover to the all-product action queue without understanding internal filter priority.
