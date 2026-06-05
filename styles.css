@@ -3496,6 +3496,46 @@ tbody tr:hover {
     min-width: 112px;
   }
 
+  body[data-bulk-ready="false"] .import-assist.info {
+    gap: 6px;
+  }
+
+  body[data-bulk-ready="false"] .import-assist.info > span {
+    display: none;
+  }
+
+  body[data-bulk-ready="false"] .import-assist.info .assist-checklist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 1px;
+  }
+
+  body[data-bulk-ready="false"] .import-assist.info .assist-row {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+    border-top: 0;
+  }
+
+  body[data-bulk-ready="false"] .import-assist.info .assist-row em {
+    max-width: none;
+  }
+
+  body[data-bulk-ready="false"] .import-assist.info .assist-row div {
+    display: block;
+  }
+
+  body[data-bulk-ready="false"] .import-assist.info .assist-row strong {
+    font-size: 11px;
+  }
+
+  body[data-bulk-ready="false"] .import-assist.info .assist-row small {
+    display: none;
+  }
+
   .campaign-panel {
     max-height: 360px;
   }
