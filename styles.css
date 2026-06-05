@@ -3562,11 +3562,13 @@ tbody tr:hover {
     display: grid;
   }
 
+  body[data-bulk-ready="false"] .topbar,
   body[data-bulk-ready="true"] .topbar {
     gap: 8px;
     margin-bottom: 10px;
   }
 
+  body[data-bulk-ready="false"] .topbar p,
   body[data-bulk-ready="true"] .topbar p {
     display: none;
   }
@@ -3580,16 +3582,19 @@ tbody tr:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  body[data-bulk-ready="false"] .workflow-strip,
   body[data-bulk-ready="true"] .workflow-strip {
     grid-template-columns: 1fr;
     margin: -2px 0 8px;
   }
 
+  body[data-bulk-ready="false"] .workflow-step.idle,
   body[data-bulk-ready="true"] .workflow-step.idle,
   body[data-bulk-ready="true"] .workflow-step.done:not(:last-child) {
     display: none;
   }
 
+  body[data-bulk-ready="false"] .workflow-step,
   body[data-bulk-ready="true"] .workflow-step {
     padding: 8px 10px;
   }
@@ -3605,6 +3610,14 @@ tbody tr:hover {
     padding: 10px 12px;
   }
 
+  body[data-bulk-ready="false"] .workflow-compass {
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+  }
+
+  body[data-bulk-ready="false"] .workflow-compass-copy p,
+  body[data-bulk-ready="false"] .workflow-compass-side small,
   body[data-bulk-ready="true"] .workflow-compass-copy p,
   body[data-bulk-ready="true"] .workflow-compass-side small {
     display: none;
