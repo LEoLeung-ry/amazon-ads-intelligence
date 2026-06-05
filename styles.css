@@ -1264,6 +1264,104 @@ body[data-bulk-ready="false"] .campaign-panel {
   margin-bottom: 12px;
 }
 
+.scope-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--teal);
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.scope-summary.search {
+  border-left-color: var(--blue);
+}
+
+.scope-summary.selected {
+  border-left-color: var(--amber);
+}
+
+.scope-summary.product {
+  border-left-color: var(--green);
+}
+
+.scope-copy {
+  min-width: 0;
+}
+
+.scope-copy h4,
+.scope-copy p {
+  margin: 0;
+}
+
+.scope-copy h4 {
+  margin-top: 2px;
+  color: #10212b;
+  font-size: 14px;
+}
+
+.scope-copy p {
+  margin-top: 3px;
+  max-width: 760px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.scope-side {
+  min-width: 360px;
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+}
+
+.scope-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.scope-chips span {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.scope-chips b {
+  color: #10212b;
+  font-size: 12px;
+}
+
+.scope-side button {
+  width: fit-content;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.scope-side button:hover {
+  border-color: var(--teal);
+  color: var(--teal);
+}
+
 .action-queue {
   margin-bottom: 16px;
 }
@@ -2959,6 +3057,19 @@ tbody tr:hover {
     display: grid;
   }
 
+  .scope-summary {
+    display: grid;
+  }
+
+  .scope-side {
+    min-width: 0;
+    justify-items: start;
+  }
+
+  .scope-chips {
+    justify-content: flex-start;
+  }
+
   .goal-checkpoint-metrics {
     justify-content: flex-start;
     min-width: 0;
@@ -3073,6 +3184,15 @@ tbody tr:hover {
 
   .workflow-compass-side > div {
     display: grid;
+  }
+
+  .scope-side button {
+    width: 100%;
+  }
+
+  .scope-chips span {
+    flex: 1 1 132px;
+    justify-content: space-between;
   }
 
   .execution-summary,

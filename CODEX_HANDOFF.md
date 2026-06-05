@@ -65,6 +65,7 @@ Important behavior:
 - If the campaign search box has text, analyze only fuzzy-matched campaigns.
 - Manual campaign selection is still supported, but global campaign search takes priority when present.
 - The owner optimizes one product at a time across all of that product's campaigns. The default homepage workflow must therefore stay product-wide first, not campaign-by-campaign first.
+- After Bulk import, `#scopeSummary` must make the active analysis scope explicit. KPI cards, action queue, confirmations, and queue exports all use the same scope: campaign search first, then manually selected campaigns, otherwise the visible product group/all-product set.
 - Campaign-level CPS overrides are optional. Empty override fields inherit the product default CPS.
 - Goal preferences are saved in `localStorage` under `amazonAds.goalPrefs.v2`; uploaded files themselves are never persisted.
 - The first screen should communicate a task path, not a feature catalog: import data, confirm goals, review the action queue, confirm actions, export execution data.
@@ -437,6 +438,7 @@ Important UI behavior:
 - Target diagnostics and search term decision tables must include the related ad group column (`广告组`) next to campaign (`活动`) so every action is traceable to both campaign and ad group.
 - The analysis workspace uses a quieter focus layout: fixed-order KPI chunks, a stronger primary judgment card, muted support cards, and a plain layered background to reduce cognitive load.
 - After import, show a compact metric guide for CPS, CVR, RPC, and ACOS. This is for new operators; keep it short and operational, not academic.
+- After import, show `renderScopeSummary()` above KPI cards so first-time users know whether they are looking at all-product activity, a product group, activity search results, or manually selected campaigns. The scope summary may include a reset button for search/selection/product filter, but it must stay compact.
 - After import, keep `#briefGrid` hidden until `state.detailsExpanded` is true. The first layer should be workflow compass, KPI context, metric guide, and the all-product action queue; judgment/support cards belong to the explanation layer opened by `展开解释和详细分析`.
 - KPI order must remain: 点击, CTR, CVR, 订单, CPC, 花费, 销售额, ACOS, ROAS, 活动.
 - The all-product action queue should stay above deep tab tables after data import.
@@ -525,6 +527,7 @@ Before opening a PR or merging:
    - Workflow compass shows exactly one current next step: upload before Bulk, queue review after Bulk, export after confirmed actions, and exported status after a product queue CSV is downloaded.
    - Upload guidance shows the default upload order before import, a clear warning for unsupported/incorrect files, and a success hint after Bulk is recognized.
    - Metric guide explains CPS, CVR, RPC, and ACOS after import without expanding the page into a tutorial.
+   - Scope summary appears above KPI cards after import, shows the current analysis scope, and updates when activity search, product filter, or manual campaign selection changes.
    - The judgment/support `briefGrid` is hidden on the first imported view and appears only after clicking `展开解释和详细分析`; the action queue should move higher than the old report-heavy layout.
    - Goal checkpoint appears above the action queue after import and reflects default target CPS, natural CVR, derived ACOS, actual CPS, and campaign override count.
    - Lead action preview appears above queue filters, mirrors the first currently filtered queue row, and its review buttons update the same row state as the table.

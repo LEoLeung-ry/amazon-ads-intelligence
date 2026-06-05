@@ -132,6 +132,7 @@
       "workflowCompass",
       "emptyState",
       "focusBand",
+      "scopeSummary",
       "metricGuide",
       "briefGrid",
       "actionQueue",
@@ -319,6 +320,25 @@
     const checklistButton = event.target.closest("[data-download-field-checklist]");
     if (checklistButton) {
       downloadFieldChecklist();
+      return;
+    }
+    const clearSearchButton = event.target.closest("[data-clear-campaign-search]");
+    if (clearSearchButton) {
+      state.search = "";
+      if (els.campaignSearch) els.campaignSearch.value = "";
+      renderAll();
+      return;
+    }
+    const clearSelectionButton = event.target.closest("[data-clear-campaign-selection]");
+    if (clearSelectionButton) {
+      state.selectedCampaigns.clear();
+      renderAll();
+      return;
+    }
+    const resetProductButton = event.target.closest("[data-reset-product-filter]");
+    if (resetProductButton) {
+      state.productFilter = "全部";
+      renderAll();
       return;
     }
     const exportConfirmedButton = event.target.closest("[data-workflow-export-confirmed]");
@@ -1222,6 +1242,7 @@
         ? "默认分析当前可见活动；需要聚焦时再搜索活动名或勾选固定组合。"
         : "按一个产品下的所有广告活动分析，先找放量、控费、承接这三类动作。";
 
+    renderScopeSummary(selectedCampaigns, selectedSearch, metrics, calculated);
     renderKpis(metrics, calculated, selectedCampaigns.length, selectedSearch.length);
     renderMetricGuide();
     renderBrief(metrics, calculated, selectedTargets, selectedSearch, selectedCampaigns);
@@ -1234,6 +1255,62 @@
     renderPlacement(selectedPlacement, metrics);
     renderMentorTable();
     renderCharts(selectedCampaigns, selectedTargets, selectedPlacement, selectedNames);
+  }
+
+  function renderScopeSummary(campaigns, searchRows, metrics, calculated) {
+    if (!els.scopeSummary) return;
+    if (!state.bulkLoaded) {
+      els.scopeSummary.innerHTML = "";
+      return;
+    }
+    const campaignCount = campaigns.length;
+    const searchCount = searchRows.length;
+    const targetCps = averageTargetCps(campaigns);
+    const visibleCount = getVisibleCampaigns().length;
+    let title = "正在分析全产品活动";
+    let body = "KPI、行动队列、确认状态和导出文件都基于这个范围。需要聚焦时，先用左侧活动搜索。";
+    let tone = "all";
+    let action = "";
+
+    if (state.search) {
+      title = `正在分析活动搜索结果：${fmtInt(campaignCount)} 个活动`;
+      body = "活动搜索优先于手动勾选；右侧队列和导出会暂时只看这些匹配活动。";
+      tone = "search";
+      action = '<button type="button" data-clear-campaign-search>回到全产品</button>';
+    } else if (state.selectedCampaigns.size) {
+      title = `正在分析已勾选活动：${fmtInt(campaignCount)} 个`;
+      body = "当前只看左侧勾选活动。适合复盘一组活动；要回到产品全局，请清空勾选。";
+      tone = "selected";
+      action = '<button type="button" data-clear-campaign-selection>清空勾选</button>';
+    } else if (state.productFilter !== "全部") {
+      title = `正在分析产品组：${state.productFilter}`;
+      body = `当前产品组下有 ${fmtInt(visibleCount)} 个活动；队列和导出只覆盖这个产品组。`;
+      tone = "product";
+      action = '<button type="button" data-reset-product-filter>全部产品组</button>';
+    }
+
+    const cps = calculated.cpa ? fmtMoney(calculated.cpa) : "无订单";
+    const chips = [
+      ["活动", fmtInt(campaignCount)],
+      ["搜索词", fmtInt(searchCount)],
+      ["目标 CPS", fmtMoney(targetCps)],
+      ["实际 CPS", cps],
+      ["涉及花费", fmtKpiMoney(metrics.spend)],
+    ];
+    els.scopeSummary.className = `scope-summary ${tone}`;
+    els.scopeSummary.innerHTML = `
+      <div class="scope-copy">
+        <span class="eyebrow">Analysis scope</span>
+        <h4>${escapeHtml(title)}</h4>
+        <p>${escapeHtml(body)}</p>
+      </div>
+      <div class="scope-side">
+        <div class="scope-chips">
+          ${chips.map(([label, value]) => `<span><b>${escapeHtml(value)}</b>${escapeHtml(label)}</span>`).join("")}
+        </div>
+        ${action}
+      </div>
+    `;
   }
 
   function renderKpis(metrics, calculated, campaignCount, searchCount) {
