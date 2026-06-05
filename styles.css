@@ -3567,6 +3567,47 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 
+  .task-rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .task-chip {
+    padding: 7px 8px;
+  }
+
+  .task-chip button {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2px;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .task-chip-main {
+    min-width: 0;
+    grid-row: auto;
+    justify-items: center;
+  }
+
+  .task-chip-main span {
+    font-size: 10px;
+  }
+
+  .task-chip-main b {
+    font-size: 18px;
+  }
+
+  .task-title {
+    width: 100%;
+    font-size: 12px;
+  }
+
+  .task-chip small,
+  .task-chip details {
+    display: none;
+  }
+
   .execution-coach-side {
     justify-items: start;
     min-width: 0;
