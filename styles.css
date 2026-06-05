@@ -3604,6 +3604,10 @@ tbody tr:hover {
     text-align: left;
   }
 
+  .queue-export-actions button:disabled {
+    display: none;
+  }
+
   .execution-coach {
     display: grid;
   }
