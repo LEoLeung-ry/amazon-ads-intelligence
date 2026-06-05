@@ -322,6 +322,12 @@
     }
   }
 
+  function clearQueueExportState() {
+    if (!state.lastExport || !["productQueue", "productQueueConfirmed"].includes(state.lastExport.key)) return;
+    state.lastExport = null;
+    delete document.body.dataset.lastExport;
+  }
+
   function activateTab(tabName) {
     document.querySelectorAll("#analysisWorkspace .tab").forEach((tab) => {
       tab.classList.toggle("active", tab.dataset.tab === tabName);
@@ -386,6 +392,7 @@
       if (!key || !reviewLabels[status]) return;
       if (status === "pending") delete state.actionReviews[key];
       else state.actionReviews[key] = status;
+      clearQueueExportState();
       state.goalChangeNotice = null;
       renderAnalysis();
       return;
@@ -401,6 +408,8 @@
         if (status === "pending") delete state.actionReviews[row.reviewKey];
         else state.actionReviews[row.reviewKey] = status;
       });
+      if (rows.length) state.queueFilters.review = status;
+      clearQueueExportState();
       state.goalChangeNotice = null;
       renderAnalysis();
       return;
@@ -1467,6 +1476,7 @@
     const canBatchConfirm = batchConfirmRows.length && isQueueNarrowedForBatch();
     const canBatchReset = batchResetRows.length && isQueueNarrowedForBatch();
     const isTodayBatch = state.queueFilters.impact === "todayFocus";
+    const hasConfirmedRows = confirmedRows.length > 0;
     const queueTitle = isTodayBatch
       ? `本轮执行包（${fmtInt(filteredQueueRows.length)} 项）`
       : `当前筛选动作（${fmtInt(filteredQueueRows.length)} 项）`;
@@ -1474,7 +1484,9 @@
       ? `默认只处理从 ${fmtInt(queueRows.length)} 个候选动作里收敛出的这一批；确认后导出给后台执行。`
       : "当前是扩展筛选结果；确认前先复核风险、目标 CPS 和后台定位。";
     const confirmCurrentLabel = isTodayBatch ? "确认本轮" : "确认待处理";
-    const exportCurrentLabel = isTodayBatch ? "导出本轮" : "导出当前";
+    const exportCurrentLabel = hasConfirmedRows ? "导出当前视图" : isTodayBatch ? "导出本轮" : "导出当前";
+    const confirmedExportClass = hasConfirmedRows ? "export-btn" : "secondary-btn";
+    const currentExportClass = hasConfirmedRows ? "secondary-btn" : "export-btn";
     const taskScopeLabel = isTodayBatch ? "本轮" : "当前范围";
     const taskRowsFor = (action) => filterQueueRows(queueRows, { action });
     const growthTaskRows = taskRowsFor("growth");
@@ -1553,8 +1565,8 @@
           <div class="queue-export-actions">
             <button class="secondary-btn" type="button" data-review-current="confirmed"${canBatchConfirm ? "" : " disabled title=\"先筛选任务、风险或影响后再批量确认\""}>${confirmCurrentLabel} (${batchConfirmRows.length})</button>
             <button class="secondary-btn" type="button" data-review-current="pending"${canBatchReset ? "" : " disabled title=\"先筛选任务、风险或影响后再撤回确认\""}>撤回已确认 (${batchResetRows.length})</button>
-            <button class="secondary-btn" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>导出已确认 (${confirmedRows.length})</button>
-            <button class="export-btn" type="button" data-export-queue${filteredQueueRows.length ? "" : " disabled"}>${exportCurrentLabel} (${filteredQueueRows.length})</button>
+            <button class="${confirmedExportClass}" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>导出已确认 (${confirmedRows.length})</button>
+            <button class="${currentExportClass}" type="button" data-export-queue${filteredQueueRows.length ? "" : " disabled"}>${exportCurrentLabel} (${filteredQueueRows.length})</button>
           </div>
         </div>
         <div class="execution-summary">
