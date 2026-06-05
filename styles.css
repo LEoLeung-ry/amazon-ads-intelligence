@@ -1968,6 +1968,103 @@ body[data-bulk-ready="false"] .campaign-panel {
   color: #0f766e;
 }
 
+.action-language {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  margin: 9px 14px 0;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.action-language-head {
+  min-width: 96px;
+  display: grid;
+  gap: 2px;
+}
+
+.action-language-head span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.action-language-head b {
+  color: #10212b;
+  font-size: 15px;
+}
+
+.action-language-items {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.action-language-items span {
+  min-width: 0;
+  max-width: 260px;
+  display: inline-grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+}
+
+.action-language-items b {
+  color: #10212b;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.action-language-items em {
+  min-width: 20px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #475569;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.action-language-items small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.action-language-items .danger {
+  border-color: rgba(239, 68, 68, 0.22);
+  background: #fef2f2;
+}
+
+.action-language-items .warn {
+  border-color: rgba(245, 158, 11, 0.26);
+  background: #fffbeb;
+}
+
+.action-language-items .safe {
+  border-color: rgba(34, 197, 94, 0.24);
+  background: #f0fdf4;
+}
+
+.action-language-items .info {
+  border-color: rgba(37, 99, 235, 0.2);
+  background: #eff6ff;
+}
+
 .queue-filter-bar {
   display: grid;
   grid-template-columns: repeat(5, minmax(118px, 150px)) minmax(84px, 1fr);
@@ -2882,6 +2979,14 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 
+  .action-language {
+    grid-template-columns: 1fr;
+  }
+
+  .action-language-items span {
+    max-width: none;
+  }
+
   .mobile-action-cards {
     display: grid;
     gap: 8px;
@@ -2948,6 +3053,15 @@ tbody tr:hover {
 
   .lead-action {
     margin-inline: 10px;
+  }
+
+  .action-language {
+    margin-inline: 10px;
+  }
+
+  .action-language-items span {
+    width: 100%;
+    border-radius: 8px;
   }
 
   .lead-action-side .review-control {

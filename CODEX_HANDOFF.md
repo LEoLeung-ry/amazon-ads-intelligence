@@ -291,6 +291,8 @@ The homepage action queue is now the primary workflow.
 - Queue rows include `sales`; it is hidden by default as the expert/custom column `销售额`, mainly for growth opportunity exports and future impact scoring.
 - `renderLeadAction(filteredQueueRows)` appears above queue filters and the table. It translates the current filtered row #1 into one operator-facing action card with execution action, next step, evidence, object, campaign/ad group, recommended bid, and the same review controls as the row. This is meant to reduce table-reading burden; keep it synced with current filters and execution order.
 - `leadPriorityReason(row)` powers the `为什么先看它` line inside the lead action card. It should explain the current filter/sort context plus the strongest business reason (negative conflict, no-order spend, over-target CPS, existing orders, high spend). Keep it short and operational, not a long scoring formula.
+- `renderActionLanguage(filteredQueueRows)` sits between the lead action card and queue filters. It translates only the actions currently visible in the filtered queue into plain operator language, with counts. Keep it compact and current-scope based; it is for first-time users who do not yet know what `检查否定`, `止损`, or `承接` imply.
+- `actionPlainLanguage(action)` owns the short explanations for action tags. Use business language such as budget protection, preventing accidental negative conflicts, small-step bid changes, or carrying over proven terms. Do not turn this into long formulas; formulas belong in task-chip disclosures or expert columns.
 - `withPriorityReasons(rows)` copies that explanation into `priorityReason` for every visible/exported queue row. Keep `优先理由` in the default queue CSV so exported sheets still explain why each row is ordered where it is.
 - `actionGuidance(row)` translates rule output into operator language. It must return `nextStep`, `evidence`, and `risk`.
 - `nextStep` should tell the operator what to do next in Amazon Ads, not merely restate the mathematical rule.
@@ -526,6 +528,7 @@ Before opening a PR or merging:
    - Goal checkpoint appears above the action queue after import and reflects default target CPS, natural CVR, derived ACOS, actual CPS, and campaign override count.
    - Lead action preview appears above queue filters, mirrors the first currently filtered queue row, and its review buttons update the same row state as the table.
    - Lead action preview includes a `为什么先看它` line that changes with queue filters/sorting and provides a short priority rationale.
+   - Action language strip appears between the lead action preview and queue filters, shows only current filtered action types with counts, and uses plain operator language.
    - Lead action preview and the default queue CSV include `后台定位`, so confirmed exports can be used as an execution sheet in Amazon Ads.
    - Default queue CSV includes `优先理由`, matching the lead action rationale and changing when queue sort/filter context changes.
    - Default queue CSV includes `执行分组`, matching the execution package route map and allowing exported rows to be grouped by backend action family.

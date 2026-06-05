@@ -1424,6 +1424,7 @@
         </div>
         ${renderExecutionPackage(confirmedRows)}
         ${renderLeadAction(filteredQueueRows)}
+        ${renderActionLanguage(filteredQueueRows)}
         ${renderQueueFilters(queueRows, filteredQueueRows)}
         ${renderMobileActionCards(filteredQueueRows)}
         <div class="table-wrap"><table id="productActionTable"></table></div>
@@ -2005,6 +2006,44 @@
         ${reviewControl(row)}
       </div>
     </div>`;
+  }
+
+  function renderActionLanguage(rows) {
+    if (!rows.length) return "";
+    const counts = countBy(rows.map((row) => row.action));
+    const actions = Object.keys(counts)
+      .sort((a, b) => actionPriority(a) - actionPriority(b) || counts[b] - counts[a])
+      .slice(0, 5);
+    return `<div class="action-language" aria-label="动作含义">
+      <div class="action-language-head">
+        <span>动作怎么理解</span>
+        <b>${fmtInt(rows.length)} 项</b>
+      </div>
+      <div class="action-language-items">
+        ${actions.map((action) => {
+          const guide = actionPlainLanguage(action);
+          return `<span class="${escapeAttr(guide.tone)}">
+            <b>${escapeHtml(action)}</b>
+            <em>${fmtInt(counts[action])}</em>
+            <small>${escapeHtml(guide.text)}</small>
+          </span>`;
+        }).join("")}
+      </div>
+    </div>`;
+  }
+
+  function actionPlainLanguage(action) {
+    const map = {
+      检查否定: { tone: "danger", text: "有订单但可能被否定覆盖，先防误伤有效流量" },
+      否定: { tone: "danger", text: "确认不相关或低质量后，放入否定候选" },
+      止损: { tone: "danger", text: "无订单高消耗，先降价或暂停观察" },
+      降价: { tone: "warn", text: "CPS 偏高但不急着砍，先降低点击成本" },
+      放量: { tone: "safe", text: "有订单且 CPS 合格，小步提高竞价拿更多订单" },
+      "保留/加预算": { tone: "safe", text: "转化质量合格，预算受限时优先保留" },
+      加精准词: { tone: "info", text: "出单搜索词拆到精准匹配，单独控价" },
+      加商品定向: { tone: "info", text: "出单 ASIN 拆到商品定向，单独承接" },
+    };
+    return map[action] || { tone: "neutral", text: "先复核证据，再决定是否执行" };
   }
 
   function leadPriorityReason(row) {
