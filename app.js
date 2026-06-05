@@ -1508,7 +1508,7 @@
             <button class="secondary-btn" type="button" data-review-current="confirmed"${canBatchConfirm ? "" : " disabled title=\"先筛选任务、风险或影响后再批量确认\""}>确认待处理 (${batchConfirmRows.length})</button>
             <button class="secondary-btn" type="button" data-review-current="pending"${canBatchReset ? "" : " disabled title=\"先筛选任务、风险或影响后再撤回确认\""}>撤回已确认 (${batchResetRows.length})</button>
             <button class="secondary-btn" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>导出已确认 (${confirmedRows.length})</button>
-            <button class="export-btn" type="button" data-export-queue>导出当前 (${filteredQueueRows.length})</button>
+            <button class="export-btn" type="button" data-export-queue${filteredQueueRows.length ? "" : " disabled"}>导出当前 (${filteredQueueRows.length})</button>
           </div>
         </div>
         <div class="execution-summary">
@@ -1518,6 +1518,7 @@
         </div>
         ${renderReviewGuide(filteredQueueRows, confirmedRows, canBatchConfirm)}
         ${renderExecutionPackage(confirmedRows)}
+        ${renderExportReceipt()}
         ${renderLeadAction(filteredQueueRows)}
         ${renderActionLanguage(filteredQueueRows)}
         ${renderQueueFilters(queueRows, filteredQueueRows)}
@@ -1712,6 +1713,32 @@
         <span><b>${fmtInt(structureCount)}</b> 承接</span>
         <span><b>${fmtMoney(spend)}</b> 涉及花费</span>
         <button class="export-btn" type="button" data-export-confirmed>导出已确认 (${fmtInt(rows.length)})</button>
+      </div>
+    </div>`;
+  }
+
+  function renderExportReceipt() {
+    const last = state.lastExport;
+    if (!last || !["productQueue", "productQueueConfirmed"].includes(last.key)) return "";
+    const confirmed = last.key === "productQueueConfirmed";
+    const title = confirmed ? "已导出确认后的执行包" : "已导出当前队列视图";
+    const body = confirmed
+      ? "CSV 已按当前列设置生成。进入 Amazon 后台时，先按执行顺序处理，再用后台定位和后台动作逐项调整。"
+      : "这是当前筛选视图的完整快照，适合复盘或交给同事复核；真正执行前建议先确认动作，再导出已确认。";
+    const action = confirmed
+      ? '<button class="export-btn" type="button" data-export-confirmed>重新导出已确认</button>'
+      : '<button class="secondary-btn" type="button" data-scroll-action-queue>继续确认动作</button>';
+    return `<div class="export-receipt ${confirmed ? "confirmed" : "current"}">
+      <div>
+        <span class="eyebrow">Export receipt</span>
+        <h4>${escapeHtml(title)}</h4>
+        <p>${escapeHtml(body)}</p>
+      </div>
+      <div class="export-receipt-side">
+        <span><b>${fmtInt(last.rows || 0)}</b> 行</span>
+        <span><b>${fmtInt(last.columns || 0)}</b> 列</span>
+        <small>${escapeHtml(last.filename || "CSV")}</small>
+        ${action}
       </div>
     </div>`;
   }
@@ -3169,9 +3196,7 @@
 
   function refreshWorkflowAfterQueueExport(key) {
     if (["productQueue", "productQueueConfirmed"].includes(key)) {
-      const selectedCampaigns = getAnalysisCampaigns();
-      const selectedSet = new Set(selectedCampaigns.map((row) => row.name));
-      renderWorkflow(selectedCampaigns.length, state.searchRows.filter((row) => selectedSet.has(row.campaign)).length);
+      renderAnalysis();
     }
   }
 
