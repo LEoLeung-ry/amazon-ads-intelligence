@@ -285,11 +285,12 @@ The homepage action queue is now the primary workflow.
 - The default queue is intentionally strict. It should include only real action categories: `止损`, `否定`, `检查否定`, `降价`, `放量`, `加精准词`, `加商品定向`, and `保留/加预算`.
 - Keep `观察`, `无流量`, `保持`, `保留`, `继续积累`, `小幅优化`, and `已否定` out of the default queue. These can still appear in expanded diagnostic tables, but showing them by default makes the homepage feel overwhelming.
 - It must show execution order, review status, action, backend execution action, backend path, object, campaign, ad group, next step, evidence, recommended bid, and optional expert metrics.
-- Default queue columns should be execution-first: `执行顺序`, `确认`, `动作`, `后台动作`, `后台定位`, `对象`, `活动`, `广告组`, `下一步`, `证据`, `建议竞价`. Keep `当前 CPS`, `目标 CPS`, `ACOS`, and `原始原因` available as expert/custom columns.
+- Default queue columns should be execution-first: `执行顺序`, `确认`, `动作`, `后台动作`, `后台定位`, `对象`, `活动`, `广告组`, `下一步`, `证据`, `优先理由`, `建议竞价`. Keep `当前 CPS`, `目标 CPS`, `ACOS`, and `原始原因` available as expert/custom columns.
 - `withExecutionOrder(rows)` annotates the current filtered/sorted queue scope with `executionOrder: index + 1`. Recompute this after filtering and sorting so on-screen order, mobile cards, `导出当前`, and `导出已确认` all agree.
 - Queue rows include `sales`; it is hidden by default as the expert/custom column `销售额`, mainly for growth opportunity exports and future impact scoring.
 - `renderLeadAction(filteredQueueRows)` appears above queue filters and the table. It translates the current filtered row #1 into one operator-facing action card with execution action, next step, evidence, object, campaign/ad group, recommended bid, and the same review controls as the row. This is meant to reduce table-reading burden; keep it synced with current filters and execution order.
 - `leadPriorityReason(row)` powers the `为什么先看它` line inside the lead action card. It should explain the current filter/sort context plus the strongest business reason (negative conflict, no-order spend, over-target CPS, existing orders, high spend). Keep it short and operational, not a long scoring formula.
+- `withPriorityReasons(rows)` copies that explanation into `priorityReason` for every visible/exported queue row. Keep `优先理由` in the default queue CSV so exported sheets still explain why each row is ordered where it is.
 - `actionGuidance(row)` translates rule output into operator language. It must return `nextStep`, `evidence`, and `risk`.
 - `nextStep` should tell the operator what to do next in Amazon Ads, not merely restate the mathematical rule.
 - `executionAction` should stay short and operational for exports, e.g. `调高竞价到 ¥X`, `加入否定候选`, `拆出精准词`, or `复核否定冲突`.
@@ -523,6 +524,7 @@ Before opening a PR or merging:
    - Lead action preview appears above queue filters, mirrors the first currently filtered queue row, and its review buttons update the same row state as the table.
    - Lead action preview includes a `为什么先看它` line that changes with queue filters/sorting and provides a short priority rationale.
    - Lead action preview and the default queue CSV include `后台定位`, so confirmed exports can be used as an execution sheet in Amazon Ads.
+   - Default queue CSV includes `优先理由`, matching the lead action rationale and changing when queue sort/filter context changes.
    - Action queue rows can be marked `已确认` or `暂缓`; the review summary updates immediately.
    - `确认待处理` is disabled on the default all-action queue. After filtering to `止损/否定`, it bulk-confirms only pending rows in that filtered set.
    - If one filtered row is already `暂缓`, `确认待处理` preserves it and confirms only the remaining pending rows.

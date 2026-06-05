@@ -1294,11 +1294,11 @@
       state.pendingQueueAutoFocus = false;
     }
     const todayFocusRows = queueRows.filter((row) => state.todayFocusKeys.has(row.reviewKey));
-    const filteredQueueRows = withExecutionOrder(filterQueueRows(queueRows));
+    const filteredQueueRows = withPriorityReasons(withExecutionOrder(filterQueueRows(queueRows)));
     const scopedQueueRows = filterQueueRows(queueRows, { review: "all" });
     state.lastQueueCount = filteredQueueRows.length;
     state.lastReviewCounts = countReviewStatuses(scopedQueueRows);
-    const confirmedRows = withExecutionOrder(filterQueueRows(queueRows, { review: "confirmed" }));
+    const confirmedRows = withPriorityReasons(withExecutionOrder(filterQueueRows(queueRows, { review: "confirmed" })));
     const executionCoach = buildExecutionCoach(scopedQueueRows, confirmedRows);
     const batchConfirmRows = filteredQueueRows.filter((row) => (row.reviewState || "pending") === "pending");
     const batchResetRows = confirmedRows;
@@ -1397,6 +1397,7 @@
       col("广告组", "adGroup", "clip"),
       col("下一步", "nextStep", "reason", { width: "340px" }),
       col("证据", "evidence", "reason", { width: "300px" }),
+      col("优先理由", "priorityReason", "reason", { width: "300px" }),
       col("建议竞价", "recBid", "money"),
       col("风险", "risk", "tag", { defaultVisible: false }),
       col("当前 CPS", "actualCps", "money", { defaultVisible: false }),
@@ -1785,6 +1786,10 @@
     return rows.map((row, index) => ({ ...row, executionOrder: index + 1 }));
   }
 
+  function withPriorityReasons(rows) {
+    return rows.map((row) => ({ ...row, priorityReason: leadPriorityReason(row) }));
+  }
+
   function queueGap(row) {
     if (!row.actualCps || !row.targetCps) return row.spend || 0;
     return Math.abs(row.actualCps / row.targetCps - 1);
@@ -1925,7 +1930,7 @@
         <small>${escapeHtml(row.evidence || "")}</small>
         <div class="lead-priority">
           <b>为什么先看它</b>
-          <span>${escapeHtml(leadPriorityReason(row))}</span>
+          <span>${escapeHtml(row.priorityReason || leadPriorityReason(row))}</span>
         </div>
       </div>
       <div class="lead-action-side">
