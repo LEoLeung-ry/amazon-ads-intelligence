@@ -532,7 +532,7 @@
         record.type = `每小时报告 · ${state.hourlyRows.length} 行`;
         return;
       }
-      throw new Error("CSV 不是商品推广每小时报告，需要包含“开始时间、广告活动名称、7天总销售额”等列");
+      throw new Error("这不是 Bulk 工作簿，也不是可识别的每小时 CSV；请先上传 Bulk xlsx/xls");
     }
 
     if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
@@ -1112,16 +1112,16 @@
     ];
     if (warnFile) {
       tone = "warn";
-      title = "文件没有识别成功";
-      body = `${warnFile.name}：${warnFile.note || "请检查文件格式"}。请按下面三项确认后重新上传。`;
+      title = "还不能生成广告诊断";
+      body = `${warnFile.name}：${warnFile.note || "请检查文件格式"}。主文件必须先上传 Bulk 工作簿；CSV 只能作为分时补充。`;
       checklist = [
-        ["检查 1", "上传 Bulk xlsx/xls", "工作簿里要有商品推广活动 / Sponsored Products Campaigns"],
-        ["检查 2", "搜索词报告", "商品推广搜索词报告用于生成加词、否定和承接建议"],
-        ["检查 3", "CSV 不是 Bulk", "每小时 CSV 只用于分时效率；不能单独生成行动队列"],
+        ["第 1 步", "上传 Bulk xlsx/xls", "工作簿里要有商品推广活动 / Sponsored Products Campaigns"],
+        ["最好有", "搜索词工作表", "商品推广搜索词报告用于生成加词、否定和承接建议"],
+        ["CSV 作用", "只能补充分时", "每小时 CSV 需要开始时间、广告活动名称、7天总销售额"],
       ];
       action = renderAssistActions([
-        { label: "重新选择 Bulk", attr: "data-workflow-upload", variant: "primary" },
-        { label: "字段清单", attr: "data-download-field-checklist", variant: "ghost" },
+        { label: "选择 Bulk", attr: "data-workflow-upload", variant: "primary" },
+        { label: "查看字段清单", attr: "data-download-field-checklist", variant: "ghost" },
         { label: "先看示例", attr: "data-workflow-demo", variant: "ghost" },
       ]);
     } else if (state.bulkLoaded) {
