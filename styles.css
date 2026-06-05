@@ -579,6 +579,7 @@ button {
   gap: 6px;
 }
 
+body[data-bulk-ready="false"] .search-card,
 body[data-bulk-ready="false"] .activity-controls,
 body[data-bulk-ready="false"] .campaign-panel {
   display: none;
@@ -3615,6 +3616,21 @@ tbody tr:hover {
 
   .goal-checkpoint {
     display: grid;
+  }
+
+  body[data-bulk-ready="false"] .goal-card {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  body[data-bulk-ready="false"] .goal-head b,
+  body[data-bulk-ready="false"] .goal-metrics,
+  body[data-bulk-ready="false"] .goal-helper {
+    display: none;
+  }
+
+  body[data-bulk-ready="false"] .goal-fields input {
+    height: 34px;
   }
 
   .goal-change-notice {
