@@ -1443,12 +1443,6 @@
     }
     const targetRows = targets.map((row) => ({ row, decision: targetAction(row, metrics) }));
     const searchDecisionRows = searchRows.map((row) => ({ row, decision: searchDecision(row, metrics) }));
-    const growthTargets = targetRows.filter((item) => item.decision.action === "放量");
-    const growthSearch = searchDecisionRows.filter((item) => item.decision.action === "保留/加预算");
-    const stopTargets = targetRows.filter((item) => ["止损", "降价"].includes(item.decision.action));
-    const stopSearch = searchDecisionRows.filter((item) => item.decision.action === "否定");
-    const negativeConflictSearch = searchDecisionRows.filter((item) => item.decision.action === "检查否定");
-    const structureSearch = searchDecisionRows.filter((item) => ["加精准词", "加商品定向"].includes(item.decision.action));
     const keywordSummary = readKeywordCheckerSummary();
     const keywordRisk = sumKeys(keywordSummary.actions || {}, ["缺精准", "竞价倒挂", "重复分散", "正负冲突", "搜索出单未承接"]);
     const targetCps = averageTargetCps(campaigns);
@@ -1481,43 +1475,54 @@
       : "当前是扩展筛选结果；确认前先复核风险、目标 CPS 和后台定位。";
     const confirmCurrentLabel = isTodayBatch ? "确认本轮" : "确认待处理";
     const exportCurrentLabel = isTodayBatch ? "导出本轮" : "导出当前";
+    const taskScopeLabel = isTodayBatch ? "本轮" : "当前范围";
+    const taskRowsFor = (action) => filterQueueRows(queueRows, { action });
+    const growthTaskRows = taskRowsFor("growth");
+    const stopTaskRows = taskRowsFor("stop");
+    const structureTaskRows = taskRowsFor("structure");
+    const taskRailTitle = isTodayBatch ? "本轮动作构成" : "当前候选类型";
+    const taskRailCopy = isTodayBatch
+      ? "下面只统计本轮执行包，点击卡片会在本轮内继续收窄。"
+      : "当前是候选池视角，点击卡片会继续按任务类型收窄。";
 
     const cards = [
       {
         tone: "green",
         eyebrow: "Growth",
         title: "放量机会",
-        value: growthTargets.length + growthSearch.length,
-        meta: `可放量销售额 ${fmtMoney(sumBy(growthTargets, (item) => item.row.metrics.sales) + sumBy(growthSearch, (item) => item.row.metrics.sales))}`,
+        value: growthTaskRows.length,
+        meta: `${taskScopeLabel}可放量销售额 ${fmtMoney(sumBy(growthTaskRows, (row) => row.sales))}`,
         body: "有订单且实际 CPS 低于目标 CPS 的标的，优先小步加价，避免一次性把学习期打乱。",
         proof: `建议 bid = 目标 CPS × 平滑 CVR；当前平均目标 CPS 约 ${fmtMoney(targetCps)}，自然 CVR ${fmtPct(state.naturalCvr)} 参与小样本平滑。`,
         button: "筛选放量",
         queueAction: "growth",
-        queueCount: growthTargets.length + growthSearch.length,
+        queueCount: growthTaskRows.length,
       },
       {
         tone: "red",
         eyebrow: "Stop loss",
         title: "止损 / 否定",
-        value: stopTargets.length + stopSearch.length + negativeConflictSearch.length,
-        meta: `待保护花费 ${fmtMoney(sumBy(stopTargets, (item) => item.row.metrics.spend) + sumBy(stopSearch, (item) => item.row.metrics.spend) + sumBy(negativeConflictSearch, (item) => item.row.metrics.spend))}`,
+        value: stopTaskRows.length,
+        meta: `${taskScopeLabel}待保护花费 ${fmtMoney(sumBy(stopTaskRows, (row) => row.spend))}`,
         body: "无订单且点击或花费达到阈值时先控费；搜索词层面优先否定不相关或低质量流量。",
         proof: "样本不足先观察；达到点击/花费阈值仍无订单，才进入止损或否定，避免误伤归因期。",
         button: "筛选止损",
         queueAction: "stop",
-        queueCount: stopTargets.length + stopSearch.length + negativeConflictSearch.length,
+        queueCount: stopTaskRows.length,
       },
       {
         tone: "blue",
         eyebrow: "Structure",
         title: "结构修复",
-        value: structureSearch.length + keywordRisk,
-        meta: `承接机会 ${structureSearch.length} 个 · 结构风险 ${keywordRisk} 个`,
+        value: structureTaskRows.length,
+        meta: isTodayBatch
+          ? `${taskScopeLabel}承接 ${fmtInt(structureTaskRows.length)} 个`
+          : `${taskScopeLabel}承接 ${fmtInt(structureTaskRows.length)} 个${keywordRisk ? ` · 体检风险 ${fmtInt(keywordRisk)} 个` : ""}`,
         body: "搜索词或 ASIN 已经证明能转化时，应拆出来承接，用精准/商品定向做控制位。",
         proof: "课程逻辑不是机械找词，而是把有效流量从探索层转到效率层，再用否定词做流量切分。",
         button: "筛选承接",
         queueAction: "structure",
-        queueCount: structureSearch.length,
+        queueCount: structureTaskRows.length,
       },
     ];
 
@@ -1525,10 +1530,10 @@
       <div class="queue-head">
         <div>
           <span class="eyebrow">Action queue</span>
-          <h3>今天先处理这三类动作</h3>
+          <h3>${escapeHtml(taskRailTitle)}</h3>
         </div>
         <div class="queue-actions">
-          <p>只显示可执行动作；观察、已否定和样本不足项收进详细分析。</p>
+          <p>${escapeHtml(taskRailCopy)}</p>
           <button class="secondary-btn" type="button" data-toggle-details>${state.detailsExpanded ? "收起解释和详细分析" : "展开解释和详细分析"}</button>
         </div>
       </div>

@@ -21,6 +21,7 @@ This push preserves the current production app code and refreshes this handoff s
 
 Latest implementation note for this release:
 
+- Task cards now count the current visible scope, not the full candidate pool. In the default `本轮执行包`, Growth/Stop/Structure cards should show the composition of the 30-row batch (for the real fixture: 2 / 28 / 0), while expanded `候选池` can show larger pool counts and structure-health risk counts.
 - Empty-state onboarding, the imported sidebar assist card, workflow strip, workflow compass, execution coach, review guide, and queue table header now all use the same default term: `本轮执行包`. Use `行动队列` only as the broader module name and `候选池` for the expanded full queue.
 - The default action queue now frames the first 30 items as `本轮执行包` and the full queue as `候选池`. Keep this distinction: new operators should understand they only need to review/export the current execution batch first, while the thousands of remaining actions are a searchable/filterable pool, not today's workload.
 - Queue export receipts and the workflow compass now use `activeQueueExport()`, which only returns `lastExport` when the stored export scope matches the current `analysisScopeLabel()`. Do not show an old all-product export receipt after the operator switches to a search, selected campaign set, or product-group scope.
@@ -599,6 +600,7 @@ Before opening a PR or merging:
    - If the selected fixture has no structure queue rows, the structure card button shows `暂无队列` and is disabled.
    - Execution coach appears above the queue table. With the real Bulk fixture it should recommend `先保护预算`, preset `stop`, and show the stop/loss-control pending count.
    - `今日优先` focus strip appears after Bulk import. With the real Bulk fixture the first post-import queue view should default to 30 focused rows and `导出本轮 (30)`, while `查看候选池` restores the full 5,927-row queue/export scope.
+   - In the default `今日优先` batch, task cards show current-batch counts, not full-pool counts. With the real Bulk fixture they should read Growth 2, Stop Loss 28, Structure 0 before the operator expands the candidate pool.
    - After clicking `确认本轮` in the default `今日优先` view, the same 30-row execution batch stays stable, the execution package appears, and `导出已确认` remains scoped to those 30 confirmed rows.
    - Action queue filters work for action, risk, impact (`高花费优先`, `CPS 超目标`, `有订单`, `无订单`), and sorting (`按优先级`, `按花费`, `按订单`, `按偏离目标`).
    - `导出本轮` / `导出当前` respects the active queue filters and current custom column setup.
