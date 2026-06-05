@@ -21,6 +21,7 @@ This push preserves the current production app code and refreshes this handoff s
 
 Latest implementation note for this release:
 
+- Queue export receipts and the workflow compass now use `activeQueueExport()`, which only returns `lastExport` when the stored export scope matches the current `analysisScopeLabel()`. Do not show an old all-product export receipt after the operator switches to a search, selected campaign set, or product-group scope.
 - Confirmed execution-package exports now append export context columns (`导出时间`, `分析范围`, `产品默认 CPS`, `自然 CVR`) plus hidden metric columns (`目标 CPS`, `当前 CPS`, `ACOS`) through `exportColumnsForKey()`. This keeps the visible table light while making forwarded CSVs self-explanatory for another operator.
 - Queue exports now use `queueExportFilename()` so current-queue and confirmed execution-package CSV filenames include analysis scope plus local timestamp, e.g. all-product/search/selected/product-group context. Keep fixed generic filenames out of queue exports because operators may produce multiple execution packages in one day.
 - Confirmed action exports automatically append execution tracking columns (`执行状态`, `执行备注`, `复盘日期`) through `exportColumnsForKey()`, even when those columns are hidden in the on-screen table. This preserves the lightweight queue UI while making the CSV usable as an execution log in Amazon Ads backend work.

@@ -1769,8 +1769,8 @@
   }
 
   function renderExportReceipt() {
-    const last = state.lastExport;
-    if (!last || !["productQueue", "productQueueConfirmed"].includes(last.key)) return "";
+    const last = activeQueueExport();
+    if (!last) return "";
     const confirmed = last.key === "productQueueConfirmed";
     const title = confirmed ? "已导出确认后的执行包" : "已导出当前队列视图";
     const body = confirmed
@@ -1808,6 +1808,13 @@
     return `<div class="export-next-steps">
       ${steps.map(([label, text]) => `<span><b>${escapeHtml(label)}</b>${escapeHtml(text)}</span>`).join("")}
     </div>`;
+  }
+
+  function activeQueueExport() {
+    const last = state.lastExport;
+    if (!last || !["productQueue", "productQueueConfirmed"].includes(last.key)) return null;
+    if (last.scope && last.scope !== analysisScopeLabel()) return null;
+    return last;
   }
 
   function renderExecutionHandoff() {
@@ -2492,9 +2499,8 @@
     if (!els.workflowCompass) return;
     const pending = state.lastReviewCounts.pending || 0;
     const held = state.lastReviewCounts.held || 0;
-    const exportedRows = state.lastExport && ["productQueue", "productQueueConfirmed"].includes(state.lastExport.key)
-      ? state.lastExport.rows
-      : 0;
+    const activeExport = activeQueueExport();
+    const exportedRows = activeExport ? activeExport.rows : 0;
     let tone = "upload";
     let step = "第 1 步";
     let title = "先上传 Bulk 工作簿";
@@ -2510,7 +2516,7 @@
       step = "第 5 步";
       title = `已导出 ${fmtInt(exportedRows)} 行执行数据`;
       body = "这一轮已经形成可执行文件。进入 Amazon 后台前，再按执行顺序复核高风险否定和大额调价项。";
-      meta = `${state.lastExport.filename || "CSV"} · ${fmtInt(state.lastExport.columns || 0)} 列`;
+      meta = `${activeExport.filename || "CSV"} · ${fmtInt(activeExport.columns || 0)} 列`;
       actions = `
         <button class="secondary-btn" type="button" data-scroll-action-queue>回到队列</button>
         <button class="export-btn" type="button" data-workflow-export-confirmed>重新导出已确认</button>
