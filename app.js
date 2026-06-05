@@ -20,6 +20,7 @@
     detailsExpanded: false,
     lastQueueCount: 0,
     lastReviewCounts: { pending: 0, confirmed: 0, held: 0 },
+    lastExport: null,
     actionReviews: {},
     todayFocusKeys: new Set(),
     pendingQueueAutoFocus: false,
@@ -128,6 +129,7 @@
       "workspaceSubtitle",
       "statusPills",
       "workflowStrip",
+      "workflowCompass",
       "emptyState",
       "focusBand",
       "metricGuide",
@@ -303,6 +305,21 @@
   }
 
   function handleGlobalShortcutClick(event) {
+    const uploadButton = event.target.closest("[data-workflow-upload]");
+    if (uploadButton) {
+      els.fileInput.click();
+      return;
+    }
+    const demoButton = event.target.closest("[data-workflow-demo]");
+    if (demoButton) {
+      loadDemoData();
+      return;
+    }
+    const exportConfirmedButton = event.target.closest("[data-workflow-export-confirmed]");
+    if (exportConfirmedButton) {
+      exportTableCsv("productQueueConfirmed", "已确认行动队列.csv");
+      return;
+    }
     const queueButton = event.target.closest("[data-scroll-action-queue]");
     if (!queueButton) return;
     const target = els.actionQueue?.hidden ? els.workflowStrip : els.actionQueue;
@@ -1939,6 +1956,78 @@
         <small>${escapeHtml(step.meta)}</small>
       </div>`)
       .join("");
+    renderWorkflowCompass({ ready, campaignCount, searchCount, queueCount, confirmed });
+  }
+
+  function renderWorkflowCompass({ ready, campaignCount, searchCount, queueCount, confirmed }) {
+    if (!els.workflowCompass) return;
+    const pending = state.lastReviewCounts.pending || 0;
+    const held = state.lastReviewCounts.held || 0;
+    const exportedRows = state.lastExport && ["productQueue", "productQueueConfirmed"].includes(state.lastExport.key)
+      ? state.lastExport.rows
+      : 0;
+    let tone = "upload";
+    let step = "第 1 步";
+    let title = "先上传 Bulk 工作簿";
+    let body = "不用先研究所有功能。Bulk 是生成活动、标的、搜索词和行动队列的主文件；每小时 CSV 与 SciAds 记录可以后补。";
+    let meta = "文件只在当前浏览器本地解析";
+    let actions = `
+      <button class="export-btn" type="button" data-workflow-upload>选择 Bulk</button>
+      <button class="secondary-btn" type="button" data-workflow-demo>体验示例</button>
+    `;
+
+    if (ready && exportedRows) {
+      tone = "done";
+      step = "第 5 步";
+      title = `已导出 ${fmtInt(exportedRows)} 行执行数据`;
+      body = "这一轮已经形成可执行文件。进入 Amazon 后台前，再按执行顺序复核高风险否定和大额调价项。";
+      meta = `${state.lastExport.filename || "CSV"} · ${fmtInt(state.lastExport.columns || 0)} 列`;
+      actions = `
+        <button class="secondary-btn" type="button" data-scroll-action-queue>回到队列</button>
+        <button class="export-btn" type="button" data-workflow-export-confirmed>重新导出已确认</button>
+      `;
+    } else if (ready && confirmed) {
+      tone = "export";
+      step = "第 4 步";
+      title = `已确认 ${fmtInt(confirmed)} 个动作，下一步导出执行包`;
+      body = `已确认项会按后台动作分组并带执行顺序。还有 ${fmtInt(pending)} 个待确认、${fmtInt(held)} 个暂缓，不需要一次处理完整张表。`;
+      meta = "导出已确认 CSV 后即可进入后台逐项操作";
+      actions = `
+        <button class="secondary-btn" type="button" data-scroll-action-queue>继续确认</button>
+        <button class="export-btn" type="button" data-workflow-export-confirmed>导出已确认</button>
+      `;
+    } else if (ready && queueCount) {
+      tone = "queue";
+      step = "第 3 步";
+      title = "现在只看行动队列";
+      body = `已从 ${fmtInt(campaignCount)} 个活动和 ${fmtInt(searchCount)} 条搜索词里收敛出 ${fmtInt(queueCount)} 个可执行动作。先处理今日优先，再展开明细。`;
+      meta = `目标 CPS ${fmtMoney(state.defaultTargetCps)} · 自然 CVR ${fmtPct(state.naturalCvr)}`;
+      actions = `
+        <button class="export-btn" type="button" data-scroll-action-queue>查看行动队列</button>
+      `;
+    } else if (ready) {
+      tone = "empty";
+      step = "第 3 步";
+      title = "当前范围没有需要立刻执行的动作";
+      body = "可以放宽活动搜索、检查目标 CPS 是否过严，或展开详细分析查看观察项、样本不足项和结构体检。";
+      meta = `${fmtInt(campaignCount)} 个活动 · ${fmtInt(searchCount)} 条搜索词`;
+      actions = `
+        <button class="secondary-btn" type="button" data-scroll-action-queue>查看详细入口</button>
+      `;
+    }
+
+    els.workflowCompass.className = `workflow-compass ${tone}`;
+    els.workflowCompass.innerHTML = `
+      <div class="workflow-compass-copy">
+        <span>${escapeHtml(step)}</span>
+        <h3>${escapeHtml(title)}</h3>
+        <p>${escapeHtml(body)}</p>
+      </div>
+      <div class="workflow-compass-side">
+        <small>${escapeHtml(meta)}</small>
+        <div>${actions}</div>
+      </div>
+    `;
   }
 
   function actionTaskChip(card) {
@@ -2589,13 +2678,15 @@
     const csv = [header, ...body]
       .map((line) => line.map(csvEscape).join(","))
       .join("\r\n");
-    document.body.dataset.lastExport = JSON.stringify({
+    state.lastExport = {
       key,
       filename,
       rows: table.rows.length,
       columns: columns.length,
       sample: csv.slice(0, 160),
-    });
+    };
+    document.body.dataset.lastExport = JSON.stringify(state.lastExport);
+    refreshWorkflowAfterQueueExport(key);
     const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -2648,6 +2739,14 @@
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  }
+
+  function refreshWorkflowAfterQueueExport(key) {
+    if (["productQueue", "productQueueConfirmed"].includes(key)) {
+      const selectedCampaigns = getAnalysisCampaigns();
+      const selectedSet = new Set(selectedCampaigns.map((row) => row.name));
+      renderWorkflow(selectedCampaigns.length, state.searchRows.filter((row) => selectedSet.has(row.campaign)).length);
+    }
   }
 
   function formatForExport(value, type) {

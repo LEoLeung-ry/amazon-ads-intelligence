@@ -791,6 +791,101 @@ body[data-bulk-ready="false"] .campaign-panel {
   color: #15803d;
 }
 
+.workflow-compass {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin: 0 0 16px;
+  padding: 13px 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-left: 4px solid var(--teal);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045);
+}
+
+.workflow-compass.upload {
+  border-left-color: var(--blue);
+  background: linear-gradient(90deg, rgba(239, 246, 255, 0.92), #ffffff 48%);
+}
+
+.workflow-compass.queue {
+  border-left-color: var(--teal);
+  background: linear-gradient(90deg, rgba(240, 253, 250, 0.94), #ffffff 50%);
+}
+
+.workflow-compass.export {
+  border-left-color: var(--amber);
+  background: linear-gradient(90deg, rgba(255, 251, 235, 0.94), #ffffff 50%);
+}
+
+.workflow-compass.done {
+  border-left-color: var(--green);
+  background: linear-gradient(90deg, rgba(240, 253, 244, 0.94), #ffffff 50%);
+}
+
+.workflow-compass.empty {
+  border-left-color: #94a3b8;
+  background: #fbfdff;
+}
+
+.workflow-compass-copy {
+  min-width: 0;
+}
+
+.workflow-compass-copy span {
+  color: var(--teal-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.workflow-compass-copy h3,
+.workflow-compass-copy p {
+  margin: 0;
+}
+
+.workflow-compass-copy h3 {
+  margin-top: 4px;
+  color: #10212b;
+  font-size: 16px;
+  line-height: 1.28;
+}
+
+.workflow-compass-copy p {
+  margin-top: 5px;
+  max-width: 820px;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.workflow-compass-side {
+  min-width: 190px;
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.workflow-compass-side small {
+  color: var(--muted);
+  font-size: 11px;
+  text-align: right;
+}
+
+.workflow-compass-side > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.workflow-compass-side .export-btn,
+.workflow-compass-side .secondary-btn {
+  min-height: 34px;
+  padding: 0 12px;
+}
+
 .status-pills {
   display: flex;
   flex-wrap: wrap;
@@ -2448,6 +2543,24 @@ tbody tr:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .workflow-compass {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .workflow-compass-side {
+    min-width: 0;
+    justify-items: start;
+  }
+
+  .workflow-compass-side small {
+    text-align: left;
+  }
+
+  .workflow-compass-side > div {
+    justify-content: flex-start;
+  }
+
   .hero-panel {
     grid-template-columns: 1fr;
   }
@@ -2570,6 +2683,16 @@ tbody tr:hover {
 
   .onboarding-steps {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workflow-compass-side > div,
+  .workflow-compass-side .export-btn,
+  .workflow-compass-side .secondary-btn {
+    width: 100%;
+  }
+
+  .workflow-compass-side > div {
+    display: grid;
   }
 
   .execution-summary,

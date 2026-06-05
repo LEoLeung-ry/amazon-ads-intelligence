@@ -401,6 +401,8 @@ Important UI behavior:
 
 - First screen is the usable app, not a landing page.
 - The analysis workspace top area includes a compact workflow strip: `导入数据`, `确认目标`, `查看队列`, `确认动作`, `导出结果`. Keep this lightweight and status-driven.
+- Directly under the workflow strip, `#workflowCompass` renders the single recommended next step. `renderWorkflowCompass()` switches between upload, queue review, confirmed-action export, already-exported, and no-action states. Keep it focused on one action at a time; do not turn it into another KPI/report block.
+- `handleGlobalShortcutClick()` owns the workflow compass buttons: `data-workflow-upload`, `data-workflow-demo`, `data-scroll-action-queue`, and `data-workflow-export-confirmed`. Keep those actions global because the compass sits outside `#actionQueue`.
 - The empty state uses business language around turning ad reports into executable actions, and it shows file requirements instead of decorative graphics.
 - The empty state should stay light and task-first: white surface, clear Bulk upload CTA in the main workspace, five-step workflow, and a compact required/optional file checklist. Do not turn it back into a heavy marketing hero.
 - `#heroBrowseBtn` is a secondary entry to the same local file picker as the left-sidebar upload button. Keep both paths wired to `#fileInput` so first-time users can start from either the main workspace or sidebar.
@@ -508,6 +510,7 @@ Before opening a PR or merging:
    - Demo data should produce representative action categories for onboarding: `检查否定`, `否定`, `止损` or `降价`, `放量`, `加精准词`, `加商品定向`, and `保留/加预算` when thresholds allow.
    - Clicking `选择 Bulk 工作簿` opens the same local file picker and successfully imports the real Bulk fixture.
    - Workflow strip updates from `先上传 Bulk` to campaign/search-term counts after import.
+   - Workflow compass shows exactly one current next step: upload before Bulk, queue review after Bulk, export after confirmed actions, and exported status after a product queue CSV is downloaded.
    - Upload guidance shows the default upload order before import, a clear warning for unsupported/incorrect files, and a success hint after Bulk is recognized.
    - Metric guide explains CPS, CVR, RPC, and ACOS after import without expanding the page into a tutorial.
    - Goal checkpoint appears above the action queue after import and reflects default target CPS, natural CVR, derived ACOS, actual CPS, and campaign override count.
