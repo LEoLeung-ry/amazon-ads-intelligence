@@ -1763,6 +1763,7 @@
 
   function renderExecutionPackage(rows) {
     if (!rows.length) return "";
+    const exported = activeQueueExport()?.key === "productQueueConfirmed";
     const stopCount = rows.filter((row) => queueActionMatches("stop", row.action)).length;
     const growthCount = rows.filter((row) => queueActionMatches("growth", row.action)).length;
     const structureCount = rows.filter((row) => queueActionMatches("structure", row.action)).length;
@@ -1772,8 +1773,8 @@
     return `<div class="execution-package">
       <div class="execution-package-body">
         <span class="eyebrow">Execution package</span>
-        <h4>已确认 ${fmtInt(rows.length)} 个动作，可以导出执行</h4>
-        <p>这一包已按当前筛选收敛，适合导出后进入 Amazon 后台逐项处理。执行前再复核高风险和否定冲突项。</p>
+        <h4>${exported ? `已导出 ${fmtInt(rows.length)} 个动作，可以进入后台执行` : `已确认 ${fmtInt(rows.length)} 个动作，可以导出执行`}</h4>
+        <p>${exported ? "这一包已经生成 CSV。进入 Amazon 后台时，按执行顺序处理，并在执行表里记录跳过或需复核的项。" : "这一包已按当前筛选收敛，适合导出后进入 Amazon 后台逐项处理。执行前再复核高风险和否定冲突项。"}</p>
         <div class="execution-plan" aria-label="执行路线图">
           ${plan.map((item, index) => `<div class="execution-step">
             <b>${fmtInt(index + 1)}. ${escapeHtml(item.label)}</b>
@@ -1788,7 +1789,7 @@
         <span><b>${fmtInt(growthCount)}</b> 放量</span>
         <span><b>${fmtInt(structureCount)}</b> 承接</span>
         <span><b>${fmtMoney(spend)}</b> 涉及花费</span>
-        <button class="export-btn" type="button" data-export-confirmed>导出已确认 (${fmtInt(rows.length)})</button>
+        <button class="export-btn" type="button" data-export-confirmed>${exported ? "重新导出已确认" : "导出已确认"} (${fmtInt(rows.length)})</button>
       </div>
     </div>`;
   }
@@ -2129,6 +2130,7 @@
     const confirmedCount = confirmedRows.length;
     const baseMeta = `待确认 ${fmtInt(pendingRows.length)} · 已确认 ${fmtInt(confirmedCount)}`;
     const suggestionLabel = state.queueFilters.impact === "todayFocus" ? "本轮建议" : "当前建议";
+    const exported = activeQueueExport()?.key === "productQueueConfirmed";
     const groups = [
       {
         preset: "stop",
@@ -2170,6 +2172,16 @@
       };
     }
     if (confirmedCount) {
+      if (exported) {
+        return {
+          tone: "green",
+          title: "执行包已导出，可以进入后台",
+          body: "CSV 已生成。进入 Amazon 后台后按执行顺序处理，先复核高风险否定和大额调价项。",
+          meta: `${baseMeta} · 已导出 ${fmtInt(confirmedCount)} 个`,
+          button: "重新导出已确认",
+          exportConfirmed: true,
+        };
+      }
       return {
         tone: "green",
         title: "动作已确认，可以导出",
