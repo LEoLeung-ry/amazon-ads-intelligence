@@ -2651,8 +2651,8 @@
       `;
     } else if (ready && snapshotExport) {
       tone = confirmed ? "export" : "queue";
-      step = confirmed ? "第 4 步" : "第 3 步";
-      title = "已导出当前视图快照，执行前还要确认动作";
+      step = confirmed ? "第 5 步" : "第 3 步";
+      title = confirmed ? "快照已导出，下一步导出已确认执行包" : "已导出当前视图快照，执行前还要确认动作";
       body = confirmed
         ? `刚导出的是复核快照，不是后台执行包。已有 ${fmtInt(confirmed)} 个动作确认，可以继续导出已确认 CSV。`
         : `这份 CSV 适合复核或转交同事，不等于后台执行包。还有 ${fmtInt(pending)} 个待确认，先确认动作再导出已确认。`;
@@ -2667,8 +2667,8 @@
         `;
     } else if (ready && confirmed) {
       tone = "export";
-      step = "第 4 步";
-      title = `已确认 ${fmtInt(confirmed)} 个动作，下一步导出执行包`;
+      step = "第 5 步";
+      title = `导出 ${fmtInt(confirmed)} 个已确认动作`;
       body = `已确认项会按后台动作分组并带执行顺序。还有 ${fmtInt(pending)} 个待确认、${fmtInt(held)} 个暂缓，不需要一次处理完整张表。`;
       meta = "导出已确认 CSV 后即可进入后台逐项操作";
       actions = `
