@@ -21,6 +21,7 @@ This push preserves the current production app code and refreshes this handoff s
 
 Latest implementation note for this release:
 
+- The empty state now relies on the top `workflow-strip` as the only five-step path. Do not duplicate the same five steps inside the hero panel; the hero should stay focused on the Bulk upload CTA, the two analysis entrances, and the required/optional file checklist.
 - The visible first-layer module labels now use Chinese operator language instead of decorative English labels. Keep these labels business-facing: `行动队列`, `下一步`, `本轮重点`, `目标校验`, `执行包`, `导出记录`, `分析范围`, `确认规则`. Do not reintroduce visible labels such as `Action queue`, `Next action`, `Goal checkpoint`, `Today focus`, or `Export receipt` in the main workflow; this app is for Chinese Amazon operators and new staff who need immediate task comprehension.
 - After a confirmed execution package is exported, `buildExecutionCoach()`, `renderExecutionPackage()`, `renderReviewGuide()`, and the queue table header now read `activeQueueExport()` and switch from "ready to export" wording to "exported, go execute in Amazon" wording. Review Rule should show `下一步：后台执行`, and the table-head button should read `重新导出已确认` while the export receipt exists. Keep local queue copy aligned with the Step 5 workflow state; the UI should not continue asking for a first export after an export receipt exists.
 - Batch review actions now switch the visible review filter to the new state: `确认本轮` shows the 30 confirmed rows instead of an empty pending view; `撤回已确认` returns to pending. Once confirmed rows exist, `导出已确认` becomes the primary button and `导出当前视图` is secondary.
@@ -467,7 +468,7 @@ Important UI behavior:
 - Directly under the workflow strip, `#workflowCompass` renders the single recommended next step. `renderWorkflowCompass()` switches between upload, queue review, confirmed-action export, already-exported, and no-action states. Keep it focused on one action at a time; do not turn it into another KPI/report block.
 - `handleGlobalShortcutClick()` owns global recovery/workflow buttons: `data-workflow-upload`, `data-workflow-demo`, `data-download-field-checklist`, `data-scroll-action-queue`, and `data-workflow-export-confirmed`. Keep these actions global because the compass and import assist sit outside `#actionQueue`.
 - The empty state uses business language around turning ad reports into executable actions, and it shows file requirements instead of decorative graphics.
-- The empty state should stay light and task-first: white surface, clear Bulk upload CTA in the main workspace, five-step workflow, and a compact required/optional file checklist. Do not turn it back into a heavy marketing hero.
+- The empty state should stay light and task-first: white surface, clear Bulk upload CTA in the main workspace, the top workflow strip as the only five-step path, compact analysis entrances, and a compact required/optional file checklist. Do not duplicate the five steps inside the hero or turn it back into a heavy marketing hero.
 - `#heroBrowseBtn` is a secondary entry to the same local file picker as the left-sidebar upload button. Keep both paths wired to `#fileInput` so first-time users can start from either the main workspace or sidebar.
 - `#heroDemoDataBtn` and `#demoDataBtn` call `loadDemoData()`. This creates a small synthetic workbook in memory and sends it through `parseBulkWorkbook()` plus `notifyKeywordChecker()`, so the demo uses the same decision engine as real Bulk imports.
 - Demo data must remain synthetic and compact. It should exercise no-order stop/negative, negative conflict review, low-CPS growth, search term exact-match carryover, ASIN carryover, hourly dayparting, and placement advice without committing any private advertising data.
@@ -572,7 +573,7 @@ Before opening a PR or merging:
    - Product goal card shows default target CPS, natural CVR, derived ACOS, actual CPS, and target gap.
    - Editing default CPS or natural CVR updates recommendations.
    - Campaign CPS override fields save to `amazonAds.goalPrefs.v2` and override target CPS for that campaign.
-   - Empty state shows the five-step path and file requirements for required Bulk plus optional hourly CSV/SciAds files.
+   - Empty state shows one five-step path in the top workflow strip, then the hero focuses on the Bulk CTA, analysis entrances, and file requirements for required Bulk plus optional hourly CSV/SciAds files.
    - Empty state has a visible main-workspace `选择 Bulk 工作簿` button and remains visually lightweight on desktop and mobile.
    - Clicking `体验示例数据` loads only synthetic demo data, hides the empty state, shows the product action queue, labels the file stack as demo/synthetic, and does not require any real ad file.
    - Demo data should produce representative action categories for onboarding: `检查否定`, `否定`, `止损` or `降价`, `放量`, `加精准词`, `加商品定向`, and `保留/加预算` when thresholds allow.

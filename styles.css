@@ -1108,50 +1108,11 @@ body[data-bulk-ready="false"] .campaign-panel {
   font-size: 12px;
 }
 
-.onboarding-steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-  gap: 8px;
-  margin-top: 15px;
-  max-width: 760px;
-}
-
-.onboarding-steps div {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px;
-  border: 1px solid #dbe8ee;
-  border-radius: 8px;
-  background: #fbfdff;
-}
-
-.onboarding-steps b {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
-  display: grid;
-  place-items: center;
-  border-radius: 99px;
-  background: #ccfbf1;
-  color: #0f766e;
-  font-size: 12px;
-}
-
-.onboarding-steps span {
-  min-width: 0;
-  color: #334155;
-  font-size: 12px;
-  line-height: 1.35;
-  font-weight: 700;
-}
-
 .analysis-paths {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin-top: 9px;
+  margin-top: 14px;
   max-width: 760px;
 }
 
@@ -3463,7 +3424,6 @@ tbody tr:hover {
   .metric-strip,
   .insight-strip,
   .rules-grid,
-  .onboarding-steps,
   .analysis-paths,
   .goal-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3641,10 +3601,6 @@ tbody tr:hover {
   .goal-fields,
   .goal-metrics {
     grid-template-columns: 1fr;
-  }
-
-  .onboarding-steps {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .analysis-paths {
