@@ -282,11 +282,12 @@ The homepage action queue is now the primary workflow.
 - Queue sort options are `priority`, `spend`, `orders`, and `gap`; `priority` preserves action priority first and spend second.
 - The default queue is intentionally strict. It should include only real action categories: `止损`, `否定`, `检查否定`, `降价`, `放量`, `加精准词`, `加商品定向`, and `保留/加预算`.
 - Keep `观察`, `无流量`, `保持`, `保留`, `继续积累`, `小幅优化`, and `已否定` out of the default queue. These can still appear in expanded diagnostic tables, but showing them by default makes the homepage feel overwhelming.
-- It must show review status, action, object, campaign, ad group, next step, evidence, recommended bid, and optional expert metrics.
-- Default queue columns should be execution-first: `确认`, `动作`, `对象`, `活动`, `广告组`, `下一步`, `证据`, `建议竞价`. Keep `当前 CPS`, `目标 CPS`, `ACOS`, and `原始原因` available as expert/custom columns.
+- It must show review status, action, backend execution action, object, campaign, ad group, next step, evidence, recommended bid, and optional expert metrics.
+- Default queue columns should be execution-first: `确认`, `动作`, `后台动作`, `对象`, `活动`, `广告组`, `下一步`, `证据`, `建议竞价`. Keep `当前 CPS`, `目标 CPS`, `ACOS`, and `原始原因` available as expert/custom columns.
 - Queue rows include `sales`; it is hidden by default as the expert/custom column `销售额`, mainly for growth opportunity exports and future impact scoring.
 - `actionGuidance(row)` translates rule output into operator language. It must return `nextStep`, `evidence`, and `risk`.
 - `nextStep` should tell the operator what to do next in Amazon Ads, not merely restate the mathematical rule.
+- `executionAction` should stay short and operational for exports, e.g. `调高竞价到 ¥X`, `加入否定候选`, `拆出精准词`, or `复核否定冲突`.
 - `evidence` should summarize spend, clicks, orders, actual CPS, and target CPS in one compact sentence.
 - `risk` is a tag (`低风险`, `中风险`, `高风险`) used for quick scanning and export.
 - `renderMobileActionCards(filteredQueueRows)` renders the first eight currently filtered queue rows as touch-friendly cards before the table. This is mobile-only (`.mobile-action-cards`) and must use the same review controls/review keys as the table so confirmation, hold, and export state stay aligned.

@@ -2056,6 +2056,20 @@ td.review-cell {
   margin: 0;
 }
 
+.mobile-card-exec {
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f0fdfa;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .mobile-action-card h4 {
   color: #10212b;
   font-size: 13px;

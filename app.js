@@ -1192,6 +1192,7 @@
     const columns = [
       col("确认", "reviewStatus", "review", { width: "170px" }),
       col("动作", "action", "tag"),
+      col("后台动作", "executionAction", "text"),
       col("对象", "item", "text"),
       col("活动", "campaign", "clip"),
       col("广告组", "adGroup", "clip"),
@@ -1354,40 +1355,49 @@
     const sourceName = row.source === "搜索词" ? "搜索词" : row.source === "ASIN" ? "ASIN" : "标的";
     const map = {
       放量: {
+        executionAction: `调高竞价到 ${bidText}`,
         nextStep: `小步提高竞价或预算，先按建议竞价 ${bidText} 执行；执行后观察 2-3 天订单是否稳定。`,
         risk: "低风险",
       },
       "保留/加预算": {
+        executionAction: "保留投放，优先预算",
         nextStep: `该${sourceName}已有合格转化，保留投放；预算受限时优先给这类词/ASIN。`,
         risk: "低风险",
       },
       降价: {
+        executionAction: "下调竞价控费",
         nextStep: `先下调竞价控费，不建议立刻否定；如果降价后仍高 CPS，再进入止损。`,
         risk: "中风险",
       },
       止损: {
+        executionAction: "降价或暂停观察",
         nextStep: `先降低竞价或暂停观察；如果不是核心战略词，不要继续烧预算。`,
         risk: "高风险",
       },
       否定: {
+        executionAction: "加入否定候选",
         nextStep: `加入否定词候选；确认不相关或非核心后，在同活动/广告组里做否定。`,
         risk: "高风险",
       },
       检查否定: {
+        executionAction: "复核否定冲突",
         nextStep: `优先人工复核：该项有订单但被否定覆盖，确认是否误伤有效流量。`,
         risk: "高风险",
       },
       加精准词: {
+        executionAction: "拆出精准词",
         nextStep: `把该搜索词拆到精准匹配承接，并保留探索层继续找新词。`,
         risk: "中风险",
       },
       加商品定向: {
+        executionAction: "拆出商品定向",
         nextStep: `把该 ASIN 拆到商品定向承接，用单独竞价控制效率。`,
         risk: "中风险",
       },
     };
     return {
       ...(map[row.action] || {
+        executionAction: "人工复核",
         nextStep: row.reason || "先观察数据，不做大幅动作。",
         risk: "观察",
       }),
@@ -1584,6 +1594,7 @@
           ${tag(row.action)}
           <span>${escapeHtml(row.risk || "待判断")}</span>
         </div>
+        <div class="mobile-card-exec">${escapeHtml(row.executionAction || "人工复核")}</div>
         <h4 title="${escapeAttr(row.item)}">${escapeHtml(shorten(row.item, 52))}</h4>
         <p>${escapeHtml(row.nextStep || row.reason || "先复核数据，再决定是否执行。")}</p>
         <small>${escapeHtml(row.evidence || "")}</small>
