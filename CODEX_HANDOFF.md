@@ -31,6 +31,7 @@ Latest implementation note for this release:
 - Row-level review controls use full Chinese state labels: `待确认`, `已确认`, `暂缓`. Do not shorten these back to ambiguous labels such as `待` or `确认`; after batch confirmation, the confirmed table must visibly read as confirmed.
 - Workflow compass must distinguish export types. `productQueue` means `当前视图快照` and should keep the operator in Step 3/4 with a prompt to confirm actions; only `productQueueConfirmed` means an execution package and may move the compass to Step 5 / backend execution wording.
 - Current-view snapshot wording must be consistent across the workflow compass, export receipt, and CSV filename: use `当前视图快照`, not `当前行动队列` or `当前队列视图`.
+- The workflow strip must have at most one `active` step. After actions are confirmed, `确认动作` is `done` and `导出结果` becomes `active`; after `productQueueConfirmed` export, `导出结果` becomes `done`.
 - After a confirmed execution package is exported, `buildExecutionCoach()`, `renderExecutionPackage()`, `renderReviewGuide()`, and the queue table header now read `activeQueueExport()` and switch from "ready to export" wording to "exported, go execute in Amazon" wording. Review Rule should show `下一步：后台执行`, and the table-head button should read `重新导出已确认` while the export receipt exists. Keep local queue copy aligned with the Step 5 workflow state; the UI should not continue asking for a first export after an export receipt exists.
 - Batch review actions now switch the visible review filter to the new state: `确认本轮` shows the 30 confirmed rows instead of an empty pending view; `撤回已确认` returns to pending. Once confirmed rows exist, `导出已确认` becomes the primary button and `导出当前视图` is secondary.
 - Any row-level or batch review-status change calls `clearQueueExportState()`, removing stale product-queue export receipts and Step 5 workflow state. Do not leave an old exported CSV receipt visible after the operator confirms, holds, or withdraws actions.
@@ -484,6 +485,7 @@ Important UI behavior:
 
 - First screen is the usable app, not a landing page.
 - The analysis workspace top area includes a compact workflow strip: `导入数据`, `确认目标`, `查看队列`, `确认动作`, `导出结果`. Keep this lightweight and status-driven.
+- In `renderWorkflow()`, never mark both `确认动作` and `导出结果` active at the same time. The strip should show one current step, while `#workflowCompass` explains the next action in detail.
 - Directly under the workflow strip, `#workflowCompass` renders the single recommended next step. `renderWorkflowCompass()` switches between upload, queue review, confirmed-action export, already-exported, and no-action states. Keep it focused on one action at a time; do not turn it into another KPI/report block.
 - `handleGlobalShortcutClick()` owns global recovery/workflow buttons: `data-workflow-upload`, `data-workflow-demo`, `data-download-field-checklist`, `data-scroll-action-queue`, and `data-workflow-export-confirmed`. Keep these actions global because the compass and import assist sit outside `#actionQueue`.
 - The empty state uses business language around turning ad reports into executable actions, and it shows file requirements instead of decorative graphics.
@@ -632,6 +634,7 @@ Before opening a PR or merging:
    - Before confirmation, the queue header primary button is `确认本轮 (30)` or `确认待处理 (...)`; `导出当前视图` is secondary and clearly a snapshot, not the execution package.
    - In the default `今日优先` batch, task cards show current-batch counts, not full-pool counts. With the real Bulk fixture they should read Growth 2, Stop Loss 28, Structure 0 before the operator expands the candidate pool.
    - After clicking `确认本轮` in the default `今日优先` view, the same 30-row execution batch stays visible under the `已确认` review filter, the execution package appears, and `导出已确认` is the primary export button while `导出当前视图` is secondary.
+   - After clicking `确认本轮`, the workflow strip marks `确认动作` as done and only `导出结果` as active. After exporting the confirmed package, `导出结果` is done.
    - After exporting the confirmed package, clicking `撤回已确认` must clear the old export receipt/workflow Step 5 state and return the batch to 30 pending rows.
    - After exporting the confirmed package, the workflow compass, `Next action`, Review Rule, execution package, queue table header, and receipt all show an exported/execution-ready state. They should say `重新导出已确认` / `下一步：后台执行` rather than continuing to prompt the first export.
    - Action queue filters work for action, risk, impact (`高花费优先`, `CPS 超目标`, `有订单`, `无订单`), and sorting (`按优先级`, `按花费`, `按订单`, `按偏离目标`).

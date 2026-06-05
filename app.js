@@ -2514,6 +2514,7 @@
     const ready = state.bulkLoaded;
     const queueCount = state.lastQueueCount || 0;
     const confirmed = state.lastReviewCounts.confirmed || 0;
+    const confirmedExported = activeQueueExport()?.key === "productQueueConfirmed";
     const isTodayBatch = state.queueFilters.impact === "todayFocus";
     const steps = [
       {
@@ -2534,12 +2535,12 @@
       {
         label: "确认动作",
         meta: ready ? `${fmtInt(confirmed)} 个已确认` : "先看本轮",
-        status: ready && confirmed ? "active" : "idle",
+        status: confirmedExported ? "done" : ready && confirmed ? "done" : "idle",
       },
       {
         label: "导出结果",
-        meta: confirmed ? "导出已确认 CSV" : ready ? "确认后导出" : "确认动作后导出",
-        status: confirmed ? "active" : ready && queueCount === 0 ? "done" : "idle",
+        meta: confirmedExported ? "已导出执行包" : confirmed ? "导出已确认 CSV" : ready ? "确认后导出" : "确认动作后导出",
+        status: confirmedExported ? "done" : confirmed ? "active" : "idle",
       },
     ];
     els.workflowStrip.innerHTML = steps
