@@ -1487,6 +1487,8 @@
     const exportCurrentLabel = hasConfirmedRows ? "导出当前视图" : isTodayBatch ? "导出本轮" : "导出当前";
     const confirmedExportClass = hasConfirmedRows ? "export-btn" : "secondary-btn";
     const currentExportClass = hasConfirmedRows ? "secondary-btn" : "export-btn";
+    const confirmedExported = hasConfirmedRows && activeQueueExport()?.key === "productQueueConfirmed";
+    const confirmedExportLabel = confirmedExported ? "重新导出已确认" : "导出已确认";
     const taskScopeLabel = isTodayBatch ? "本轮" : "当前范围";
     const taskRowsFor = (action) => filterQueueRows(queueRows, { action });
     const growthTaskRows = taskRowsFor("growth");
@@ -1565,7 +1567,7 @@
           <div class="queue-export-actions">
             <button class="secondary-btn" type="button" data-review-current="confirmed"${canBatchConfirm ? "" : " disabled title=\"先筛选任务、风险或影响后再批量确认\""}>${confirmCurrentLabel} (${batchConfirmRows.length})</button>
             <button class="secondary-btn" type="button" data-review-current="pending"${canBatchReset ? "" : " disabled title=\"先筛选任务、风险或影响后再撤回确认\""}>撤回已确认 (${batchResetRows.length})</button>
-            <button class="${confirmedExportClass}" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>导出已确认 (${confirmedRows.length})</button>
+            <button class="${confirmedExportClass}" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>${confirmedExportLabel} (${confirmedRows.length})</button>
             <button class="${currentExportClass}" type="button" data-export-queue${filteredQueueRows.length ? "" : " disabled"}>${exportCurrentLabel} (${filteredQueueRows.length})</button>
           </div>
         </div>
@@ -2475,10 +2477,13 @@
     }
 
     if (confirmedRows.length) {
+      const confirmedExported = activeQueueExport()?.key === "productQueueConfirmed";
       tone = "confirmed";
-      title = `已确认 ${fmtInt(confirmedRows.length)} 个动作`;
-      body = "这些动作已经进入执行包，可以继续确认，也可以导出已确认 CSV。标为暂缓的项目会留在队列里，不进入执行包。";
-      meta = "下一步：导出已确认";
+      title = confirmedExported ? `已导出 ${fmtInt(confirmedRows.length)} 个动作` : `已确认 ${fmtInt(confirmedRows.length)} 个动作`;
+      body = confirmedExported
+        ? "执行包已经生成，可以进入 Amazon 后台按执行顺序处理；如果撤回或暂缓任何动作，旧导出会自动失效。"
+        : "这些动作已经进入执行包，可以继续确认，也可以导出已确认 CSV。标为暂缓的项目会留在队列里，不进入执行包。";
+      meta = confirmedExported ? "下一步：后台执行" : "下一步：导出已确认";
     } else if (canBatchConfirm) {
       tone = "ready";
       title = isTodayBatch ? `本轮 ${fmtInt(filteredRows.length)} 项可确认` : `当前筛选可批量确认 ${fmtInt(filteredRows.length)} 项`;
