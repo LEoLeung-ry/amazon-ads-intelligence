@@ -21,6 +21,8 @@ This push preserves the current production app code and refreshes this handoff s
 
 Latest implementation note for this release:
 
+- Imported analysis is now decision-first in DOM and visual order: `actionQueue` sits before `focusBand`, so the operator sees the all-product execution queue before KPI/background context. Preserve this ordering unless a future design provides an even stronger first action surface.
+- On narrow screens after Bulk import, the sidebar switches to a compact imported state: upload buttons stay available in one row, the import assist card keeps only the receipt plus primary queue jump, goal inputs remain editable, and repeated helper text is hidden. This keeps mobile from spending the whole first screen on setup after data is already loaded.
 - Changing product default CPS, natural CVR, or any campaign-level CPS override calls `invalidateExecutionState()`. This clears stale queue confirmations, resets the queue to pending focus, removes stale product-queue export receipts, and shows `goal-change-notice` so the operator understands that bids, stop-loss thresholds, and priorities have been recalculated and must be reconfirmed before export.
 - `targetTable` and `searchTable` use a wider `decision-reason` column for the reason/explanation field. It is intentionally a single-line summary cell with full text in the native title tooltip, so long Chinese explanations do not inflate row height.
 - Queue filters now have an empty-result recovery strip. When filters return no action rows, the UI offers `data-reset-queue-filters` instead of leaving the operator at a dead end.

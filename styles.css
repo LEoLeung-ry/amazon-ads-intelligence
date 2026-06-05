@@ -3323,11 +3323,46 @@ tbody tr:hover {
 
   body[data-bulk-ready="true"] .drop-actions {
     grid-column: 1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   body[data-bulk-ready="true"] .drop-card .secondary-btn {
-    grid-column: 1;
+    grid-column: auto;
     height: 32px;
+    padding: 0 7px;
+    font-size: 12px;
+  }
+
+  body[data-bulk-ready="true"] .import-assist {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  body[data-bulk-ready="true"] .import-assist > span,
+  body[data-bulk-ready="true"] .assist-checklist {
+    display: none;
+  }
+
+  body[data-bulk-ready="true"] .assist-receipt,
+  body[data-bulk-ready="true"] .assist-actions {
+    margin-top: 0;
+  }
+
+  body[data-bulk-ready="true"] .assist-actions {
+    flex: 0 0 auto;
+    display: flex;
+  }
+
+  body[data-bulk-ready="true"] .assist-actions .assist-jump:not(.primary) {
+    display: none;
+  }
+
+  body[data-bulk-ready="true"] .assist-jump.primary {
+    width: auto;
+    min-width: 112px;
   }
 
   .campaign-panel {
@@ -3563,6 +3598,29 @@ tbody tr:hover {
 
   .analysis-paths {
     grid-template-columns: 1fr;
+  }
+
+  body[data-bulk-ready="true"] .goal-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body[data-bulk-ready="true"] .goal-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body[data-bulk-ready="true"] .goal-metrics div {
+    display: grid;
+    align-content: start;
+    gap: 2px;
+    padding: 6px;
+  }
+
+  body[data-bulk-ready="true"] .goal-metrics b {
+    font-size: 11px;
+  }
+
+  body[data-bulk-ready="true"] .goal-helper {
+    display: none;
   }
 
   .workflow-compass-side > div,
