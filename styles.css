@@ -1635,6 +1635,51 @@ body[data-bulk-ready="false"] .campaign-panel {
   font-size: 11px;
 }
 
+.execution-guardrails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.execution-guardrails span {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: #64748b;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.execution-guardrails b {
+  color: #10212b;
+}
+
+.execution-guardrails .danger {
+  border-color: rgba(239, 68, 68, 0.26);
+  background: #fef2f2;
+}
+
+.execution-guardrails .warn {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: #fffbeb;
+}
+
+.execution-guardrails .info {
+  border-color: rgba(37, 99, 235, 0.22);
+  background: #eff6ff;
+}
+
+.execution-guardrails .safe {
+  border-color: rgba(34, 197, 94, 0.26);
+  background: #f0fdf4;
+}
+
 .execution-package-metrics {
   display: flex;
   flex-wrap: wrap;
@@ -2757,6 +2802,10 @@ tbody tr:hover {
 
   .execution-plan {
     grid-template-columns: 1fr;
+  }
+
+  .execution-guardrails span {
+    white-space: normal;
   }
 
   .execution-package-metrics {

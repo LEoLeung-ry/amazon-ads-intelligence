@@ -1549,6 +1549,7 @@
     const structureCount = rows.filter((row) => queueActionMatches("structure", row.action)).length;
     const spend = sumBy(rows, (row) => row.spend);
     const plan = buildExecutionPlan(rows);
+    const guardrails = buildExecutionGuardrails(rows);
     return `<div class="execution-package">
       <div class="execution-package-body">
         <span class="eyebrow">Execution package</span>
@@ -1560,6 +1561,7 @@
             <span>${fmtInt(item.count)} 项 · ${fmtMoney(item.spend)} · ${escapeHtml(item.sample)}</span>
           </div>`).join("")}
         </div>
+        ${renderExecutionGuardrails(guardrails)}
       </div>
       <div class="execution-package-metrics">
         <span><b>${fmtInt(stopCount)}</b> 止损/否定</span>
@@ -1568,6 +1570,48 @@
         <span><b>${fmtMoney(spend)}</b> 涉及花费</span>
         <button class="export-btn" type="button" data-export-confirmed>导出已确认 (${fmtInt(rows.length)})</button>
       </div>
+    </div>`;
+  }
+
+  function buildExecutionGuardrails(rows) {
+    const negativeConflict = rows.filter((row) => row.action === "检查否定");
+    const negativeAdds = rows.filter((row) => row.action === "否定");
+    const noOrderRows = rows.filter((row) => row.orders === 0 && row.spend > 0);
+    const bidChanges = rows.filter((row) => ["放量", "降价", "止损"].includes(row.action));
+    const carryover = rows.filter((row) => ["加精准词", "加商品定向"].includes(row.action));
+    const items = [
+      negativeConflict.length ? {
+        tone: "danger",
+        label: "先复核否定冲突",
+        meta: `${fmtInt(negativeConflict.length)} 项 · 避免误伤已出单流量`,
+      } : null,
+      negativeAdds.length ? {
+        tone: "warn",
+        label: "再确认否定词",
+        meta: `${fmtInt(negativeAdds.length)} 项 · 只否定不相关或非核心流量`,
+      } : null,
+      noOrderRows.length ? {
+        tone: "warn",
+        label: "无单消耗控费",
+        meta: `${fmtInt(noOrderRows.length)} 项 · ${fmtMoney(sumBy(noOrderRows, (row) => row.spend))}`,
+      } : null,
+      bidChanges.length ? {
+        tone: "info",
+        label: "竞价变更小步执行",
+        meta: `${fmtInt(bidChanges.length)} 项 · 执行后观察 2-3 天`,
+      } : null,
+      carryover.length ? {
+        tone: "info",
+        label: "承接动作保持结构清晰",
+        meta: `${fmtInt(carryover.length)} 项 · 新建后保留探索层`,
+      } : null,
+    ].filter(Boolean);
+    return items.length ? items : [{ tone: "safe", label: "无额外高风险复核", meta: "可按执行顺序逐项处理" }];
+  }
+
+  function renderExecutionGuardrails(items) {
+    return `<div class="execution-guardrails" aria-label="导出前复核">
+      ${items.map((item) => `<span class="${escapeAttr(item.tone)}"><b>${escapeHtml(item.label)}</b>${escapeHtml(item.meta)}</span>`).join("")}
     </div>`;
   }
 
