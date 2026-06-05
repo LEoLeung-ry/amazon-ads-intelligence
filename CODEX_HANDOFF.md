@@ -21,6 +21,7 @@ This push preserves the current production app code and refreshes this handoff s
 
 Latest implementation note for this release:
 
+- Queue exports now use `queueExportFilename()` so current-queue and confirmed execution-package CSV filenames include analysis scope plus local timestamp, e.g. all-product/search/selected/product-group context. Keep fixed generic filenames out of queue exports because operators may produce multiple execution packages in one day.
 - Confirmed action exports automatically append execution tracking columns (`执行状态`, `执行备注`, `复盘日期`) through `exportColumnsForKey()`, even when those columns are hidden in the on-screen table. This preserves the lightweight queue UI while making the CSV usable as an execution log in Amazon Ads backend work.
 - Confirmed export receipts now include `export-next-steps`: backend execution order, execution-status note taking, and a 2-3 day Bulk reimport review loop. This is intentionally shown after CSV export so the operator understands how the downloaded file turns into Amazon Ads backend changes.
 - Import errors are intentionally louder than the compact imported sidebar. `renderFileStack()` now prints `file.note` for failed files, and mobile compact rules exclude `.import-assist.warn` so a wrong CSV/XLSX still shows the reason, the three checks, and recovery buttons even after Bulk is already loaded.

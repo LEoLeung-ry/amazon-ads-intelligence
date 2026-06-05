@@ -369,7 +369,7 @@
     }
     const exportConfirmedButton = event.target.closest("[data-workflow-export-confirmed]");
     if (exportConfirmedButton) {
-      exportTableCsv("productQueueConfirmed", "已确认行动队列.csv");
+      exportTableCsv("productQueueConfirmed", queueExportFilename("productQueueConfirmed"));
       return;
     }
     const queueButton = event.target.closest("[data-scroll-action-queue]");
@@ -413,12 +413,12 @@
     }
     const exportButton = event.target.closest("[data-export-queue]");
     if (exportButton) {
-      exportTableCsv("productQueue", "全产品行动队列.csv");
+      exportTableCsv("productQueue", queueExportFilename("productQueue"));
       return;
     }
     const confirmedExportButton = event.target.closest("[data-export-confirmed]");
     if (confirmedExportButton) {
-      exportTableCsv("productQueueConfirmed", "已确认行动队列.csv");
+      exportTableCsv("productQueueConfirmed", queueExportFilename("productQueueConfirmed"));
       return;
     }
     const presetButton = event.target.closest("[data-queue-action-preset]");
@@ -3226,6 +3226,37 @@
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  }
+
+  function queueExportFilename(key) {
+    const kind = key === "productQueueConfirmed" ? "已确认执行包" : "当前行动队列";
+    return `Amazon广告_${exportScopeLabel()}_${kind}_${timestampForFilename()}.csv`;
+  }
+
+  function exportScopeLabel() {
+    const campaigns = getAnalysisCampaigns();
+    if (state.search) return safeFilenamePart(`搜索-${state.search}-${campaigns.length}活动`);
+    if (state.selectedCampaigns.size) return safeFilenamePart(`勾选-${campaigns.length}活动`);
+    if (state.productFilter !== "全部") return safeFilenamePart(`产品组-${state.productFilter}-${campaigns.length}活动`);
+    return safeFilenamePart(`全产品-${campaigns.length}活动`);
+  }
+
+  function timestampForFilename(date = new Date()) {
+    const pad = (value) => String(value).padStart(2, "0");
+    return [
+      date.getFullYear(),
+      pad(date.getMonth() + 1),
+      pad(date.getDate()),
+    ].join("") + `-${pad(date.getHours())}${pad(date.getMinutes())}`;
+  }
+
+  function safeFilenamePart(value) {
+    const cleaned = String(value || "scope")
+      .replace(/[\\/:*?"<>|]+/g, "_")
+      .replace(/\s+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    return cleaned.slice(0, 52) || "scope";
   }
 
   function exportColumnsForKey(key, table) {
