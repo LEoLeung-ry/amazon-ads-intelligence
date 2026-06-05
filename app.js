@@ -1357,7 +1357,7 @@
     els.scopeSummary.className = `scope-summary ${tone}`;
     els.scopeSummary.innerHTML = `
       <div class="scope-copy">
-        <span class="eyebrow">Analysis scope</span>
+        <span class="eyebrow">分析范围</span>
         <h4>${escapeHtml(title)}</h4>
         <p>${escapeHtml(body)}</p>
       </div>
@@ -1502,7 +1502,7 @@
     const cards = [
       {
         tone: "green",
-        eyebrow: "Growth",
+        eyebrow: "放量",
         title: "放量机会",
         value: growthTaskRows.length,
         meta: `${taskScopeLabel}可放量销售额 ${fmtMoney(sumBy(growthTaskRows, (row) => row.sales))}`,
@@ -1514,7 +1514,7 @@
       },
       {
         tone: "red",
-        eyebrow: "Stop loss",
+        eyebrow: "控费",
         title: "止损 / 否定",
         value: stopTaskRows.length,
         meta: `${taskScopeLabel}待保护花费 ${fmtMoney(sumBy(stopTaskRows, (row) => row.spend))}`,
@@ -1526,7 +1526,7 @@
       },
       {
         tone: "blue",
-        eyebrow: "Structure",
+        eyebrow: "结构",
         title: "结构修复",
         value: structureTaskRows.length,
         meta: isTodayBatch
@@ -1543,7 +1543,7 @@
     els.actionQueue.innerHTML = `
       <div class="queue-head">
         <div>
-          <span class="eyebrow">Action queue</span>
+          <span class="eyebrow">行动队列</span>
           <h3>${escapeHtml(taskRailTitle)}</h3>
         </div>
         <div class="queue-actions">
@@ -1711,7 +1711,7 @@
     const active = state.queueFilters.impact === "todayFocus";
     return `<div class="today-focus ${active ? "active" : ""}">
       <div>
-        <span class="eyebrow">Today focus</span>
+        <span class="eyebrow">本轮重点</span>
         <h4>本轮执行包：先处理 ${fmtInt(rows.length)} 个动作</h4>
         <p>这是默认工作批次；${fmtInt(allRows.length)} 个候选动作只作为筛选池，不需要今天全部处理。先完成这一批，再决定是否扩展范围。</p>
       </div>
@@ -1735,7 +1735,7 @@
     const tone = !actualCps ? "" : gap <= 0 ? "good" : gap <= 0.2 ? "warn" : "bad";
     return `<div class="goal-checkpoint ${tone}">
       <div>
-        <span class="eyebrow">Goal checkpoint</span>
+        <span class="eyebrow">目标校验</span>
         <h4>本轮建议按目标 CPS ${fmtMoney(targetCps)} 计算</h4>
       </div>
       <div class="goal-checkpoint-metrics">
@@ -1755,7 +1755,7 @@
     if (notice.exportRows) parts.push(`${fmtInt(notice.exportRows)} 行旧导出已失效`);
     return `<div class="goal-change-notice">
       <div>
-        <span class="eyebrow">Goal updated</span>
+        <span class="eyebrow">目标已更新</span>
         <h4>${escapeHtml(notice.reason || "目标已更新")}，行动队列已重新计算</h4>
         <p>建议 bid、止损阈值和优先级会随目标变化。请重新确认动作后再导出执行包。</p>
       </div>
@@ -1774,7 +1774,7 @@
     const guardrails = buildExecutionGuardrails(rows);
     return `<div class="execution-package">
       <div class="execution-package-body">
-        <span class="eyebrow">Execution package</span>
+        <span class="eyebrow">执行包</span>
         <h4>${exported ? `已导出 ${fmtInt(rows.length)} 个动作，可以进入后台执行` : `已确认 ${fmtInt(rows.length)} 个动作，可以导出执行`}</h4>
         <p>${exported ? "这一包已经生成 CSV。进入 Amazon 后台时，按执行顺序处理，并在执行表里记录跳过或需复核的项。" : "这一包已按当前筛选收敛，适合导出后进入 Amazon 后台逐项处理。执行前再复核高风险和否定冲突项。"}</p>
         <div class="execution-plan" aria-label="执行路线图">
@@ -1809,7 +1809,7 @@
       : '<button class="secondary-btn" type="button" data-scroll-action-queue>继续确认动作</button>';
     return `<div class="export-receipt ${confirmed ? "confirmed" : "current"}">
       <div>
-        <span class="eyebrow">Export receipt</span>
+        <span class="eyebrow">导出记录</span>
         <h4>${escapeHtml(title)}</h4>
         <p>${escapeHtml(body)}</p>
         ${renderExportNextSteps(confirmed)}
@@ -2209,7 +2209,7 @@
         : "";
     return `<div class="execution-coach ${escapeAttr(coach.tone)}">
       <div>
-        <span class="eyebrow">Next action</span>
+        <span class="eyebrow">下一步</span>
         <h4>${escapeHtml(coach.title)}</h4>
         <p>${escapeHtml(coach.body)}</p>
       </div>
@@ -2224,7 +2224,7 @@
     const row = rows[0];
     if (!row) {
       return `<div class="lead-action empty">
-        <span class="eyebrow">Lead action</span>
+        <span class="eyebrow">第一条建议</span>
         <h4>当前筛选下没有待处理动作</h4>
         <p>下方可以恢复默认筛选；如果活动搜索太窄，先回到全产品再看完整队列。</p>
       </div>`;
@@ -2346,7 +2346,7 @@
     if (allRows.length) {
       return `<div class="queue-recovery">
         <div>
-          <span class="eyebrow">No result</span>
+          <span class="eyebrow">没有结果</span>
           <h4>当前筛选没有行动项</h4>
           <p>${escapeHtml(filterText ? `${filterText} 把队列收得太窄。恢复默认筛选后，先处理今日优先动作。` : "恢复默认筛选后，系统会重新展示当前范围里最该先处理的动作。")}</p>
         </div>
@@ -2358,7 +2358,7 @@
     if (state.search) {
       return `<div class="queue-recovery">
         <div>
-          <span class="eyebrow">No scope</span>
+          <span class="eyebrow">范围为空</span>
           <h4>这个搜索范围没有可执行动作</h4>
           <p>可能是没有匹配活动，也可能是这组活动暂时没有达到放量、止损或结构修复阈值。先回到全产品更容易看清优先级。</p>
         </div>
@@ -2370,7 +2370,7 @@
     }
     return `<div class="queue-recovery">
       <div>
-        <span class="eyebrow">No action</span>
+        <span class="eyebrow">暂无动作</span>
         <h4>当前范围暂时没有达到执行阈值的动作</h4>
         <p>这不是报错；可以展开详细分析看观察项、样本不足项和课程规则依据。</p>
       </div>
@@ -2500,7 +2500,7 @@
 
     return `<div class="review-guide ${escapeAttr(tone)}">
       <div>
-        <span class="eyebrow">Review rule</span>
+        <span class="eyebrow">确认规则</span>
         <h4>${escapeHtml(title)}</h4>
         <p>${escapeHtml(body)}</p>
       </div>

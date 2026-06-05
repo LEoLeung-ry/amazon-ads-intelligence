@@ -21,6 +21,7 @@ This push preserves the current production app code and refreshes this handoff s
 
 Latest implementation note for this release:
 
+- The visible first-layer module labels now use Chinese operator language instead of decorative English labels. Keep these labels business-facing: `行动队列`, `下一步`, `本轮重点`, `目标校验`, `执行包`, `导出记录`, `分析范围`, `确认规则`. Do not reintroduce visible labels such as `Action queue`, `Next action`, `Goal checkpoint`, `Today focus`, or `Export receipt` in the main workflow; this app is for Chinese Amazon operators and new staff who need immediate task comprehension.
 - After a confirmed execution package is exported, `buildExecutionCoach()`, `renderExecutionPackage()`, `renderReviewGuide()`, and the queue table header now read `activeQueueExport()` and switch from "ready to export" wording to "exported, go execute in Amazon" wording. Review Rule should show `下一步：后台执行`, and the table-head button should read `重新导出已确认` while the export receipt exists. Keep local queue copy aligned with the Step 5 workflow state; the UI should not continue asking for a first export after an export receipt exists.
 - Batch review actions now switch the visible review filter to the new state: `确认本轮` shows the 30 confirmed rows instead of an empty pending view; `撤回已确认` returns to pending. Once confirmed rows exist, `导出已确认` becomes the primary button and `导出当前视图` is secondary.
 - Any row-level or batch review-status change calls `clearQueueExportState()`, removing stale product-queue export receipts and Step 5 workflow state. Do not leave an old exported CSV receipt visible after the operator confirms, holds, or withdraws actions.
@@ -578,6 +579,7 @@ Before opening a PR or merging:
    - Clicking `选择 Bulk 工作簿` opens the same local file picker and successfully imports the real Bulk fixture.
    - Workflow strip updates from `先上传 Bulk` to campaign/search-term counts after import.
    - Workflow compass shows exactly one current next step: upload before Bulk, queue review after Bulk, export after confirmed actions, and exported status after a product queue CSV is downloaded.
+   - First-layer workflow labels are Chinese operator labels, not English product labels: `行动队列`, `下一步`, `本轮重点`, `目标校验`, `执行包`, `导出记录`, `分析范围`, and `确认规则`.
    - Upload guidance shows the default upload order before import, a clear warning for unsupported/incorrect files, and a success hint after Bulk is recognized.
    - Metric guide explains CPS, CVR, RPC, and ACOS after import without expanding the page into a tutorial.
    - Scope summary appears above KPI cards after import, shows the current analysis scope, and updates when activity search, product filter, or manual campaign selection changes.
