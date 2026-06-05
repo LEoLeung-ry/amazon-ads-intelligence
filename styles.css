@@ -258,6 +258,18 @@ button {
   white-space: nowrap;
 }
 
+.file-item.has-note {
+  align-items: start;
+}
+
+.file-note {
+  grid-column: 2 / -1;
+  margin-top: -3px;
+  color: #b45309;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .import-assist {
   display: grid;
   gap: 3px;
@@ -3333,7 +3345,7 @@ tbody tr:hover {
     font-size: 12px;
   }
 
-  body[data-bulk-ready="true"] .import-assist {
+  body[data-bulk-ready="true"] .import-assist:not(.warn) {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -3341,26 +3353,26 @@ tbody tr:hover {
     padding: 8px 10px;
   }
 
-  body[data-bulk-ready="true"] .import-assist > span,
-  body[data-bulk-ready="true"] .assist-checklist {
+  body[data-bulk-ready="true"] .import-assist:not(.warn) > span,
+  body[data-bulk-ready="true"] .import-assist:not(.warn) .assist-checklist {
     display: none;
   }
 
-  body[data-bulk-ready="true"] .assist-receipt,
-  body[data-bulk-ready="true"] .assist-actions {
+  body[data-bulk-ready="true"] .import-assist:not(.warn) .assist-receipt,
+  body[data-bulk-ready="true"] .import-assist:not(.warn) .assist-actions {
     margin-top: 0;
   }
 
-  body[data-bulk-ready="true"] .assist-actions {
+  body[data-bulk-ready="true"] .import-assist:not(.warn) .assist-actions {
     flex: 0 0 auto;
     display: flex;
   }
 
-  body[data-bulk-ready="true"] .assist-actions .assist-jump:not(.primary) {
+  body[data-bulk-ready="true"] .import-assist:not(.warn) .assist-actions .assist-jump:not(.primary) {
     display: none;
   }
 
-  body[data-bulk-ready="true"] .assist-jump.primary {
+  body[data-bulk-ready="true"] .import-assist:not(.warn) .assist-jump.primary {
     width: auto;
     min-width: 112px;
   }

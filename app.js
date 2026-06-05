@@ -492,7 +492,7 @@
         await parseFile(file, record);
         record.status = "loaded";
       } catch (error) {
-        console.error(error);
+        console.warn(error);
         record.status = "warn";
         record.type = "未识别";
         record.note = error.message || "解析失败";
@@ -1071,10 +1071,11 @@
       .slice(0, 5)
       .map((file) => {
         const dot = file.status === "loaded" ? "loaded" : file.status === "warn" ? "warn" : "";
-        return `<div class="file-item">
+        return `<div class="file-item ${file.note ? "has-note" : ""}">
           <span class="file-dot ${dot}"></span>
           <span class="file-name" title="${escapeAttr(file.name)}">${escapeHtml(file.name)}</span>
           <span class="file-type">${escapeHtml(file.type || "")}</span>
+          ${file.note ? `<span class="file-note">${escapeHtml(file.note)}</span>` : ""}
         </div>`;
       })
       .join("");
