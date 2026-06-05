@@ -418,6 +418,16 @@
       });
       return;
     }
+    const resetQueueButton = event.target.closest("[data-reset-queue-filters]");
+    if (resetQueueButton) {
+      resetQueueFilters();
+      renderAnalysis();
+      requestAnimationFrame(() => {
+        const tableCard = els.actionQueue.querySelector(".queue-table-card");
+        if (tableCard) tableCard.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
+      return;
+    }
     const button = event.target.closest("[data-queue-tab]");
     if (!button) return;
     const tab = button.dataset.queueTab;
@@ -1274,9 +1284,15 @@
     let action = "";
 
     if (state.search) {
-      title = `正在分析活动搜索结果：${fmtInt(campaignCount)} 个活动`;
-      body = "活动搜索优先于手动勾选；右侧队列和导出会暂时只看这些匹配活动。";
-      tone = "search";
+      if (campaignCount) {
+        title = `正在分析活动搜索结果：${fmtInt(campaignCount)} 个活动`;
+        body = "活动搜索优先于手动勾选；右侧队列和导出会暂时只看这些匹配活动。";
+        tone = "search";
+      } else {
+        title = "没有匹配到广告活动";
+        body = "检查活动名、ASIN 或产品关键词；也可以先回到全产品，让系统重新给出完整行动队列。";
+        tone = "empty";
+      }
       action = '<button type="button" data-clear-campaign-search>回到全产品</button>';
     } else if (state.selectedCampaigns.size) {
       title = `正在分析已勾选活动：${fmtInt(campaignCount)} 个`;
@@ -1504,6 +1520,7 @@
         ${renderLeadAction(filteredQueueRows)}
         ${renderActionLanguage(filteredQueueRows)}
         ${renderQueueFilters(queueRows, filteredQueueRows)}
+        ${renderQueueRecovery(queueRows, filteredQueueRows)}
         ${renderMobileActionCards(filteredQueueRows)}
         <div class="table-wrap"><table id="productActionTable"></table></div>
       </div>
@@ -2058,7 +2075,7 @@
       return `<div class="lead-action empty">
         <span class="eyebrow">Lead action</span>
         <h4>当前筛选下没有待处理动作</h4>
-        <p>切换任务、风险、状态或影响筛选后，这里会展示当前范围的第一条执行建议。</p>
+        <p>下方可以恢复默认筛选；如果活动搜索太窄，先回到全产品再看完整队列。</p>
       </div>`;
     }
     return `<div class="lead-action ${escapeAttr((row.risk || "").includes("高") ? "high" : (row.risk || "").includes("中") ? "mid" : "low")}">
@@ -2167,6 +2184,66 @@
       ${queueSelect("排序", "sort", ["priority", "spend", "orders", "gap"], filters.sort, queueSortLabel)}
       <div class="queue-filter-count"><b>${fmtInt(filteredRows.length)}</b><span>/ ${fmtInt(allRows.length)} 项</span></div>
     </div>`;
+  }
+
+  function renderQueueRecovery(allRows, filteredRows) {
+    if (filteredRows.length) return "";
+    const filterText = activeQueueFilterText();
+    if (allRows.length) {
+      return `<div class="queue-recovery">
+        <div>
+          <span class="eyebrow">No result</span>
+          <h4>当前筛选没有行动项</h4>
+          <p>${escapeHtml(filterText ? `${filterText} 把队列收得太窄。恢复默认筛选后，先处理今日优先动作。` : "恢复默认筛选后，系统会重新展示当前范围里最该先处理的动作。")}</p>
+        </div>
+        <div class="queue-recovery-actions">
+          <button class="export-btn" type="button" data-reset-queue-filters>恢复默认筛选</button>
+        </div>
+      </div>`;
+    }
+    if (state.search) {
+      return `<div class="queue-recovery">
+        <div>
+          <span class="eyebrow">No scope</span>
+          <h4>这个搜索范围没有可执行动作</h4>
+          <p>可能是没有匹配活动，也可能是这组活动暂时没有达到放量、止损或结构修复阈值。先回到全产品更容易看清优先级。</p>
+        </div>
+        <div class="queue-recovery-actions">
+          <button class="export-btn" type="button" data-clear-campaign-search>回到全产品</button>
+          <button class="secondary-btn" type="button" data-reset-queue-filters>重置筛选</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="queue-recovery">
+      <div>
+        <span class="eyebrow">No action</span>
+        <h4>当前范围暂时没有达到执行阈值的动作</h4>
+        <p>这不是报错；可以展开详细分析看观察项、样本不足项和课程规则依据。</p>
+      </div>
+      <div class="queue-recovery-actions">
+        <button class="secondary-btn" type="button" data-toggle-details>${state.detailsExpanded ? "收起详细分析" : "展开详细分析"}</button>
+      </div>
+    </div>`;
+  }
+
+  function activeQueueFilterText() {
+    const filters = state.queueFilters;
+    const parts = [];
+    if (filters.impact !== "all") parts.push(queueImpactLabel(filters.impact));
+    if (filters.action !== "all") parts.push(queueActionLabel(filters.action));
+    if (filters.risk !== "all") parts.push(filters.risk);
+    if (filters.review !== "pending") parts.push(filters.review === "all" ? "全部状态" : reviewLabels[filters.review]);
+    return parts.join(" / ");
+  }
+
+  function resetQueueFilters() {
+    state.queueFilters = {
+      action: "all",
+      risk: "all",
+      review: "pending",
+      impact: state.todayFocusKeys.size ? "todayFocus" : "all",
+      sort: "priority",
+    };
   }
 
   function renderMobileActionCards(rows) {
@@ -2455,7 +2532,7 @@
       col("当前竞价", "bid", "money", { defaultVisible: false }),
       col("建议竞价", "recBid", "money"),
       col("调价", "bidChange", "signedPct"),
-      col("原因", "reason", "reason", { description: "按目标 CPS、自然 CVR 平滑、样本量和花费阈值生成。", width: "360px" }),
+      col("原因", "reason", "reason", { description: "按目标 CPS、自然 CVR 平滑、样本量和花费阈值生成。", width: "520px", cls: "decision-reason" }),
     ];
     state.tableExports.target = { tableId: "targetTable", columns, rows: filtered };
     els.exportTargetCsv.textContent = `导出 CSV (${filtered.length})`;
@@ -2516,7 +2593,7 @@
       col("目标 CPS", "targetCps", "money", { defaultVisible: false }),
       col("ACOS", "acos", "pct"),
       col("CVR", "cvr", "pct", { defaultVisible: false }),
-      col("原因", "reason", "reason", { description: "出单合格承接；无单高花费否定；样本不足保护归因期。", width: "360px" }),
+      col("原因", "reason", "reason", { description: "出单合格承接；无单高花费否定；样本不足保护归因期。", width: "520px", cls: "decision-reason" }),
     ];
     state.tableExports.search = { tableId: "searchTable", columns, rows: filtered };
     els.exportSearchCsv.textContent = `导出 CSV (${filtered.length})`;
@@ -3098,6 +3175,7 @@
     else if (column.type === "num") html = fmtNumber(value, 2);
     else if (column.type === "tag") html = tag(value);
     else if (column.type === "review") html = reviewControl(row);
+    else if (column.type === "reason") html = `<span class="reason-text">${escapeHtml(value ?? "")}</span>`;
     else html = escapeHtml(value ?? "");
     const title = ["clip", "full", "text", "small", "reason"].includes(column.type) ? ` title="${escapeAttr(value ?? "")}"` : "";
     return `<td class="${cls.trim()}"${title}>${html}</td>`;
@@ -3122,7 +3200,8 @@
       options = tooltip;
       tooltip = "";
     }
-    const cls = type === "text" ? "text-cell" : type === "small" ? "small-text" : type === "reason" ? "reason-cell" : type === "full" ? "full-cell" : type === "clip" ? "clip-cell" : type === "review" ? "review-cell" : "";
+    const baseCls = type === "text" ? "text-cell" : type === "small" ? "small-text" : type === "reason" ? "reason-cell" : type === "full" ? "full-cell" : type === "clip" ? "clip-cell" : type === "review" ? "review-cell" : "";
+    const cls = [baseCls, options.cls || ""].filter(Boolean).join(" ");
     return {
       label,
       key,

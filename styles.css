@@ -1329,6 +1329,11 @@ body[data-bulk-ready="false"] .campaign-panel {
   border-left-color: var(--blue);
 }
 
+.scope-summary.empty {
+  border-left-color: var(--amber);
+  background: #fffdf7;
+}
+
 .scope-summary.selected {
   border-left-color: var(--amber);
 }
@@ -2290,6 +2295,55 @@ body[data-bulk-ready="false"] .campaign-panel {
   font-size: 18px;
 }
 
+.queue-recovery {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 14px 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(245, 158, 11, 0.26);
+  border-radius: 8px;
+  background: #fffbeb;
+}
+
+.queue-recovery > div:first-child {
+  min-width: 0;
+}
+
+.queue-recovery h4,
+.queue-recovery p {
+  margin: 0;
+}
+
+.queue-recovery h4 {
+  margin-top: 2px;
+  color: #10212b;
+  font-size: 13px;
+}
+
+.queue-recovery p {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.queue-recovery-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.queue-recovery-actions .secondary-btn,
+.queue-recovery-actions .export-btn {
+  min-height: 32px;
+  height: 32px;
+  white-space: nowrap;
+}
+
 .primary-brief {
   border-left: 4px solid var(--teal);
   background: linear-gradient(90deg, rgba(236, 253, 245, 0.72), #fff 44%);
@@ -2662,12 +2716,27 @@ th.reason-cell {
   max-width: 440px;
 }
 
+td.decision-reason,
+th.decision-reason {
+  min-width: 500px;
+  max-width: 680px;
+}
+
 td.reason-cell {
   color: #475569;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.25;
   vertical-align: middle;
+}
+
+td.reason-cell .reason-text {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 td.review-cell,
@@ -3163,6 +3232,14 @@ tbody tr:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .queue-recovery {
+    display: grid;
+  }
+
+  .queue-recovery-actions {
+    justify-content: flex-start;
+  }
+
   .lead-action {
     grid-template-columns: 1fr;
   }
@@ -3241,6 +3318,12 @@ tbody tr:hover {
   .scope-chips span {
     flex: 1 1 132px;
     justify-content: space-between;
+  }
+
+  td.decision-reason,
+  th.decision-reason {
+    min-width: 320px;
+    max-width: 420px;
   }
 
   .execution-summary,
