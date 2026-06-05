@@ -113,6 +113,15 @@
       state.filters.action = els.keywordActionFilter.value;
       renderKeywordTables();
     });
+    els.keywordInsightStrip.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-keyword-action-preset]");
+      if (!button) return;
+      const action = button.dataset.keywordActionPreset || "all";
+      state.filters.action = action;
+      els.keywordActionFilter.value = action;
+      renderKeywordTables();
+      els.keywordCoverageTable?.closest(".table-card")?.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
     els.runManualKeywordCheck.addEventListener("click", () => {
       state.manualTerms = parseManualTerms(els.manualKeywordInput.value);
       renderKeywordChecker();
@@ -492,6 +501,7 @@
   }
 
   function renderKeywordInsights(actionCounts) {
+    const lead = keywordLeadInsight(actionCounts);
     const rows = [
       {
         title: "优先补精准",
@@ -506,9 +516,62 @@
         body: `正负冲突 ${fmtInt(actionCounts["正负冲突"] || 0)} 个；否定词要用于切分流量，而不是误伤已经出单或正在承接的词。`,
       },
     ];
-    els.keywordInsightStrip.innerHTML = rows
-      .map((item) => `<article class="insight-card"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.body)}</span></article>`)
+    els.keywordInsightStrip.innerHTML = [
+      `<article class="insight-card keyword-lead-insight">
+        <div>
+          <small>结构下一步</small>
+          <b>${escapeHtml(lead.title)}</b>
+          <span>${escapeHtml(lead.body)}</span>
+        </div>
+        ${lead.action !== "all" ? `<button class="secondary-btn" type="button" data-keyword-action-preset="${escapeAttr(lead.action)}">筛选${escapeHtml(lead.action)}</button>` : ""}
+      </article>`,
+      ...rows.map((item) => `<article class="insight-card"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.body)}</span></article>`),
+    ]
       .join("");
+  }
+
+  function keywordLeadInsight(actionCounts) {
+    const count = (key) => actionCounts[key] || 0;
+    if (count("搜索出单未承接")) {
+      return {
+        action: "搜索出单未承接",
+        title: `先承接 ${fmtInt(count("搜索出单未承接"))} 个出单搜索词`,
+        body: "这些词已经带来订单，但 Bulk 中没有正向关键词承接。优先新增精准词，再决定是否保留探索流量。",
+      };
+    }
+    if (count("正负冲突")) {
+      return {
+        action: "正负冲突",
+        title: `先复核 ${fmtInt(count("正负冲突"))} 个正负冲突`,
+        body: "同一词同时正向投放和否定，可能切断有效流量。先确认是否误否，再做加词或否定调整。",
+      };
+    }
+    if (count("缺精准")) {
+      return {
+        action: "缺精准",
+        title: `先补 ${fmtInt(count("缺精准"))} 个精准控制位`,
+        body: "广泛/词组在探索流量，但缺少精准承接。先把有效词拆成精准，再用探索层继续找增量。",
+      };
+    }
+    if (count("竞价倒挂")) {
+      return {
+        action: "竞价倒挂",
+        title: `先校正 ${fmtInt(count("竞价倒挂"))} 个竞价倒挂`,
+        body: "精准竞价低于探索匹配会让预算流向不稳定流量。按 精准 ≥ 词组 ≥ 广泛 调整层级。",
+      };
+    }
+    if (count("重复分散")) {
+      return {
+        action: "重复分散",
+        title: `先整理 ${fmtInt(count("重复分散"))} 个重复分散词`,
+        body: "同一词跨多个活动或广告组重复，会让预算和判断分散。先合并管理口径，再看表现。",
+      };
+    }
+    return {
+      action: "all",
+      title: "结构暂时稳定，先观察表现",
+      body: "当前没有明显结构动作。可以用手动检查词表复核核心词，或回到广告诊断查看本轮执行包。",
+    };
   }
 
   function renderCampaignOptions() {
