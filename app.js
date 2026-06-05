@@ -104,8 +104,10 @@
       "dropZone",
       "fileInput",
       "browseBtn",
+      "demoDataBtn",
       "fieldChecklistBtn",
       "heroBrowseBtn",
+      "heroDemoDataBtn",
       "heroFieldChecklistBtn",
       "fileStack",
       "importAssist",
@@ -185,6 +187,8 @@
   function bindEvents() {
     els.browseBtn.addEventListener("click", () => els.fileInput.click());
     els.heroBrowseBtn?.addEventListener("click", () => els.fileInput.click());
+    els.demoDataBtn?.addEventListener("click", loadDemoData);
+    els.heroDemoDataBtn?.addEventListener("click", loadDemoData);
     els.fieldChecklistBtn?.addEventListener("click", downloadFieldChecklist);
     els.heroFieldChecklistBtn?.addEventListener("click", downloadFieldChecklist);
     els.fileInput.addEventListener("change", (event) => handleFiles(event.target.files));
@@ -781,6 +785,178 @@
       }
     }
     state.mentorRows = snippets.slice(0, 120);
+  }
+
+  function loadDemoData() {
+    if (!window.XLSX) return;
+    setLoading(true, "生成示例广告数据...");
+    try {
+      const { workbook, campaignSheetName, searchSheetName } = buildDemoWorkbook();
+      resetDemoState();
+      parseBulkWorkbook(workbook, campaignSheetName, searchSheetName);
+      notifyKeywordChecker(workbook, campaignSheetName, searchSheetName);
+      state.hourlyRows = buildDemoHourlyRows();
+      state.mentorRows = buildDemoMentorRows();
+      state.bulkLoaded = true;
+      state.hourlyLoaded = true;
+      state.mentorLoaded = true;
+      state.pendingQueueAutoFocus = true;
+      state.files.unshift({
+        name: "合成示例数据",
+        status: "loaded",
+        type: `示例 Bulk · ${state.campaignRows.length} 活动`,
+      });
+      finalizeDefaultSelection();
+      renderAll();
+      requestAnimationFrame(() => {
+        if (els.actionQueue) els.actionQueue.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function resetDemoState() {
+    state.files = [];
+    state.campaignRows = [];
+    state.targetRows = [];
+    state.searchRows = [];
+    state.placementRows = [];
+    state.negativeByScope = new Map();
+    state.targetedByCampaign = new Map();
+    state.hourlyRows = [];
+    state.mentorRows = [];
+    state.bulkLoaded = false;
+    state.hourlyLoaded = false;
+    state.mentorLoaded = false;
+    state.detailsExpanded = false;
+    state.productFilter = "全部";
+    state.selectedCampaigns.clear();
+    state.actionReviews = {};
+    state.todayFocusKeys = new Set();
+    state.queueFilters = { action: "all", risk: "all", review: "pending", impact: "all", sort: "priority" };
+    state.tableFilters = { targetCampaign: "", targetAction: "all", searchCampaign: "", searchAction: "all" };
+    state.search = "";
+    if (els.campaignSearch) els.campaignSearch.value = "";
+    if (els.targetCampaignFilter) els.targetCampaignFilter.value = "";
+    if (els.searchCampaignFilter) els.searchCampaignFilter.value = "";
+    if (els.targetActionFilter) els.targetActionFilter.value = "all";
+    if (els.searchActionFilter) els.searchActionFilter.value = "all";
+    if (els.fileInput) els.fileInput.value = "";
+  }
+
+  function buildDemoWorkbook() {
+    const campaignSheetName = "商品推广活动";
+    const searchSheetName = "商品推广搜索词报告";
+    const campaignHeader = [
+      "实体层级",
+      "广告活动编号",
+      "广告组编号",
+      "广告活动名称（仅供参考）",
+      "广告组名称（仅供参考）",
+      "ASIN（仅供参考）",
+      "投放类型",
+      "状态",
+      "每日预算",
+      "广告组默认竞价",
+      "竞价",
+      "关键词文本",
+      "匹配类型",
+      "竞价方案",
+      "广告位",
+      "百分比",
+      "商品投放 ID",
+      "拓展商品投放名称（仅供参考）",
+      "展示量",
+      "点击量",
+      "花费",
+      "销量",
+      "订单数量",
+      "商品数量",
+    ];
+    const searchHeader = [
+      "广告活动编号",
+      "广告组编号",
+      "关键词编号",
+      "商品投放 ID",
+      "广告活动名称（仅供参考）",
+      "广告组名称（仅供参考）",
+      "状态",
+      "竞价",
+      "关键词文本",
+      "匹配类型",
+      "拓展商品投放名称（仅供参考）",
+      "顾客搜索词",
+      "展示量",
+      "点击量",
+      "花费",
+      "销量",
+      "订单数量",
+      "商品数量",
+    ];
+    const campaigns = [
+      ["广告活动", "demo-c1", "", "DEMO_折叠日伞_AUTO", "", "B0DEMO1234", "自动", "已启用", 3500, 55, "", "", "", "动态竞价 - 只降低", "", "", "", "", 56000, 620, 28600, 112000, 150, 158],
+      ["广告活动", "demo-c2", "", "DEMO_折叠日伞_EXACT", "", "B0DEMO1234", "手动", "已启用", 2600, 48, "", "", "", "动态竞价 - 只降低", "", "", "", "", 39000, 420, 16800, 76000, 96, 101],
+      ["广告活动", "demo-c3", "", "DEMO_折叠日伞_ASIN", "", "B0DEMO1234", "手动", "已启用", 2200, 42, "", "", "", "动态竞价 - 只降低", "", "", "", "", 26000, 300, 12600, 50400, 62, 65],
+      ["广告活动", "demo-c4", "", "DEMO_折叠日伞_BRAND", "", "B0DEMO1234", "手动", "已启用", 1200, 35, "", "", "", "动态竞价 - 只降低", "", "", "", "", 12000, 130, 5200, 22600, 28, 30],
+      ["关键词", "demo-c2", "demo-g2", "DEMO_折叠日伞_EXACT", "exact_核心词", "B0DEMO1234", "手动", "已启用", "", 48, 45, "日傘 軽量", "精准匹配", "", "", "", "", "", 6200, 92, 2100, 24600, 6, 6],
+      ["关键词", "demo-c2", "demo-g2", "DEMO_折叠日伞_EXACT", "exact_核心词", "B0DEMO1234", "手动", "已启用", "", 48, 52, "遮光 日傘", "精准匹配", "", "", "", "", "", 8400, 88, 1800, 4200, 1, 1],
+      ["关键词", "demo-c1", "demo-g1", "DEMO_折叠日伞_AUTO", "auto_探索", "B0DEMO1234", "自动", "已启用", "", 55, 58, "子供 傘", "广泛匹配", "", "", "", "", "", 11200, 26, 1600, 0, 0, 0],
+      ["商品定向", "demo-c3", "demo-g3", "DEMO_折叠日伞_ASIN", "pt_竞品", "B0DEMO1234", "手动", "已启用", "", 42, 40, "", "", "", "", "", "B0COMPET02", "asin=\"B0COMPET02\"", 7800, 64, 1700, 12600, 3, 3],
+      ["否定关键词", "demo-c1", "demo-g1", "DEMO_折叠日伞_AUTO", "auto_探索", "B0DEMO1234", "自动", "已启用", "", "", "", "uv protection parasol", "否定精准匹配", "", "", "", "", "", 0, 0, 0, 0, 0, 0],
+      ["广告位调整", "demo-c1", "", "DEMO_折叠日伞_AUTO", "", "B0DEMO1234", "", "已启用", "", "", "", "", "", "", "首页首位", 20, "", "", 9800, 88, 3500, 21000, 24, 24],
+      ["广告位调整", "demo-c1", "", "DEMO_折叠日伞_AUTO", "", "B0DEMO1234", "", "已启用", "", "", "", "", "", "", "商品页面", 0, "", "", 11600, 138, 6200, 13800, 12, 12],
+    ];
+    const searches = [
+      ["demo-c1", "demo-g1", "", "auto-close", "DEMO_折叠日伞_AUTO", "auto_探索", "已启用", 55, "", "自动", "close-match", "uvカット 日傘 折りたたみ", 11800, 74, 1600, 17600, 4, 4],
+      ["demo-c1", "demo-g1", "", "auto-loose", "DEMO_折叠日伞_AUTO", "auto_探索", "已启用", 55, "", "自动", "loose-match", "安い 傘 子供", 9200, 28, 1900, 0, 0, 0],
+      ["demo-c3", "demo-g3", "", "pt-sub", "DEMO_折叠日伞_ASIN", "pt_竞品", "已启用", 42, "", "商品定向", "substitutes", "B0COMPET01", 6900, 46, 900, 8200, 2, 2],
+      ["demo-c4", "demo-g4", "kw-brand", "", "DEMO_折叠日伞_BRAND", "brand_保护", "已启用", 35, "ブランド 日傘", "精准匹配", "", "ブランド 日傘", 5200, 38, 1260, 13800, 3, 3],
+      ["demo-c1", "demo-g1", "", "auto-close", "DEMO_折叠日伞_AUTO", "auto_探索", "已启用", 55, "", "自动", "close-match", "uv protection parasol", 3100, 18, 620, 4200, 1, 1],
+    ];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([campaignHeader, ...campaigns]), campaignSheetName);
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([searchHeader, ...searches]), searchSheetName);
+    return { workbook, campaignSheetName, searchSheetName };
+  }
+
+  function buildDemoHourlyRows() {
+    const rows = [];
+    const campaigns = ["DEMO_折叠日伞_AUTO", "DEMO_折叠日伞_EXACT", "DEMO_折叠日伞_ASIN"];
+    const segments = [
+      { hour: 8, factor: 1.25 },
+      { hour: 14, factor: 1.1 },
+      { hour: 22, factor: 0.72 },
+    ];
+    campaigns.forEach((campaign, campaignIndex) => {
+      segments.forEach((segment) => {
+        const clicks = Math.round((42 - campaignIndex * 7) * segment.factor);
+        const orders = Math.max(1, Math.round(clicks * (segment.hour === 22 ? 0.06 : 0.13)));
+        rows.push({
+          date: "2026-06-01",
+          hour: segment.hour,
+          campaign,
+          segment: daypartSegment(segment.hour),
+          metrics: {
+            impressions: clicks * 88,
+            clicks,
+            spend: clicks * (42 + campaignIndex * 3),
+            sales: orders * (4200 + campaignIndex * 300),
+            orders,
+            units: orders,
+          },
+        });
+      });
+    });
+    return rows;
+  }
+
+  function buildDemoMentorRows() {
+    return [
+      { row: 1, text: "示例：冷启动先跑数据，样本少不急着否定；达到 CPS 止损阈值后才控费。" },
+      { row: 2, text: "示例：有订单且 CPS 合格的搜索词，应拆到精准或商品定向承接。" },
+      { row: 3, text: "示例：稳定转化后增长重点在抢高质量流量，而不是无限扩大泛流量。" },
+    ];
   }
 
   function renderAll() {
@@ -2676,7 +2852,7 @@
     const targetAcos = aov ? clamp(targetCps / aov, 0.01, 1) : state.targetAcos;
     const smoothedCvr = safeDivide(m.orders + state.naturalCvr * 20, m.clicks + 20);
     const recBid = targetCps * smoothedCvr;
-    const alreadyTargeted = isAlreadyTargeted(row.campaign, row.query) || isAlreadyTargeted(row.campaign, row.target);
+    const alreadyTargeted = isAlreadyTargeted(row.campaign, row.query);
     const negativeCoverage = findNegativeCoverage(row.campaign, row.adGroup || "-", row.query);
     if (negativeCoverage && m.orders === 0) {
       return {

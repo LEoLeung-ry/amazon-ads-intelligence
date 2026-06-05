@@ -249,6 +249,7 @@ Search term actions include:
 Core principle:
 
 - Add terms/ASINs when there is at least one order and CPS is acceptable.
+- A search term / ASIN is considered already carried over only when `isAlreadyTargeted(row.campaign, row.query)` is true. Do not treat the source target (`row.target`, such as `close-match`, a broad keyword, or an ASIN bucket) as proof that the actual converting query has been carried over; that would hide exact-match and ASIN carryover opportunities.
 - Negate when there are enough clicks/spend and no orders, using the CPS stop-loss threshold.
 - Protect low-sample terms during the attribution window.
 - Parse active Bulk negative keyword rows into `state.negativeByScope` before search term decisions.
@@ -400,6 +401,8 @@ Important UI behavior:
 - The empty state uses business language around turning ad reports into executable actions, and it shows file requirements instead of decorative graphics.
 - The empty state should stay light and task-first: white surface, clear Bulk upload CTA in the main workspace, five-step workflow, and a compact required/optional file checklist. Do not turn it back into a heavy marketing hero.
 - `#heroBrowseBtn` is a secondary entry to the same local file picker as the left-sidebar upload button. Keep both paths wired to `#fileInput` so first-time users can start from either the main workspace or sidebar.
+- `#heroDemoDataBtn` and `#demoDataBtn` call `loadDemoData()`. This creates a small synthetic workbook in memory and sends it through `parseBulkWorkbook()` plus `notifyKeywordChecker()`, so the demo uses the same decision engine as real Bulk imports.
+- Demo data must remain synthetic and compact. It should exercise no-order stop/negative, negative conflict review, low-CPS growth, search term exact-match carryover, ASIN carryover, hourly dayparting, and placement advice without committing any private advertising data.
 - `#fieldChecklistBtn` and `#heroFieldChecklistBtn` both call `downloadFieldChecklist()`. This generates a local CSV field checklist for Bulk/hourly/SciAds inputs. It is not a sample ad report and must not contain real advertising data.
 - The left sidebar includes `#importAssist`, a compact upload guidance/error state. It should explain the required Bulk workbook, optional hourly CSV/SciAds records, and what to do when a file is not recognized.
 - `renderImportAssist()` must stay structured, not a single vague sentence. It renders title, body, and a three-row checklist for the current state: default upload order, wrong/unrecognized file, optional-file-loaded-but-Bulk-missing, or Bulk-loaded success.
@@ -498,6 +501,8 @@ Before opening a PR or merging:
    - Campaign CPS override fields save to `amazonAds.goalPrefs.v2` and override target CPS for that campaign.
    - Empty state shows the five-step path and file requirements for required Bulk plus optional hourly CSV/SciAds files.
    - Empty state has a visible main-workspace `选择 Bulk 工作簿` button and remains visually lightweight on desktop and mobile.
+   - Clicking `体验示例数据` loads only synthetic demo data, hides the empty state, shows the product action queue, labels the file stack as demo/synthetic, and does not require any real ad file.
+   - Demo data should produce representative action categories for onboarding: `检查否定`, `否定`, `止损` or `降价`, `放量`, `加精准词`, `加商品定向`, and `保留/加预算` when thresholds allow.
    - Clicking `选择 Bulk 工作簿` opens the same local file picker and successfully imports the real Bulk fixture.
    - Workflow strip updates from `先上传 Bulk` to campaign/search-term counts after import.
    - Upload guidance shows the default upload order before import, a clear warning for unsupported/incorrect files, and a success hint after Bulk is recognized.
