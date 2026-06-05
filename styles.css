@@ -585,6 +585,10 @@ body[data-bulk-ready="false"] .campaign-panel {
   display: none;
 }
 
+body[data-bulk-ready="false"] #emptyState .hero-upload-actions {
+  display: none;
+}
+
 .control-row label {
   color: var(--muted);
   font-size: 12px;
