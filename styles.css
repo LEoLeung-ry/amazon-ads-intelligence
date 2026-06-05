@@ -2720,6 +2720,14 @@ body[data-bulk-ready="false"] .campaign-panel {
   line-height: 1.3;
 }
 
+#keywordWorkspace[data-keyword-ready="false"] .keyword-kpi-grid,
+#keywordWorkspace[data-keyword-ready="false"] .keyword-brief-grid,
+#keywordWorkspace[data-keyword-ready="false"] .keyword-control-panel,
+#keywordWorkspace[data-keyword-ready="false"] #keywordInsightStrip,
+#keywordWorkspace[data-keyword-ready="false"] .keyword-results-card {
+  display: none;
+}
+
 .tool-field input,
 .tool-field select {
   height: 34px;

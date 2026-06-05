@@ -462,6 +462,7 @@
   }
 
   function renderKeywordSummary() {
+    if (els.keywordWorkspace) els.keywordWorkspace.dataset.keywordReady = state.loaded ? "true" : "false";
     els.keywordEmptyState.classList.toggle("hidden", state.loaded);
     const actionCounts = countBy(state.keywordSummaries.map((row) => row.action));
     const campaigns = unique([...state.positiveRows.map((row) => row.campaign), ...state.negativeRows.map((row) => row.campaign)]);

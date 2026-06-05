@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Amazon Ads Intelligence Workbench</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="./styles.css?v=keyword-acos-20260606" />
+    <link rel="stylesheet" href="./styles.css?v=keyword-empty-focus-20260606" />
     <link rel="stylesheet" href="./keyword-checker.css?v=goal-helper-20260605" />
   </head>
   <body>
@@ -289,7 +289,7 @@
         </section>
       </main>
 
-      <main class="workspace mode-workspace" id="keywordWorkspace" hidden>
+      <main class="workspace mode-workspace" id="keywordWorkspace" data-keyword-ready="false" hidden>
         <header class="topbar">
           <div>
             <h2>投放关键词检查</h2>
@@ -391,12 +391,12 @@
 
         <section class="insight-strip" id="keywordInsightStrip"></section>
 
-        <section class="table-card">
+        <section class="table-card keyword-results-card">
           <div class="table-head"><h3>关键词覆盖与竞价结构</h3><span id="keywordTableMeta">等待 Bulk 文件</span></div>
           <div class="table-wrap keyword-table-wrap"><table id="keywordCoverageTable"></table></div>
         </section>
 
-        <section class="table-card">
+        <section class="table-card keyword-results-card">
           <div class="table-head"><h3>广告组投放视图</h3><span>按广告活动 + 广告组拆开看结构</span></div>
           <div class="table-wrap keyword-table-wrap"><table id="adGroupCoverageTable"></table></div>
         </section>
