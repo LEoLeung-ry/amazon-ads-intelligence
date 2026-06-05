@@ -284,6 +284,38 @@ button {
   margin-top: 3px;
 }
 
+.assist-receipt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 3px;
+}
+
+.receipt-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.receipt-chip.ok {
+  border-color: rgba(34, 197, 94, 0.24);
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.receipt-chip.warn {
+  border-color: rgba(245, 158, 11, 0.28);
+  background: #fffbeb;
+  color: #b45309;
+}
+
 .assist-row {
   min-width: 0;
   display: grid;
@@ -347,10 +379,17 @@ button {
   color: #15803d;
 }
 
+.assist-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 6px;
+  margin-top: 5px;
+}
+
 .assist-jump {
   width: 100%;
   min-height: 30px;
-  margin-top: 4px;
+  margin-top: 0;
   border: 1px solid rgba(15, 118, 110, 0.28);
   border-radius: 7px;
   background: #fff;
@@ -359,9 +398,25 @@ button {
   font-weight: 900;
 }
 
+.assist-jump.primary {
+  border-color: var(--teal);
+  background: var(--teal);
+  color: #fff;
+}
+
+.assist-jump.ghost {
+  border-color: var(--line-strong);
+  color: #475569;
+}
+
 .assist-jump:hover {
   border-color: var(--teal);
   background: #f0fdfa;
+}
+
+.assist-jump.primary:hover {
+  background: #0f766e;
+  color: #fff;
 }
 
 .search-card {

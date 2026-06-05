@@ -316,6 +316,11 @@
       loadDemoData();
       return;
     }
+    const checklistButton = event.target.closest("[data-download-field-checklist]");
+    if (checklistButton) {
+      downloadFieldChecklist();
+      return;
+    }
     const exportConfirmedButton = event.target.closest("[data-workflow-export-confirmed]");
     if (exportConfirmedButton) {
       exportTableCsv("productQueueConfirmed", "已确认行动队列.csv");
@@ -1038,6 +1043,11 @@
         ["检查 2", "搜索词报告", "商品推广搜索词报告用于生成加词、否定和承接建议"],
         ["检查 3", "CSV 不是 Bulk", "每小时 CSV 只用于分时效率；不能单独生成行动队列"],
       ];
+      action = renderAssistActions([
+        { label: "重新选择 Bulk", attr: "data-workflow-upload", variant: "primary" },
+        { label: "字段清单", attr: "data-download-field-checklist", variant: "ghost" },
+        { label: "先看示例", attr: "data-workflow-demo", variant: "ghost" },
+      ]);
     } else if (state.bulkLoaded) {
       tone = "ok";
       title = "Bulk 已识别";
@@ -1049,7 +1059,9 @@
         ["可补充", "每小时 CSV", "用于判断哪些时段 RPC/CVR 更稳"],
         ["可展开", "详细分析", "标的、搜索词、分时和广告位都在二级层"],
       ];
-      action = '<button class="assist-jump" type="button" data-scroll-action-queue>查看行动队列</button>';
+      action = renderAssistActions([
+        { label: "查看行动队列", attr: "data-scroll-action-queue", variant: "primary" },
+      ]);
     } else if (loaded.length) {
       title = "还缺 Bulk";
       body = "已读取可选文件，但核心诊断需要 Bulk 工作簿才能生成广告活动、搜索词和行动队列。";
@@ -1058,11 +1070,16 @@
         ["已读取", "可选增强文件", "小时 CSV 或 SciAds 会在 Bulk 后一起参与解释"],
         ["不用担心", "不会上传服务器", "所有文件只在当前浏览器本地解析"],
       ];
+      action = renderAssistActions([
+        { label: "选择 Bulk 工作簿", attr: "data-workflow-upload", variant: "primary" },
+        { label: "字段清单", attr: "data-download-field-checklist", variant: "ghost" },
+      ]);
     }
     els.importAssist.className = `import-assist ${tone}`;
     els.importAssist.innerHTML = `
       <b>${escapeHtml(title)}</b>
       <span>${escapeHtml(body)}</span>
+      ${renderImportReceipt()}
       <div class="assist-checklist">
         ${checklist.map(([tag, label, text]) => `<div class="assist-row">
           <em>${escapeHtml(tag)}</em>
@@ -1074,6 +1091,32 @@
       </div>
       ${action}
     `;
+  }
+
+  function renderImportReceipt() {
+    if (!state.files.length) return "";
+    const warnCount = state.files.filter((file) => file.status === "warn").length;
+    const chips = [
+      {
+        text: state.bulkLoaded
+          ? `Bulk ${state.campaignRows.length} 活动 / ${state.searchRows.length} 搜索词`
+          : "Bulk 待补",
+        cls: state.bulkLoaded ? "ok" : "warn",
+      },
+    ];
+    if (state.hourlyLoaded) chips.push({ text: `小时 ${state.hourlyRows.length} 行`, cls: "ok" });
+    if (state.mentorLoaded) chips.push({ text: `SciAds ${state.mentorRows.length} 条`, cls: "ok" });
+    if (warnCount) chips.push({ text: `${warnCount} 个未识别`, cls: "warn" });
+    return `<div class="assist-receipt" aria-label="导入识别结果">
+      ${chips.map((chip) => `<span class="receipt-chip ${chip.cls}">${escapeHtml(chip.text)}</span>`).join("")}
+    </div>`;
+  }
+
+  function renderAssistActions(actions) {
+    if (!actions?.length) return "";
+    return `<div class="assist-actions">
+      ${actions.map((action) => `<button class="assist-jump ${escapeAttr(action.variant || "")}" type="button" ${action.attr}>${escapeHtml(action.label)}</button>`).join("")}
+    </div>`;
   }
 
   function renderProductSegments() {
