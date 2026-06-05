@@ -1181,6 +1181,7 @@
         </div>
         ${renderExecutionPackage(confirmedRows)}
         ${renderQueueFilters(queueRows, filteredQueueRows)}
+        ${renderMobileActionCards(filteredQueueRows)}
         <div class="table-wrap"><table id="productActionTable"></table></div>
       </div>
     `;
@@ -1566,6 +1567,29 @@
       ${queueSelect("影响", "impact", ["all", "todayFocus", "highSpend", "overTarget", "hasOrders", "noOrders"], filters.impact, queueImpactLabel)}
       ${queueSelect("排序", "sort", ["priority", "spend", "orders", "gap"], filters.sort, queueSortLabel)}
       <div class="queue-filter-count"><b>${fmtInt(filteredRows.length)}</b><span>/ ${fmtInt(allRows.length)} 项</span></div>
+    </div>`;
+  }
+
+  function renderMobileActionCards(rows) {
+    if (!rows.length) return "";
+    const cards = rows.slice(0, 8);
+    const remaining = rows.length - cards.length;
+    return `<div class="mobile-action-cards" aria-label="移动端行动卡">
+      ${cards.map((row) => `<article class="mobile-action-card">
+        <div class="mobile-card-top">
+          ${tag(row.action)}
+          <span>${escapeHtml(row.risk || "待判断")}</span>
+        </div>
+        <h4 title="${escapeAttr(row.item)}">${escapeHtml(shorten(row.item, 52))}</h4>
+        <p>${escapeHtml(row.nextStep || row.reason || "先复核数据，再决定是否执行。")}</p>
+        <small>${escapeHtml(row.evidence || "")}</small>
+        <div class="mobile-card-meta">
+          <span title="${escapeAttr(row.campaign)}">${escapeHtml(shorten(row.campaign, 34))}</span>
+          <span title="${escapeAttr(row.adGroup)}">${escapeHtml(shorten(row.adGroup, 34))}</span>
+        </div>
+        ${reviewControl(row)}
+      </article>`).join("")}
+      ${remaining > 0 ? `<div class="mobile-card-more">还有 ${fmtInt(remaining)} 项在下方表格，可用筛选继续收窄。</div>` : ""}
     </div>`;
   }
 

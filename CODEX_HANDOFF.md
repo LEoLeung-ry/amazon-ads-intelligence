@@ -289,6 +289,8 @@ The homepage action queue is now the primary workflow.
 - `nextStep` should tell the operator what to do next in Amazon Ads, not merely restate the mathematical rule.
 - `evidence` should summarize spend, clicks, orders, actual CPS, and target CPS in one compact sentence.
 - `risk` is a tag (`低风险`, `中风险`, `高风险`) used for quick scanning and export.
+- `renderMobileActionCards(filteredQueueRows)` renders the first eight currently filtered queue rows as touch-friendly cards before the table. This is mobile-only (`.mobile-action-cards`) and must use the same review controls/review keys as the table so confirmation, hold, and export state stay aligned.
+- Keep the full `productActionTable` below the mobile cards. The cards are an execution shortcut, not a replacement for custom columns, expert inspection, or CSV export.
 - Each queue row has a lightweight review status: `待确认`, `已确认`, or `暂缓`. This is stored in memory under `state.actionReviews` because uploaded files are not persisted.
 - Review row keys must be precise enough that confirming one row does not accidentally confirm duplicate-looking rows. Include source/action/campaign/ad group/item plus metrics such as spend/orders/recommended bid.
 - The queue summary shows pending/confirmed/held counts for the current action/risk/impact filters, independent of the selected review-status filter. This keeps confirmed counts visible after rows leave the default `待确认` view.

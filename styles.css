@@ -2003,6 +2003,79 @@ td.review-cell {
   color: #b45309;
 }
 
+.mobile-action-cards {
+  display: none;
+}
+
+.mobile-action-card {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.mobile-card-top,
+.mobile-card-meta {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mobile-card-top > span:not(.tag) {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.mobile-action-card h4,
+.mobile-action-card p,
+.mobile-action-card small {
+  margin: 0;
+}
+
+.mobile-action-card h4 {
+  color: #10212b;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.mobile-action-card p {
+  color: #17212b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.mobile-action-card small {
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.mobile-card-meta span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #475569;
+  font-size: 11px;
+}
+
+.mobile-card-more {
+  padding: 8px 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  color: var(--muted);
+  background: #fbfdff;
+  font-size: 12px;
+  text-align: center;
+}
+
 td.num,
 th.num {
   text-align: right;
@@ -2294,6 +2367,20 @@ tbody tr:hover {
   .execution-summary,
   .queue-filter-bar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mobile-action-cards {
+    display: grid;
+    gap: 8px;
+    padding: 0 14px 12px;
+  }
+
+  .mobile-action-card .review-control {
+    width: 100%;
+  }
+
+  .mobile-action-card .review-control button {
+    min-height: 32px;
   }
 
   .tool-field,
