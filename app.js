@@ -380,7 +380,9 @@
     }
     const queueButton = event.target.closest("[data-scroll-action-queue]");
     if (!queueButton) return;
-    const target = els.actionQueue?.hidden ? els.workflowStrip : els.actionQueue;
+    const target = els.actionQueue?.hidden
+      ? els.workflowStrip
+      : els.actionQueue?.querySelector(".round-plan") || els.actionQueue;
     if (target) target.scrollIntoView({ block: "start", behavior: "smooth" });
   }
 
@@ -1552,10 +1554,6 @@
           <button class="secondary-btn" type="button" data-toggle-details>${state.detailsExpanded ? "收起解释和详细分析" : "展开解释和详细分析"}</button>
         </div>
       </div>
-      ${renderExecutionCoach(executionCoach)}
-      ${renderGoalCheckpoint(calculated, campaigns)}
-      ${renderGoalChangeNotice()}
-      ${renderTodayFocus(todayFocusRows, queueRows)}
       ${renderRoundPlan({
         stopRows: stopTaskRows,
         growthRows: growthTaskRows,
@@ -1563,6 +1561,10 @@
         filteredRows: filteredQueueRows,
         confirmedRows,
       })}
+      ${renderExecutionCoach(executionCoach)}
+      ${renderGoalCheckpoint(calculated, campaigns)}
+      ${renderGoalChangeNotice()}
+      ${renderTodayFocus(todayFocusRows, queueRows)}
       <div class="task-rail" aria-label="行动任务筛选">
         ${cards.map((card) => actionTaskChip(card)).join("")}
       </div>
