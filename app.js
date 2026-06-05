@@ -1484,9 +1484,10 @@
       ? `默认只处理从 ${fmtInt(queueRows.length)} 个候选动作里收敛出的这一批；确认后导出给后台执行。`
       : "当前是扩展筛选结果；确认前先复核风险、目标 CPS 和后台定位。";
     const confirmCurrentLabel = isTodayBatch ? "确认本轮" : "确认待处理";
-    const exportCurrentLabel = hasConfirmedRows ? "导出当前视图" : isTodayBatch ? "导出本轮" : "导出当前";
+    const exportCurrentLabel = "导出当前视图";
+    const confirmCurrentClass = canBatchConfirm && !hasConfirmedRows ? "export-btn" : "secondary-btn";
     const confirmedExportClass = hasConfirmedRows ? "export-btn" : "secondary-btn";
-    const currentExportClass = hasConfirmedRows ? "secondary-btn" : "export-btn";
+    const currentExportClass = "secondary-btn";
     const confirmedExported = hasConfirmedRows && activeQueueExport()?.key === "productQueueConfirmed";
     const confirmedExportLabel = confirmedExported ? "重新导出已确认" : "导出已确认";
     const taskScopeLabel = isTodayBatch ? "本轮" : "当前范围";
@@ -1565,10 +1566,10 @@
             <span>${escapeHtml(queueSubtitle)}</span>
           </div>
           <div class="queue-export-actions">
-            <button class="secondary-btn" type="button" data-review-current="confirmed"${canBatchConfirm ? "" : " disabled title=\"先筛选任务、风险或影响后再批量确认\""}>${confirmCurrentLabel} (${batchConfirmRows.length})</button>
+            <button class="${confirmCurrentClass}" type="button" data-review-current="confirmed"${canBatchConfirm ? "" : " disabled title=\"先筛选任务、风险或影响后再批量确认\""}>${confirmCurrentLabel} (${batchConfirmRows.length})</button>
             <button class="secondary-btn" type="button" data-review-current="pending"${canBatchReset ? "" : " disabled title=\"先筛选任务、风险或影响后再撤回确认\""}>撤回已确认 (${batchResetRows.length})</button>
             <button class="${confirmedExportClass}" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>${confirmedExportLabel} (${confirmedRows.length})</button>
-            <button class="${currentExportClass}" type="button" data-export-queue${filteredQueueRows.length ? "" : " disabled"}>${exportCurrentLabel} (${filteredQueueRows.length})</button>
+            <button class="${currentExportClass}" type="button" data-export-queue title="仅导出当前筛选快照，不等于已确认执行包"${filteredQueueRows.length ? "" : " disabled"}>${exportCurrentLabel} (${filteredQueueRows.length})</button>
           </div>
         </div>
         <div class="execution-summary">
