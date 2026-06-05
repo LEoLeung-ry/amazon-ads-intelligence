@@ -1863,6 +1863,10 @@
         <h4>${escapeHtml(row.executionAction || "人工复核")}</h4>
         <p>${escapeHtml(row.nextStep || row.reason || "先复核数据，再决定是否执行。")}</p>
         <small>${escapeHtml(row.evidence || "")}</small>
+        <div class="lead-priority">
+          <b>为什么先看它</b>
+          <span>${escapeHtml(leadPriorityReason(row))}</span>
+        </div>
       </div>
       <div class="lead-action-side">
         <div>
@@ -1880,6 +1884,26 @@
         ${reviewControl(row)}
       </div>
     </div>`;
+  }
+
+  function leadPriorityReason(row) {
+    const filters = state.queueFilters;
+    const reasons = [];
+    if (filters.impact === "todayFocus") reasons.push("来自今日优先批次");
+    if (filters.action !== "all") reasons.push(`当前任务：${queueActionLabel(filters.action)}`);
+    if (filters.risk !== "all") reasons.push(`风险筛选：${row.risk || "待判断"}`);
+    if (filters.sort === "spend") reasons.push("按花费从高到低排序");
+    else if (filters.sort === "orders") reasons.push("按订单贡献排序");
+    else if (filters.sort === "gap") reasons.push("按偏离目标 CPS 排序");
+    else reasons.push("按动作优先级和花费排序");
+
+    if (row.action === "检查否定") reasons.push("有订单但可能被否定误伤");
+    else if (row.orders === 0) reasons.push("无订单消耗需要先控费");
+    else if (row.actualCps && row.targetCps && row.actualCps > row.targetCps) reasons.push("实际 CPS 已高于目标");
+    else if (row.orders > 0) reasons.push("已有转化，影响更直接");
+
+    if (row.spend >= Math.max(3000, (Number(row.targetCps) || 0) * 4)) reasons.push("涉及花费较高");
+    return reasons.slice(0, 4).join(" · ");
   }
 
   function renderQueueFilters(allRows, filteredRows) {
