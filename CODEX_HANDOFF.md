@@ -67,6 +67,7 @@ Important behavior:
 - The owner optimizes one product at a time across all of that product's campaigns. The default homepage workflow must therefore stay product-wide first, not campaign-by-campaign first.
 - After Bulk import, `#scopeSummary` must make the active analysis scope explicit. KPI cards, action queue, confirmations, and queue exports all use the same scope: campaign search first, then manually selected campaigns, otherwise the visible product group/all-product set.
 - Campaign-level CPS overrides are optional. Empty override fields inherit the product default CPS.
+- `#goalHelper` inside the product target card explains how to fill product default CPS and natural CVR before import, then switches after Bulk import to the active formula context: AOV, derived target ACOS, target CPS, and natural-CVR smoothing. Keep this helper compact because it sits in the left sidebar.
 - Goal preferences are saved in `localStorage` under `amazonAds.goalPrefs.v2`; uploaded files themselves are never persisted.
 - The first screen should communicate a task path, not a feature catalog: import data, confirm goals, review the action queue, confirm actions, export execution data.
 - Required file guidance is part of the empty state: Bulk is required; hourly CSV and SciAds records are optional enrichments.
@@ -430,6 +431,7 @@ Important UI behavior:
 - The left sidebar has two separate mode buttons: `广告诊断` and `投放关键词检查`.
 - Left sidebar campaign search appears above upload and goal controls.
 - Left sidebar contains upload, product default target CPS, natural CVR, derived ACOS, actual CPS, target gap, product groups, and campaign list.
+- Left sidebar product target card includes `renderGoalHelper()` guidance. It should help a first-time operator set CPS/CVR correctly without adding a separate tutorial block.
 - On mobile after Bulk is loaded, CSS uses `body[data-bulk-ready="true"]` to compress the sidebar: hide file stack, product-group controls, and campaign list; compact the upload card; keep campaign search, goal controls, and the action-queue jump. This keeps the default path product-wide and prevents the action queue from being buried below a long sidebar.
 - Each campaign row supports a compact CPS override input. Empty input means inherit product default CPS.
 - Top status pills show Bulk/hourly/SciAds load status.

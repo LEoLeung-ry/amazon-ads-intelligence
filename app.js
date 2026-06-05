@@ -118,6 +118,7 @@
       "actualCps",
       "goalGap",
       "goalOverrideCount",
+      "goalHelper",
       "campaignSearch",
       "productSegments",
       "selectVisibleBtn",
@@ -3464,6 +3465,36 @@
         els.goalGap.className = gap <= 0 ? "status-good" : gap <= 0.2 ? "status-warn" : "status-bad";
       }
     }
+    renderGoalHelper(targetCps, calculated, derivedAcos);
+  }
+
+  function renderGoalHelper(targetCps, calculated, derivedAcos) {
+    if (!els.goalHelper) return;
+    const aov = calculated.aov;
+    const ready = state.bulkLoaded && aov > 0;
+    const title = ready
+      ? `AOV ${fmtMoney(aov)} → 目标 ACOS ${fmtPct(derivedAcos)}`
+      : "目标怎么填";
+    const body = ready
+      ? `建议 bid 用目标 CPS ${fmtMoney(targetCps)} × 平滑 CVR；活动列表里可以给单个活动覆盖 CPS。`
+      : "CPS 是你愿意为 1 个广告订单支付的上限；自然 CVR 用商品近 7-14 天自然/总转化率。";
+    const chips = ready
+      ? [
+        ["主控", `CPS ${fmtMoney(targetCps)}`],
+        ["平滑", `自然 CVR ${fmtPct(state.naturalCvr)}`],
+      ]
+      : [
+        ["CPS", "每单成本上限"],
+        ["CVR", "小样本保护"],
+      ];
+    els.goalHelper.className = `goal-helper ${ready ? "ready" : ""}`;
+    els.goalHelper.innerHTML = `
+      <b>${escapeHtml(title)}</b>
+      <p>${escapeHtml(body)}</p>
+      <div>
+        ${chips.map(([label, value]) => `<span><em>${escapeHtml(label)}</em>${escapeHtml(value)}</span>`).join("")}
+      </div>
+    `;
   }
 
   function analysisSubtitle(count) {

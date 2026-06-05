@@ -508,6 +508,54 @@ button {
   font-size: 12px;
 }
 
+.goal-helper {
+  display: grid;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.goal-helper b {
+  color: #10212b;
+  font-size: 12px;
+}
+
+.goal-helper p {
+  margin: 0;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.goal-helper > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.goal-helper span {
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.goal-helper em {
+  color: var(--teal);
+  font-style: normal;
+}
+
+.goal-helper.ready span {
+  background: #f0fdfa;
+  border-color: rgba(15, 118, 110, 0.18);
+}
+
 .control-card {
   display: grid;
   gap: 12px;
