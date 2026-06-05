@@ -21,6 +21,7 @@ This push preserves the current production app code and refreshes this handoff s
 
 Latest implementation note for this release:
 
+- The imported action queue now includes a compact `本轮作业单` strip before the task chips. It translates the current execution batch into an ordered operator path: first stop-loss/budget protection, then growth, then structure carryover, then confirmation/export. Keep it thin and non-interactive; it exists to reduce first-time scanning burden, not to become another KPI/report block.
 - The empty state now relies on the top `workflow-strip` as the only five-step path. Do not duplicate the same five steps inside the hero panel; the hero should stay focused on the Bulk upload CTA, the two analysis entrances, and the required/optional file checklist.
 - The visible first-layer module labels now use Chinese operator language instead of decorative English labels. Keep these labels business-facing: `行动队列`, `下一步`, `本轮重点`, `目标校验`, `执行包`, `导出记录`, `分析范围`, `确认规则`. Do not reintroduce visible labels such as `Action queue`, `Next action`, `Goal checkpoint`, `Today focus`, or `Export receipt` in the main workflow; this app is for Chinese Amazon operators and new staff who need immediate task comprehension.
 - The `投放关键词检查` empty state now uses Chinese operator language (`关键词结构体检`) and includes its own `选择 Bulk 工作簿` and demo buttons wired through the global workflow actions. A new operator who enters this mode first should not need to hunt back through the left sidebar to start.

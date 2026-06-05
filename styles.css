@@ -1580,6 +1580,106 @@ body[data-bulk-ready="false"] .campaign-panel {
   line-height: 1.45;
 }
 
+.round-plan {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f8fffd, #fff);
+}
+
+.round-plan-head {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+}
+
+.round-plan-head .eyebrow {
+  color: var(--teal);
+}
+
+.round-plan-head b {
+  color: #10212b;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.round-plan-items {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.round-plan-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 7px;
+  align-items: start;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+}
+
+.round-plan-item > span {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.round-plan-item.red > span {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.round-plan-item.green > span {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.round-plan-item.blue > span {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.round-plan-item b,
+.round-plan-item small {
+  min-width: 0;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.round-plan-item b {
+  color: #10212b;
+  font-size: 12px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.round-plan-item small {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 .execution-coach {
   display: flex;
   align-items: center;
@@ -3298,6 +3398,14 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 
+  .round-plan {
+    grid-template-columns: 1fr;
+  }
+
+  .round-plan-items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .queue-filter-bar {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -3453,6 +3561,10 @@ tbody tr:hover {
 
   .execution-coach {
     display: grid;
+  }
+
+  .round-plan-items {
+    grid-template-columns: 1fr;
   }
 
   .execution-coach-side {

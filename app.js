@@ -1556,6 +1556,13 @@
       ${renderGoalCheckpoint(calculated, campaigns)}
       ${renderGoalChangeNotice()}
       ${renderTodayFocus(todayFocusRows, queueRows)}
+      ${renderRoundPlan({
+        stopRows: stopTaskRows,
+        growthRows: growthTaskRows,
+        structureRows: structureTaskRows,
+        filteredRows: filteredQueueRows,
+        confirmedRows,
+      })}
       <div class="task-rail" aria-label="行动任务筛选">
         ${cards.map((card) => actionTaskChip(card)).join("")}
       </div>
@@ -1621,6 +1628,60 @@
     state.tableExports.productQueueBatchConfirm = { rows: batchConfirmRows };
     state.tableExports.productQueueBatchReset = { rows: batchResetRows };
     renderTable("productActionTable", columns, filteredQueueRows.slice(0, 360), "当前筛选下没有行动项。");
+  }
+
+  function renderRoundPlan({ stopRows, growthRows, structureRows, filteredRows, confirmedRows }) {
+    const pendingRows = filteredRows.filter((row) => (row.reviewState || "pending") === "pending");
+    if (!filteredRows.length && !confirmedRows.length) return "";
+    const plan = [
+      {
+        tone: "red",
+        step: 1,
+        title: stopRows.length ? `先控费 ${fmtInt(stopRows.length)} 项` : "先控费：本轮暂无",
+        body: stopRows.length
+          ? `保护 ${fmtMoney(sumBy(stopRows, (row) => row.spend))} 花费，先复核否定、止损和降价。`
+          : "没有达到止损阈值的项，不需要硬找问题。",
+      },
+      {
+        tone: "green",
+        step: 2,
+        title: growthRows.length ? `再放量 ${fmtInt(growthRows.length)} 项` : "再放量：本轮暂无",
+        body: growthRows.length
+          ? `承接 ${fmtMoney(sumBy(growthRows, (row) => row.sales))} 销售额，用小步竞价拿订单。`
+          : "没有 CPS 合格的放量项，先保护预算。",
+      },
+      {
+        tone: "blue",
+        step: 3,
+        title: structureRows.length ? `补结构 ${fmtInt(structureRows.length)} 项` : "补结构：本轮跳过",
+        body: structureRows.length
+          ? "把出单搜索词或 ASIN 拆出承接，减少跨活动来回找。"
+          : "结构动作不在本轮优先批次里。",
+      },
+      {
+        tone: "neutral",
+        step: 4,
+        title: confirmedRows.length ? `已确认 ${fmtInt(confirmedRows.length)} 项` : `确认 ${fmtInt(pendingRows.length)} 项`,
+        body: confirmedRows.length
+          ? "下一步导出已确认执行包，进入 Amazon 后台处理。"
+          : "确认只代表进入执行包；不确定的行先暂缓。",
+      },
+    ];
+    return `<div class="round-plan" aria-label="本轮作业单">
+      <div class="round-plan-head">
+        <span class="eyebrow">本轮作业单</span>
+        <b>按这个顺序处理，不用先读完整张表</b>
+      </div>
+      <div class="round-plan-items">
+        ${plan.map((item) => `<div class="round-plan-item ${escapeAttr(item.tone)}">
+          <span>${fmtInt(item.step)}</span>
+          <div>
+            <b>${escapeHtml(item.title)}</b>
+            <small>${escapeHtml(item.body)}</small>
+          </div>
+        </div>`).join("")}
+      </div>
+    </div>`;
   }
 
   function buildProductActionRows(targetRows, searchDecisionRows) {
