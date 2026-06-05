@@ -21,6 +21,7 @@ This push preserves the current production app code and refreshes this handoff s
 
 Latest implementation note for this release:
 
+- Empty-state onboarding, the imported sidebar assist card, workflow strip, workflow compass, execution coach, review guide, and queue table header now all use the same default term: `本轮执行包`. Use `行动队列` only as the broader module name and `候选池` for the expanded full queue.
 - The default action queue now frames the first 30 items as `本轮执行包` and the full queue as `候选池`. Keep this distinction: new operators should understand they only need to review/export the current execution batch first, while the thousands of remaining actions are a searchable/filterable pool, not today's workload.
 - Queue export receipts and the workflow compass now use `activeQueueExport()`, which only returns `lastExport` when the stored export scope matches the current `analysisScopeLabel()`. Do not show an old all-product export receipt after the operator switches to a search, selected campaign set, or product-group scope.
 - Confirmed execution-package exports now append export context columns (`导出时间`, `分析范围`, `产品默认 CPS`, `自然 CVR`) plus hidden metric columns (`目标 CPS`, `当前 CPS`, `ACOS`) through `exportColumnsForKey()`. This keeps the visible table light while making forwarded CSVs self-explanatory for another operator.
@@ -357,9 +358,10 @@ The homepage action queue is now the primary workflow.
 - The execution package must include `renderExecutionGuardrails(buildExecutionGuardrails(rows))`, a compact pre-export safety row. It should flag negative conflicts, negative additions, no-order spend, bid changes, and carryover actions before export without blocking the user.
 - The execution package must also include `renderExecutionHandoff()`, a compact three-step handoff strip explaining how to use the exported CSV in Amazon Ads: follow `执行顺序`, use `后台定位 + 后台动作`, then leave a 2-3 day observation window before the next Bulk import.
 - `executionPlanLabel(row)` intentionally groups bid-change variants such as `调高竞价到 ¥X` under `按建议竞价小步加价`; otherwise a growth batch with different bids becomes visually fragmented.
-- `导出当前` exports the currently filtered queue rows, not the unfiltered queue. `导出已确认` exports confirmed rows matching the current action/risk/impact filters, independent of the selected review-status filter. Both exports include the recalculated `执行顺序` column so the CSV can be used as an ordered execution sheet. Keep `productQueueConfirmed` wired to the same columns so current column choices apply to both exports.
-- `确认待处理` bulk-confirms only pending rows inside the currently filtered queue by writing each row's `reviewKey` to `state.actionReviews`.
-- `确认待处理` must be disabled until the queue is narrowed by task/action, risk, or impact. The default all-action queue must not allow one-click confirmation of every row.
+- In the default `今日优先` batch, the current-scope buttons are labeled `确认本轮` and `导出本轮`. In expanded candidate-pool scopes, the same handlers are labeled `确认待处理` and `导出当前`.
+- `导出本轮` / `导出当前` exports the currently filtered queue rows, not the unfiltered queue. `导出已确认` exports confirmed rows matching the current action/risk/impact filters, independent of the selected review-status filter. Both exports include the recalculated `执行顺序` column so the CSV can be used as an ordered execution sheet. Keep `productQueueConfirmed` wired to the same columns so current column choices apply to both exports.
+- `确认本轮` / `确认待处理` bulk-confirms only pending rows inside the currently filtered queue by writing each row's `reviewKey` to `state.actionReviews`.
+- Batch confirmation must be disabled until the queue is narrowed by task/action, risk, or impact. The default full candidate-pool queue must not allow one-click confirmation of every row.
 - Bulk confirmation must never overwrite rows already marked `暂缓` or `已确认`, even when the review-status filter is `全部状态`.
 - `撤回已确认` clears only confirmed rows inside the current narrowed task/action, risk, or impact scope by deleting each row's `reviewKey` from `state.actionReviews`.
 - `撤回已确认` must be disabled until the queue is narrowed and there is at least one confirmed row in that narrowed scope. It must never affect rows marked `暂缓`.
@@ -584,8 +586,8 @@ Before opening a PR or merging:
    - Default queue CSV includes `优先理由`, matching the lead action rationale and changing when queue sort/filter context changes.
    - Default queue CSV includes `执行分组`, matching the execution package route map and allowing exported rows to be grouped by backend action family.
    - Action queue rows can be marked `已确认` or `暂缓`; the review summary updates immediately.
-   - `确认待处理` is disabled on the default all-action queue. After filtering to `止损/否定`, it bulk-confirms only pending rows in that filtered set.
-   - If one filtered row is already `暂缓`, `确认待处理` preserves it and confirms only the remaining pending rows.
+   - `确认本轮` is enabled in the default `今日优先` execution batch because the scope is already narrowed. In the expanded full candidate pool, batch confirmation should stay guarded until the operator narrows by task/action, risk, or impact.
+   - If one filtered row is already `暂缓`, `确认本轮` / `确认待处理` preserves it and confirms only the remaining pending rows.
    - After filtering to `止损/否定`, confirming pending rows, then clicking `撤回已确认`, confirmed rows in that narrowed scope return to `待确认`; any `暂缓` row remains `暂缓`.
    - `导出已确认` is disabled until at least one action is confirmed, then exports only confirmed rows with the current column setup.
    - Once actions are confirmed, the execution package shows an execution plan with grouped backend action families such as `复核否定冲突`, `加入否定候选`, `拆出精准词`, or `按建议竞价小步加价`.
@@ -596,10 +598,10 @@ Before opening a PR or merging:
    - Action card buttons filter the queue through task presets: `放量任务`, `止损/否定`, and `结构修复`; they should not force users into deep tabs.
    - If the selected fixture has no structure queue rows, the structure card button shows `暂无队列` and is disabled.
    - Execution coach appears above the queue table. With the real Bulk fixture it should recommend `先保护预算`, preset `stop`, and show the stop/loss-control pending count.
-   - `今日优先` focus strip appears after Bulk import. With the real Bulk fixture the first post-import queue view should default to 30 focused rows and `导出当前 (30)`, while `查看全部动作` restores the full 5,927-row queue/export scope.
-   - After clicking `确认待处理` in the default `今日优先` view, the same 30-row focus batch stays stable, the execution package appears, and `导出已确认` remains scoped to those 30 confirmed rows.
+   - `今日优先` focus strip appears after Bulk import. With the real Bulk fixture the first post-import queue view should default to 30 focused rows and `导出本轮 (30)`, while `查看候选池` restores the full 5,927-row queue/export scope.
+   - After clicking `确认本轮` in the default `今日优先` view, the same 30-row execution batch stays stable, the execution package appears, and `导出已确认` remains scoped to those 30 confirmed rows.
    - Action queue filters work for action, risk, impact (`高花费优先`, `CPS 超目标`, `有订单`, `无订单`), and sorting (`按优先级`, `按花费`, `按订单`, `按偏离目标`).
-   - `导出当前` respects the active queue filters and current custom column setup.
+   - `导出本轮` / `导出当前` respects the active queue filters and current custom column setup.
    - Action queue default columns include `下一步` and `证据`; expert/custom columns can reveal CPS, ACOS, sales, and original rule reason.
    - With the real Bulk fixture, queue rows should contain non-empty `nextStep`, `evidence`, and `risk` fields.
    - Activity health table renders after Bulk import and uses campaign-level target CPS from `campaignTargetCps(row.name)`.

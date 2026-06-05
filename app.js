@@ -1113,15 +1113,15 @@
       tone = "ok";
       title = "Bulk 已识别";
       body = state.hourlyLoaded
-        ? "现在可以先看全产品行动队列；每小时报告已用于分时效率。"
-        : "现在可以先看全产品行动队列；如果要看分时效率，再补充每小时 CSV。";
+        ? "现在可以先看本轮执行包；每小时报告已用于分时效率。"
+        : "现在可以先看本轮执行包；如果要看分时效率，再补充每小时 CSV。";
       checklist = [
-        ["下一步", "查看今日优先", "先确认最值得执行的一批动作"],
+        ["下一步", "查看本轮执行包", "先确认系统收窄出的这一批动作"],
         ["可补充", "每小时 CSV", "用于判断哪些时段 RPC/CVR 更稳"],
         ["可展开", "详细分析", "标的、搜索词、分时和广告位都在二级层"],
       ];
       action = renderAssistActions([
-        { label: "查看行动队列", attr: "data-scroll-action-queue", variant: "primary" },
+        { label: "查看本轮执行包", attr: "data-scroll-action-queue", variant: "primary" },
       ]);
     } else if (loaded.length) {
       title = "还缺 Bulk";
@@ -2111,6 +2111,7 @@
     const pendingRows = scopedRows.filter((row) => (row.reviewState || "pending") === "pending");
     const confirmedCount = confirmedRows.length;
     const baseMeta = `待确认 ${fmtInt(pendingRows.length)} · 已确认 ${fmtInt(confirmedCount)}`;
+    const suggestionLabel = state.queueFilters.impact === "todayFocus" ? "本轮建议" : "当前建议";
     const groups = [
       {
         preset: "stop",
@@ -2146,7 +2147,7 @@
         tone: focus.tone,
         title: focus.title,
         body: `${focus.body} ${focus.metric(focus.rows)}。`,
-        meta: `${baseMeta} · 当前建议 ${fmtInt(focus.rows.length)} 个`,
+        meta: `${baseMeta} · ${suggestionLabel} ${fmtInt(focus.rows.length)} 个`,
         button: focus.button,
         preset: focus.preset,
       };
@@ -2432,10 +2433,17 @@
   }
 
   function renderReviewGuide(filteredRows, confirmedRows, canBatchConfirm) {
+    const isTodayBatch = state.queueFilters.impact === "todayFocus";
     let tone = "neutral";
     let title = "先收窄范围，再批量确认";
     let body = "确认代表准备进入导出执行包；暂缓代表保留线索但不导出。批量确认需要先点上方任务卡，或用任务、风险、影响筛选收窄范围。";
     let meta = "避免一次确认整张表";
+
+    if (isTodayBatch) {
+      title = "先复核本轮，再批量确认";
+      body = "本轮执行包已经被系统收窄。确认代表准备导出执行；暂缓代表保留线索但不进入本轮执行包。";
+      meta = "只确认这 1 批";
+    }
 
     if (confirmedRows.length) {
       tone = "confirmed";
@@ -2444,9 +2452,11 @@
       meta = "下一步：导出已确认";
     } else if (canBatchConfirm) {
       tone = "ready";
-      title = `当前筛选可批量确认 ${fmtInt(filteredRows.length)} 项`;
-      body = "如果这组动作已经复核过，可以用“确认待处理”；不确定的行先点“暂缓”，等下一轮数据再判断。";
-      meta = "确认后生成执行包";
+      title = isTodayBatch ? `本轮 ${fmtInt(filteredRows.length)} 项可确认` : `当前筛选可批量确认 ${fmtInt(filteredRows.length)} 项`;
+      body = isTodayBatch
+        ? "如果本轮动作已经复核过，可以用“确认本轮”；不确定的行先点“暂缓”，这项不会进入本轮执行包。"
+        : "如果这组动作已经复核过，可以用“确认待处理”；不确定的行先点“暂缓”，等下一轮数据再判断。";
+      meta = isTodayBatch ? "确认后进入执行包" : "确认后生成执行包";
     } else if (!filteredRows.length) {
       tone = "empty";
       title = "当前没有待确认动作";
@@ -2469,6 +2479,7 @@
     const ready = state.bulkLoaded;
     const queueCount = state.lastQueueCount || 0;
     const confirmed = state.lastReviewCounts.confirmed || 0;
+    const isTodayBatch = state.queueFilters.impact === "todayFocus";
     const steps = [
       {
         label: "导入数据",
@@ -2481,13 +2492,13 @@
         status: ready ? "done" : "idle",
       },
       {
-        label: "查看队列",
-        meta: ready ? `${fmtInt(queueCount)} 个可执行动作` : "导入后自动生成",
+        label: isTodayBatch ? "查看本轮" : "查看队列",
+        meta: ready ? (isTodayBatch ? `本轮 ${fmtInt(queueCount)} 个动作` : `${fmtInt(queueCount)} 个可执行动作`) : "导入后自动生成",
         status: ready && confirmed ? "done" : ready ? "active" : "idle",
       },
       {
         label: "确认动作",
-        meta: ready ? `${fmtInt(confirmed)} 个已确认` : "先看队列",
+        meta: ready ? `${fmtInt(confirmed)} 个已确认` : "先看本轮",
         status: ready && confirmed ? "active" : "idle",
       },
       {
@@ -2545,11 +2556,14 @@
     } else if (ready && queueCount) {
       tone = "queue";
       step = "第 3 步";
-      title = "现在只看行动队列";
-      body = `已从 ${fmtInt(campaignCount)} 个活动和 ${fmtInt(searchCount)} 条搜索词里收敛出 ${fmtInt(queueCount)} 个可执行动作。先处理今日优先，再展开明细。`;
+      const isTodayBatch = state.queueFilters.impact === "todayFocus";
+      title = isTodayBatch ? "现在只看本轮执行包" : "现在只看当前筛选动作";
+      body = isTodayBatch
+        ? `已从 ${fmtInt(campaignCount)} 个活动和 ${fmtInt(searchCount)} 条搜索词里收敛出本轮 ${fmtInt(queueCount)} 个动作。先复核这一批，候选池可以稍后再展开。`
+        : `当前筛选下有 ${fmtInt(queueCount)} 个可执行动作。先复核风险、目标 CPS 和后台定位，再确认导出。`;
       meta = `目标 CPS ${fmtMoney(state.defaultTargetCps)} · 自然 CVR ${fmtPct(state.naturalCvr)}`;
       actions = `
-        <button class="export-btn" type="button" data-scroll-action-queue>查看行动队列</button>
+        <button class="export-btn" type="button" data-scroll-action-queue>${isTodayBatch ? "查看本轮执行包" : "查看当前动作"}</button>
       `;
     } else if (ready) {
       tone = "empty";
