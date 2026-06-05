@@ -1294,11 +1294,11 @@
       state.pendingQueueAutoFocus = false;
     }
     const todayFocusRows = queueRows.filter((row) => state.todayFocusKeys.has(row.reviewKey));
-    const filteredQueueRows = withPriorityReasons(withExecutionOrder(filterQueueRows(queueRows)));
+    const filteredQueueRows = prepareQueueRowsForExport(filterQueueRows(queueRows));
     const scopedQueueRows = filterQueueRows(queueRows, { review: "all" });
     state.lastQueueCount = filteredQueueRows.length;
     state.lastReviewCounts = countReviewStatuses(scopedQueueRows);
-    const confirmedRows = withPriorityReasons(withExecutionOrder(filterQueueRows(queueRows, { review: "confirmed" })));
+    const confirmedRows = prepareQueueRowsForExport(filterQueueRows(queueRows, { review: "confirmed" }));
     const executionCoach = buildExecutionCoach(scopedQueueRows, confirmedRows);
     const batchConfirmRows = filteredQueueRows.filter((row) => (row.reviewState || "pending") === "pending");
     const batchResetRows = confirmedRows;
@@ -1388,6 +1388,7 @@
     `;
     const columns = [
       col("执行顺序", "executionOrder", "int", { width: "86px" }),
+      col("执行分组", "executionGroup", "clip", { width: "180px" }),
       col("确认", "reviewStatus", "review", { width: "170px" }),
       col("动作", "action", "tag"),
       col("后台动作", "executionAction", "text"),
@@ -1786,8 +1787,16 @@
     return rows.map((row, index) => ({ ...row, executionOrder: index + 1 }));
   }
 
+  function withExecutionGroups(rows) {
+    return rows.map((row) => ({ ...row, executionGroup: executionPlanLabel(row) }));
+  }
+
   function withPriorityReasons(rows) {
     return rows.map((row) => ({ ...row, priorityReason: leadPriorityReason(row) }));
+  }
+
+  function prepareQueueRowsForExport(rows) {
+    return withPriorityReasons(withExecutionGroups(withExecutionOrder(rows)));
   }
 
   function queueGap(row) {
