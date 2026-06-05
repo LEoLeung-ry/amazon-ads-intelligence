@@ -1472,6 +1472,15 @@
     const batchResetRows = confirmedRows;
     const canBatchConfirm = batchConfirmRows.length && isQueueNarrowedForBatch();
     const canBatchReset = batchResetRows.length && isQueueNarrowedForBatch();
+    const isTodayBatch = state.queueFilters.impact === "todayFocus";
+    const queueTitle = isTodayBatch
+      ? `本轮执行包（${fmtInt(filteredQueueRows.length)} 项）`
+      : `当前筛选动作（${fmtInt(filteredQueueRows.length)} 项）`;
+    const queueSubtitle = isTodayBatch
+      ? `默认只处理从 ${fmtInt(queueRows.length)} 个候选动作里收敛出的这一批；确认后导出给后台执行。`
+      : "当前是扩展筛选结果；确认前先复核风险、目标 CPS 和后台定位。";
+    const confirmCurrentLabel = isTodayBatch ? "确认本轮" : "确认待处理";
+    const exportCurrentLabel = isTodayBatch ? "导出本轮" : "导出当前";
 
     const cards = [
       {
@@ -1533,14 +1542,14 @@
       <div class="table-card queue-table-card">
         <div class="table-head">
           <div>
-            <h3>全产品行动队列</h3>
-            <span>先确认要执行的动作，再导出给后台调整</span>
+            <h3>${escapeHtml(queueTitle)}</h3>
+            <span>${escapeHtml(queueSubtitle)}</span>
           </div>
           <div class="queue-export-actions">
-            <button class="secondary-btn" type="button" data-review-current="confirmed"${canBatchConfirm ? "" : " disabled title=\"先筛选任务、风险或影响后再批量确认\""}>确认待处理 (${batchConfirmRows.length})</button>
+            <button class="secondary-btn" type="button" data-review-current="confirmed"${canBatchConfirm ? "" : " disabled title=\"先筛选任务、风险或影响后再批量确认\""}>${confirmCurrentLabel} (${batchConfirmRows.length})</button>
             <button class="secondary-btn" type="button" data-review-current="pending"${canBatchReset ? "" : " disabled title=\"先筛选任务、风险或影响后再撤回确认\""}>撤回已确认 (${batchResetRows.length})</button>
             <button class="secondary-btn" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>导出已确认 (${confirmedRows.length})</button>
-            <button class="export-btn" type="button" data-export-queue${filteredQueueRows.length ? "" : " disabled"}>导出当前 (${filteredQueueRows.length})</button>
+            <button class="export-btn" type="button" data-export-queue${filteredQueueRows.length ? "" : " disabled"}>${exportCurrentLabel} (${filteredQueueRows.length})</button>
           </div>
         </div>
         <div class="execution-summary">
@@ -1680,21 +1689,20 @@
   function renderTodayFocus(rows, allRows) {
     const spend = sumBy(rows, (row) => row.spend);
     const highRisk = rows.filter((row) => row.risk === "高风险").length;
-    const noOrders = rows.filter((row) => row.orders === 0).length;
     const active = state.queueFilters.impact === "todayFocus";
     return `<div class="today-focus ${active ? "active" : ""}">
       <div>
         <span class="eyebrow">Today focus</span>
-        <h4>先处理 ${fmtInt(rows.length)} 个最值得看的动作</h4>
-        <p>从 ${fmtInt(allRows.length)} 个动作里按风险、花费、动作优先级自动收敛。适合新人先完成一轮，不必一开始面对整张大表。</p>
+        <h4>本轮执行包：先处理 ${fmtInt(rows.length)} 个动作</h4>
+        <p>这是默认工作批次；${fmtInt(allRows.length)} 个候选动作只作为筛选池，不需要今天全部处理。先完成这一批，再决定是否扩展范围。</p>
       </div>
       <div class="today-focus-metrics">
         <span><b>${fmtMoney(spend)}</b> 涉及花费</span>
         <span><b>${fmtInt(highRisk)}</b> 高风险</span>
-        <span><b>${fmtInt(noOrders)}</b> 无订单</span>
+        <span><b>${fmtInt(allRows.length)}</b> 候选池</span>
         ${active
-          ? '<button class="secondary-btn" type="button" data-queue-impact="all">查看全部动作</button>'
-          : `<button class="export-btn" type="button" data-queue-impact="todayFocus"${rows.length ? "" : " disabled"}>查看今日优先</button>`}
+          ? '<button class="secondary-btn" type="button" data-queue-impact="all">查看候选池</button>'
+          : `<button class="export-btn" type="button" data-queue-impact="todayFocus"${rows.length ? "" : " disabled"}>回到本轮执行包</button>`}
       </div>
     </div>`;
   }
@@ -2287,13 +2295,16 @@
   function renderQueueFilters(allRows, filteredRows) {
     const actionOptions = ["all", "growth", "stop", "structure", "检查否定", "否定", "止损", "降价", "放量", "保留/加预算", "加精准词", "加商品定向"];
     const filters = state.queueFilters;
+    const countMarkup = filters.impact === "todayFocus"
+      ? `<b>本轮 ${fmtInt(filteredRows.length)}</b><span>候选池 ${fmtInt(allRows.length)}</span>`
+      : `<b>${fmtInt(filteredRows.length)}</b><span>/ ${fmtInt(allRows.length)} 项</span>`;
     return `<div class="queue-filter-bar">
       ${queueSelect("任务/动作", "action", actionOptions, filters.action, queueActionLabel)}
       ${queueSelect("风险", "risk", ["all", "高风险", "中风险", "低风险"], filters.risk, (value) => value === "all" ? "全部风险" : value)}
       ${queueSelect("状态", "review", ["pending", "confirmed", "held", "all"], filters.review, (value) => value === "all" ? "全部状态" : reviewLabels[value])}
       ${queueSelect("影响", "impact", ["all", "todayFocus", "highSpend", "overTarget", "hasOrders", "noOrders"], filters.impact, queueImpactLabel)}
       ${queueSelect("排序", "sort", ["priority", "spend", "orders", "gap"], filters.sort, queueSortLabel)}
-      <div class="queue-filter-count"><b>${fmtInt(filteredRows.length)}</b><span>/ ${fmtInt(allRows.length)} 项</span></div>
+      <div class="queue-filter-count">${countMarkup}</div>
     </div>`;
   }
 
