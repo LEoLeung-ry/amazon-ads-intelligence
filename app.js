@@ -133,6 +133,7 @@
       "emptyState",
       "focusBand",
       "metricGuide",
+      "briefGrid",
       "actionQueue",
       "tabs",
       "kpiGrid",
@@ -1164,6 +1165,7 @@
     els.focusBand.hidden = !ready;
     els.actionQueue.hidden = !ready;
     const detailsVisible = ready && state.detailsExpanded;
+    if (els.briefGrid) els.briefGrid.hidden = !detailsVisible;
     els.tabs.hidden = !detailsVisible;
     document.querySelectorAll("#analysisWorkspace .tab-panel").forEach((panel) => {
       panel.hidden = !detailsVisible;
@@ -1350,7 +1352,7 @@
         </div>
         <div class="queue-actions">
           <p>只显示可执行动作；观察、已否定和样本不足项收进详细分析。</p>
-          <button class="secondary-btn" type="button" data-toggle-details>${state.detailsExpanded ? "收起详细分析" : "展开详细分析"}</button>
+          <button class="secondary-btn" type="button" data-toggle-details>${state.detailsExpanded ? "收起解释和详细分析" : "展开解释和详细分析"}</button>
         </div>
       </div>
       ${renderExecutionCoach(executionCoach)}
