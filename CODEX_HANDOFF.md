@@ -401,9 +401,11 @@ Important UI behavior:
 - Wrong-file guidance should name the failed file, tell the user to check Bulk `xlsx/xls`, required sheet names (`商品推广活动` / `Sponsored Products Campaigns`), the search term sheet, and clarify that hourly CSV cannot replace Bulk.
 - Only the latest uploaded file should drive the warning state. If a user uploads a wrong file and then successfully uploads Bulk, the assist panel must switch to the Bulk-loaded success state instead of keeping an old warning alive.
 - After Bulk is loaded, the same assist panel should point to the product action queue / today focus first, with hourly CSV and detailed analysis as optional next layers.
+- When Bulk is loaded, the assist panel includes a `data-scroll-action-queue` button. Keep it wired through `handleGlobalShortcutClick()` so mobile users can jump directly to the product action queue after import.
 - The left sidebar has two separate mode buttons: `广告诊断` and `投放关键词检查`.
 - Left sidebar campaign search appears above upload and goal controls.
 - Left sidebar contains upload, product default target CPS, natural CVR, derived ACOS, actual CPS, target gap, product groups, and campaign list.
+- On mobile after Bulk is loaded, CSS uses `body[data-bulk-ready="true"]` to compress the sidebar: hide file stack, product-group controls, and campaign list; compact the upload card; keep campaign search, goal controls, and the action-queue jump. This keeps the default path product-wide and prevents the action queue from being buried below a long sidebar.
 - Each campaign row supports a compact CPS override input. Empty input means inherit product default CPS.
 - Top status pills show Bulk/hourly/SciAds load status.
 - `投放关键词检查` must remain a separate workspace, not merged into the original tab set.

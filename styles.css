@@ -336,6 +336,23 @@ button {
   color: #15803d;
 }
 
+.assist-jump {
+  width: 100%;
+  min-height: 30px;
+  margin-top: 4px;
+  border: 1px solid rgba(15, 118, 110, 0.28);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.assist-jump:hover {
+  border-color: var(--teal);
+  background: #f0fdfa;
+}
+
 .search-card {
   display: grid;
   gap: 7px;
@@ -2170,6 +2187,30 @@ tbody tr:hover {
     overflow: visible;
     border-right: 0;
     border-bottom: 1px solid var(--line);
+  }
+
+  body[data-bulk-ready="true"] .sidebar {
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  body[data-bulk-ready="true"] .drop-card {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  body[data-bulk-ready="true"] .drop-card .drop-icon,
+  body[data-bulk-ready="true"] .drop-card .drop-copy,
+  body[data-bulk-ready="true"] .file-stack,
+  body[data-bulk-ready="true"] .activity-controls,
+  body[data-bulk-ready="true"] .campaign-panel {
+    display: none;
+  }
+
+  body[data-bulk-ready="true"] .drop-card .secondary-btn {
+    grid-column: 1;
+    height: 32px;
   }
 
   .campaign-panel {

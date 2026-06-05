@@ -236,6 +236,7 @@
     });
     els.actionQueue.addEventListener("click", handleActionQueueClick);
     els.actionQueue.addEventListener("change", handleActionQueueChange);
+    document.addEventListener("click", handleGlobalShortcutClick);
     document.addEventListener("click", handleColumnControlClick);
     document.addEventListener("change", handleColumnControlChange);
     els.tabs.addEventListener("click", (event) => {
@@ -291,6 +292,13 @@
       panel.classList.toggle("active", panel.id === `tab-${tabName}`);
     });
     setTimeout(() => Object.values(state.charts).forEach((chart) => chart.resize()), 30);
+  }
+
+  function handleGlobalShortcutClick(event) {
+    const queueButton = event.target.closest("[data-scroll-action-queue]");
+    if (!queueButton) return;
+    const target = els.actionQueue?.hidden ? els.workflowStrip : els.actionQueue;
+    if (target) target.scrollIntoView({ block: "start", behavior: "smooth" });
   }
 
   function handleActionQueueClick(event) {
@@ -817,6 +825,7 @@
     let tone = "info";
     let title = "上传顺序";
     let body = "先导入 Bulk 工作簿；每小时 CSV 和 SciAds 记录是可选增强。文件只在浏览器本地解析。";
+    let action = "";
     let checklist = [
       ["必传", "Bulk 工作簿", "含“商品推广活动”或 Sponsored Products Campaigns"],
       ["最好有", "搜索词工作表", "含“商品推广搜索词报告”，用于加词和否定"],
@@ -842,6 +851,7 @@
         ["可补充", "每小时 CSV", "用于判断哪些时段 RPC/CVR 更稳"],
         ["可展开", "详细分析", "标的、搜索词、分时和广告位都在二级层"],
       ];
+      action = '<button class="assist-jump" type="button" data-scroll-action-queue>查看行动队列</button>';
     } else if (loaded.length) {
       title = "还缺 Bulk";
       body = "已读取可选文件，但核心诊断需要 Bulk 工作簿才能生成广告活动、搜索词和行动队列。";
@@ -864,6 +874,7 @@
           </div>
         </div>`).join("")}
       </div>
+      ${action}
     `;
   }
 
