@@ -23,6 +23,7 @@ Latest implementation note for this release:
 
 - The empty state now relies on the top `workflow-strip` as the only five-step path. Do not duplicate the same five steps inside the hero panel; the hero should stay focused on the Bulk upload CTA, the two analysis entrances, and the required/optional file checklist.
 - The visible first-layer module labels now use Chinese operator language instead of decorative English labels. Keep these labels business-facing: `行动队列`, `下一步`, `本轮重点`, `目标校验`, `执行包`, `导出记录`, `分析范围`, `确认规则`. Do not reintroduce visible labels such as `Action queue`, `Next action`, `Goal checkpoint`, `Today focus`, or `Export receipt` in the main workflow; this app is for Chinese Amazon operators and new staff who need immediate task comprehension.
+- The `投放关键词检查` empty state now uses Chinese operator language (`关键词结构体检`) and includes its own `选择 Bulk 工作簿` and demo buttons wired through the global workflow actions. A new operator who enters this mode first should not need to hunt back through the left sidebar to start.
 - After a confirmed execution package is exported, `buildExecutionCoach()`, `renderExecutionPackage()`, `renderReviewGuide()`, and the queue table header now read `activeQueueExport()` and switch from "ready to export" wording to "exported, go execute in Amazon" wording. Review Rule should show `下一步：后台执行`, and the table-head button should read `重新导出已确认` while the export receipt exists. Keep local queue copy aligned with the Step 5 workflow state; the UI should not continue asking for a first export after an export receipt exists.
 - Batch review actions now switch the visible review filter to the new state: `确认本轮` shows the 30 confirmed rows instead of an empty pending view; `撤回已确认` returns to pending. Once confirmed rows exist, `导出已确认` becomes the primary button and `导出当前视图` is secondary.
 - Any row-level or batch review-status change calls `clearQueueExportState()`, removing stale product-queue export receipts and Step 5 workflow state. Do not leave an old exported CSV receipt visible after the operator confirms, holds, or withdraws actions.
@@ -489,6 +490,7 @@ Important UI behavior:
 - Each campaign row supports a compact CPS override input. Empty input means inherit product default CPS.
 - Top status pills show Bulk/hourly/SciAds load status.
 - `投放关键词检查` must remain a separate workspace, not merged into the original tab set.
+- The keyword-checker empty state must speak in Chinese operator terms and offer a direct Bulk CTA (`data-workflow-upload`) plus demo entry (`data-workflow-demo`), because first-time users may enter this mode before importing anything.
 - Keyword checker should expose KPI cards, math/course brief, risk brief, manual term input, keyword coverage table, ad group table, filters, and CSV export.
 - Target diagnostics and search term decision tables must include the related ad group column (`广告组`) next to campaign (`活动`) so every action is traceable to both campaign and ad group.
 - The analysis workspace uses a quieter focus layout: fixed-order KPI chunks, a stronger primary judgment card, muted support cards, and a plain layered background to reduce cognitive load.
@@ -628,6 +630,7 @@ Before opening a PR or merging:
    - Dynamic hourly windows are shown.
    - Placement summary cards render.
    - `投放关键词检查` mode appears as a separate entry.
+   - In `投放关键词检查` before import, the empty state shows `关键词结构体检`, a visible `选择 Bulk 工作簿` button, and no visible `Keyword coverage` label.
    - After loading Bulk, keyword checker produces keyword rows and ad group rows.
    - Manual keyword input returns both found and not-found terms.
    - Keyword checker CSV export produces filtered rows.
