@@ -1516,6 +1516,7 @@
           ${reviewSummaryItem("已确认", state.lastReviewCounts.confirmed, "confirmed")}
           ${reviewSummaryItem("暂缓", state.lastReviewCounts.held, "held")}
         </div>
+        ${renderReviewGuide(filteredQueueRows, confirmedRows, canBatchConfirm)}
         ${renderExecutionPackage(confirmedRows)}
         ${renderLeadAction(filteredQueueRows)}
         ${renderActionLanguage(filteredQueueRows)}
@@ -2306,6 +2307,39 @@
     return `<div class="review-stat ${escapeAttr(status)}">
       <span>${escapeHtml(label)}</span>
       <b>${fmtInt(value)}</b>
+    </div>`;
+  }
+
+  function renderReviewGuide(filteredRows, confirmedRows, canBatchConfirm) {
+    let tone = "neutral";
+    let title = "先收窄范围，再批量确认";
+    let body = "确认代表准备进入导出执行包；暂缓代表保留线索但不导出。批量确认需要先点上方任务卡，或用任务、风险、影响筛选收窄范围。";
+    let meta = "避免一次确认整张表";
+
+    if (confirmedRows.length) {
+      tone = "confirmed";
+      title = `已确认 ${fmtInt(confirmedRows.length)} 个动作`;
+      body = "这些动作已经进入执行包，可以继续确认，也可以导出已确认 CSV。标为暂缓的项目会留在队列里，不进入执行包。";
+      meta = "下一步：导出已确认";
+    } else if (canBatchConfirm) {
+      tone = "ready";
+      title = `当前筛选可批量确认 ${fmtInt(filteredRows.length)} 项`;
+      body = "如果这组动作已经复核过，可以用“确认待处理”；不确定的行先点“暂缓”，等下一轮数据再判断。";
+      meta = "确认后生成执行包";
+    } else if (!filteredRows.length) {
+      tone = "empty";
+      title = "当前没有待确认动作";
+      body = "恢复默认筛选或回到全产品后，再从第一条建议开始确认。";
+      meta = "先找回队列";
+    }
+
+    return `<div class="review-guide ${escapeAttr(tone)}">
+      <div>
+        <span class="eyebrow">Review rule</span>
+        <h4>${escapeHtml(title)}</h4>
+        <p>${escapeHtml(body)}</p>
+      </div>
+      <span>${escapeHtml(meta)}</span>
     </div>`;
   }
 

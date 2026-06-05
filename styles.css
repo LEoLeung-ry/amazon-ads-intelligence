@@ -2006,6 +2006,70 @@ body[data-bulk-ready="false"] .campaign-panel {
   background: #fffbeb;
 }
 
+.review-guide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 14px 0;
+  padding: 9px 12px;
+  border: 1px solid rgba(15, 118, 110, 0.15);
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.review-guide h4,
+.review-guide p {
+  margin: 0;
+}
+
+.review-guide h4 {
+  margin-top: 2px;
+  color: #10212b;
+  font-size: 13px;
+}
+
+.review-guide p {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.review-guide > div {
+  min-width: 0;
+}
+
+.review-guide > span {
+  flex: 0 0 auto;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.review-guide.ready {
+  border-color: rgba(37, 99, 235, 0.18);
+  background: #eff6ff;
+}
+
+.review-guide.confirmed {
+  border-color: rgba(34, 197, 94, 0.22);
+  background: #f0fdf4;
+}
+
+.review-guide.empty {
+  border-color: rgba(245, 158, 11, 0.26);
+  background: #fffbeb;
+}
+
 .lead-action {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 0.45fr);
@@ -3242,6 +3306,15 @@ tbody tr:hover {
 
   .lead-action {
     grid-template-columns: 1fr;
+  }
+
+  .review-guide {
+    display: grid;
+  }
+
+  .review-guide > span {
+    justify-content: center;
+    width: fit-content;
   }
 
   .action-language {

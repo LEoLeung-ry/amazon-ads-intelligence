@@ -24,6 +24,7 @@ Latest implementation note for this release:
 - `targetTable` and `searchTable` use a wider `decision-reason` column for the reason/explanation field. It is intentionally a single-line summary cell with full text in the native title tooltip, so long Chinese explanations do not inflate row height.
 - Queue filters now have an empty-result recovery strip. When filters return no action rows, the UI offers `data-reset-queue-filters` instead of leaving the operator at a dead end.
 - Campaign search with zero matches uses `scope-summary.empty` and keeps `data-clear-campaign-search` visible, so a new user can recover to the all-product action queue without understanding internal filter priority.
+- The action queue includes a lightweight `review-guide` strip after the pending/confirmed/held summary. It explains that `确认` means "ready for export", `暂缓` means "keep but do not export", and batch confirmation should only happen after narrowing by task/risk/impact. Keep this visible because it reduces fear of mis-clicking for first-time operators.
 - Keep these recovery paths lightweight; they are meant to reduce fatigue and preserve task flow, not add another analysis module.
 
 Non-regression rules for future maintainers:
