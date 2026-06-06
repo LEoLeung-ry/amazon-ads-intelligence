@@ -3436,6 +3436,7 @@
     state.goalChangeNotice = null;
     document.body.dataset.lastExport = JSON.stringify(state.lastExport);
     refreshWorkflowAfterQueueExport(key);
+    if (["productQueue", "productQueueConfirmed"].includes(key)) focusQueueExportReceipt();
     const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -3589,6 +3590,13 @@
     if (["productQueue", "productQueueConfirmed"].includes(key)) {
       renderAnalysis();
     }
+  }
+
+  function focusQueueExportReceipt() {
+    requestAnimationFrame(() => {
+      const receipt = els.actionQueue?.querySelector(".export-receipt");
+      if (receipt) receipt.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
   }
 
   function formatForExport(value, type) {
