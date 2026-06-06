@@ -4025,3 +4025,33 @@ tbody tr:hover {
     padding: 9px 10px;
   }
 }
+
+@media (max-width: 340px) {
+  body[data-bulk-ready="false"] .drop-actions {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-bulk-ready="false"] .drop-card .secondary-btn:not(#browseBtn) {
+    display: none;
+  }
+
+  body[data-bulk-ready="false"] .drop-card {
+    padding: 12px;
+  }
+
+  body[data-bulk-ready="false"] .topbar {
+    display: none;
+  }
+
+  body[data-bulk-ready="false"] .workflow-strip {
+    display: none;
+  }
+
+  body[data-bulk-ready="false"] .workflow-compass {
+    padding-block: 3px;
+  }
+
+  body[data-bulk-ready="false"] .workflow-compass-copy h3 {
+    margin-top: 0;
+  }
+}
