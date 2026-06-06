@@ -1378,11 +1378,11 @@
 
   function renderKpis(metrics, calculated, campaignCount, searchCount) {
     const items = [
-      ["点击", fmtInt(metrics.clicks), `CTR ${fmtPct(calculated.ctr)}`],
-      ["CTR", fmtPct(calculated.ctr), `${fmtInt(metrics.impressions)} 曝光`],
+      ["点击", fmtInt(metrics.clicks), `${fmtInt(metrics.impressions)} 曝光`],
+      ["CTR", fmtPct(calculated.ctr), "点击进入率"],
       ["CVR", fmtPct(calculated.cvr), `自然 ${fmtPct(state.naturalCvr)}`],
-      ["订单", fmtInt(metrics.orders), `CPS ${fmtMoney(calculated.cpa)}`],
-      ["CPC", fmtMoney(calculated.cpc), `RPC ${fmtMoney(calculated.rpc)}`],
+      ["订单", fmtInt(metrics.orders), "广告订单"],
+      ["CPC", fmtMoney(calculated.cpc), "点击成本"],
       ["花费", fmtKpiMoney(metrics.spend), `${fmtInt(metrics.clicks)} 点击`],
       ["销售额", fmtKpiMoney(metrics.sales), `AOV ${fmtMoney(calculated.aov)}`],
       ["ACOS", fmtPct(calculated.acos), state.targetAcos ? `推导目标 ${fmtPct(state.targetAcos)}` : "由 CPS 推导"],
@@ -1399,8 +1399,8 @@
     const items = [
       ["流量：点击 / CTR", "先看有没有足够点击；CTR 低说明曝光没有吸引点击。"],
       ["转化：CVR / 订单", "再看点击能不能变订单；样本少时用自然 CVR 保护判断。"],
-      ["成本：CPC / CPS / 花费", "CPC 是每次点击成本；CPS 是每单成本，是当前主控目标。"],
-      ["回报：销售额 / ACOS / ROAS", "ACOS 与 ROAS 是回报解释指标，用 CPS 和 AOV 推导目标线。"],
+      ["成本：CPC / 花费", "这里看点击成本和消耗规模；CPS 作为主控目标放在目标卡和行动队列里判断。"],
+      ["回报：销售额 / ACOS / ROAS", "ACOS 与 ROAS 是回报解释指标，用目标 CPS 和 AOV 推导目标线。"],
     ];
     els.metricGuide.innerHTML = items
       .map(([term, text]) => `<div class="metric-guide-item"><b>${escapeHtml(term)}</b><span>${escapeHtml(text)}</span></div>`)

@@ -71,7 +71,8 @@ Latest implementation note for this release:
 - After exporting `productQueue` or `productQueueConfirmed`, `renderExportReceipt()` shows a local receipt inside the action queue. It distinguishes a current-view snapshot from a confirmed execution package and repeats row/column counts plus the filename, so the operator knows exactly what was just produced. Keep `导出当前视图` disabled when the current queue scope has zero rows to avoid silent no-op clicks.
 - If the latest active export is `productQueue`, `renderWorkflowCompass()` should say it is a review snapshot and keep the next action as confirmation or `导出已确认`. Do not show `已导出 X 行执行数据` for an unconfirmed snapshot.
 - The empty state includes an `analysis-paths` strip explaining the two analysis entrances: default `广告诊断` for the all-product action queue and supplemental `关键词检查` for Bulk structure coverage. Keep it compact; it exists to help first-time users choose the right mode without reading the whole app.
-- After import, `renderMetricGuide()` should explain KPI cards by operator reading order: traffic (`点击/CTR`), conversion (`CVR/订单`), cost (`CPC/CPS/花费`), and return (`销售额/ACOS/ROAS`). Keep this as a compact guide for new operators, not a full glossary.
+- After import, `renderKpis()` must keep the main KPI cards in the user's fixed reading order: `点击`, `CTR`, `CVR`, `订单`, `CPC`, `花费`, `销售额`, `ACOS`, `ROAS`, `活动`. Do not add standalone `CPS` or `RPC` cards to this grid. CPS is the control target and belongs in the product goal card, goal checkpoint, evidence, and action queue; RPC belongs in hourly/placement analysis.
+- After import, `renderMetricGuide()` should explain KPI cards by operator reading order: traffic (`点击/CTR`), conversion (`CVR/订单`), cost (`CPC/花费`), and return (`销售额/ACOS/ROAS`). Keep this as a compact guide for new operators, not a full glossary.
 - Keep these recovery paths lightweight; they are meant to reduce fatigue and preserve task flow, not add another analysis module.
 
 Non-regression rules for future maintainers:
@@ -533,7 +534,7 @@ Important UI behavior:
 - Keyword checker should expose KPI cards, math/course brief, risk brief, manual term input, keyword coverage table, ad group table, filters, and CSV export.
 - Target diagnostics and search term decision tables must include the related ad group column (`广告组`) next to campaign (`活动`) so every action is traceable to both campaign and ad group.
 - The analysis workspace uses a quieter focus layout: fixed-order KPI chunks, a stronger primary judgment card, muted support cards, and a plain layered background to reduce cognitive load.
-- After import, show a compact metric guide for CPS, CVR, RPC, and ACOS. This is for new operators; keep it short and operational, not academic.
+- After import, show a compact metric guide for the visible KPI reading order. Keep CPS as the operating target in the goal/queue layer and RPC as a deeper hourly/placement metric, not as first-layer KPI cards.
 - After import, show `renderScopeSummary()` above KPI cards so first-time users know whether they are looking at all-product activity, a product group, activity search results, or manually selected campaigns. The scope summary may include a reset button for search/selection/product filter, but it must stay compact.
 - After import, keep `#briefGrid` hidden until `state.detailsExpanded` is true. The first layer should be workflow compass, KPI context, metric guide, and the all-product action queue; judgment/support cards belong to the explanation layer opened by `展开解释和详细分析`.
 - KPI order must remain: 点击, CTR, CVR, 订单, CPC, 花费, 销售额, ACOS, ROAS, 活动.
@@ -623,7 +624,8 @@ Before opening a PR or merging:
    - Workflow compass shows exactly one current next step: upload before Bulk, queue review after Bulk, export after confirmed actions, and exported status after a product queue CSV is downloaded.
    - First-layer workflow labels are Chinese operator labels, not English product labels: `行动队列`, `下一步`, `本轮重点`, `目标校验`, `执行包`, `导出记录`, `分析范围`, and `确认规则`.
    - Upload guidance shows the default upload order before import, a clear warning for unsupported/incorrect files, and a success hint after Bulk is recognized.
-   - Metric guide explains CPS, CVR, RPC, and ACOS after import without expanding the page into a tutorial.
+   - KPI cards follow the fixed order `点击 → CTR → CVR → 订单 → CPC → 花费 → 销售额 → ACOS → ROAS → 活动`; CPS/RPC are not standalone KPI cards.
+   - Metric guide explains the visible KPI sequence after import without expanding the page into a tutorial.
    - Scope summary appears above KPI cards after import, shows the current analysis scope, and updates when activity search, product filter, or manual campaign selection changes.
    - The judgment/support `briefGrid` is hidden on the first imported view and appears only after clicking `展开解释和详细分析`; the action queue should move higher than the old report-heavy layout.
    - Goal checkpoint appears above the action queue after import and reflects default target CPS, natural CVR, derived ACOS, actual CPS, and campaign override count.
