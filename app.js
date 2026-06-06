@@ -380,6 +380,11 @@
       exportTableCsv("productQueueConfirmed", queueExportFilename("productQueueConfirmed"));
       return;
     }
+    const startReviewButton = event.target.closest("[data-start-lead-review]");
+    if (startReviewButton) {
+      scrollToLeadAction();
+      return;
+    }
     const queueButton = event.target.closest("[data-scroll-action-queue]");
     if (!queueButton) return;
     const target = els.actionQueue?.hidden
@@ -428,11 +433,7 @@
     }
     const startReviewButton = event.target.closest("[data-start-lead-review]");
     if (startReviewButton) {
-      const leadAction = els.actionQueue?.querySelector(".queue-table-card .lead-action");
-      if (leadAction) {
-        const isMobile = Boolean(window.matchMedia?.("(max-width: 820px)").matches);
-        leadAction.scrollIntoView({ block: isMobile ? "center" : "start", behavior: "smooth" });
-      }
+      scrollToLeadAction();
       return;
     }
     const detailsButton = event.target.closest("[data-toggle-details]");
@@ -1941,7 +1942,7 @@
       : "这是当前筛选视图的完整快照，适合复盘或交给同事复核；真正执行前建议先确认动作，再导出已确认。";
     const action = confirmed
       ? '<button class="export-btn receipt-export-btn" type="button" data-export-confirmed>重新导出已确认</button>'
-      : '<button class="secondary-btn" type="button" data-scroll-action-queue>继续确认动作</button>';
+      : '<button class="secondary-btn" type="button" data-start-lead-review>继续确认动作</button>';
     return `<div class="export-receipt ${confirmed ? "confirmed" : "current"}">
       <div>
         <span class="eyebrow">导出记录</span>
@@ -3597,6 +3598,14 @@
       const receipt = els.actionQueue?.querySelector(".export-receipt");
       if (receipt) receipt.scrollIntoView({ block: "center", behavior: "smooth" });
     });
+  }
+
+  function scrollToLeadAction() {
+    const leadAction = els.actionQueue?.querySelector(".queue-table-card .lead-action");
+    if (!leadAction) return false;
+    const isMobile = Boolean(window.matchMedia?.("(max-width: 820px)").matches);
+    leadAction.scrollIntoView({ block: isMobile ? "center" : "start", behavior: "smooth" });
+    return true;
   }
 
   function formatForExport(value, type) {
