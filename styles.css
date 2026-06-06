@@ -2235,6 +2235,10 @@ body[data-bulk-ready="false"] #emptyState .hero-upload-actions {
   gap: 8px;
 }
 
+.queue-table-card > .queue-export-actions {
+  padding: 10px 14px 0;
+}
+
 .queue-export-actions .secondary-btn,
 .queue-export-actions .export-btn {
   width: auto;

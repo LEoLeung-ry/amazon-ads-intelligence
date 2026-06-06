@@ -1539,6 +1539,13 @@
     const currentExportClass = "secondary-btn";
     const confirmedExported = hasConfirmedRows && activeQueueExport()?.key === "productQueueConfirmed";
     const confirmedExportLabel = confirmedExported ? "重新导出已确认" : "导出已确认";
+    const queueExportActions = `
+      <div class="queue-export-actions">
+        <button class="${confirmCurrentClass}" type="button" data-review-current="confirmed"${canBatchConfirm ? "" : " disabled title=\"先筛选任务、风险或影响后再批量确认\""}>${confirmCurrentLabel} (${batchConfirmRows.length})</button>
+        <button class="secondary-btn" type="button" data-review-current="pending"${canBatchReset ? "" : " disabled title=\"先筛选任务、风险或影响后再撤回确认\""}>撤回已确认 (${batchResetRows.length})</button>
+        <button class="${confirmedExportClass} queue-confirmed-export" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>${confirmedExportLabel} (${confirmedRows.length})</button>
+        <button class="${currentExportClass}" type="button" data-export-queue title="仅导出当前筛选快照，不等于已确认执行包"${filteredQueueRows.length ? "" : " disabled"}>${exportCurrentLabel} (${filteredQueueRows.length})</button>
+      </div>`;
     const showExecutionCoach = hasConfirmedRows || !filteredQueueRows.length;
     const showTodayFocus = state.detailsExpanded || !isTodayBatch;
     const taskScopeLabel = isTodayBatch ? "本轮" : "当前范围";
@@ -1623,14 +1630,9 @@
             <h3>${escapeHtml(queueTitle)}</h3>
             <span>${escapeHtml(queueSubtitle)}</span>
           </div>
-          <div class="queue-export-actions">
-            <button class="${confirmCurrentClass}" type="button" data-review-current="confirmed"${canBatchConfirm ? "" : " disabled title=\"先筛选任务、风险或影响后再批量确认\""}>${confirmCurrentLabel} (${batchConfirmRows.length})</button>
-            <button class="secondary-btn" type="button" data-review-current="pending"${canBatchReset ? "" : " disabled title=\"先筛选任务、风险或影响后再撤回确认\""}>撤回已确认 (${batchResetRows.length})</button>
-            <button class="${confirmedExportClass} queue-confirmed-export" type="button" data-export-confirmed${confirmedRows.length ? "" : " disabled"}>${confirmedExportLabel} (${confirmedRows.length})</button>
-            <button class="${currentExportClass}" type="button" data-export-queue title="仅导出当前筛选快照，不等于已确认执行包"${filteredQueueRows.length ? "" : " disabled"}>${exportCurrentLabel} (${filteredQueueRows.length})</button>
-          </div>
         </div>
         ${renderLeadAction(filteredQueueRows)}
+        ${queueExportActions}
         <div class="execution-summary">
           ${reviewSummaryItem("待确认", state.lastReviewCounts.pending, "pending")}
           ${reviewSummaryItem("已确认", state.lastReviewCounts.confirmed, "confirmed")}
@@ -3652,8 +3654,8 @@
       controls.className = "column-controls";
       controls.dataset.tableId = tableId;
       const head = card.querySelector(".table-head");
-      const leadAction = tableId === "productActionTable" ? card.querySelector(".lead-action") : null;
-      if (leadAction) leadAction.insertAdjacentElement("afterend", controls);
+      const reviewActions = tableId === "productActionTable" ? card.querySelector(":scope > .queue-export-actions") : null;
+      if (reviewActions) reviewActions.insertAdjacentElement("afterend", controls);
       else if (head) head.insertAdjacentElement("afterend", controls);
       else card.insertBefore(controls, card.firstChild);
     }
