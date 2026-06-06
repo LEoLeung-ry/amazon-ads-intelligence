@@ -13,6 +13,7 @@ This push preserves the current production app code and refreshes this handoff s
 - The primary control goal is product-level CPS/CPA. Target ACOS is derived from CPS and AOV for explanation only.
 - The user optimizes one product at a time across all campaigns for that product. The default workflow must therefore stay all-product first, with campaign search/selection as refinement tools.
 - The sidebar mode switch should express task order, not two equal modules: `先做广告诊断` is the primary entry and `再查关键词结构` is the supplemental structure check after Bulk is understood.
+- The keyword workspace header should reinforce the same sequence: use `关键词结构复核` and explain it is used after ad diagnosis with the same Bulk, not as a separate first workflow.
 - The first important screen after import is the product action queue. It should tell the user what to do first, why, and what backend path to edit.
 - Keep the KPI order fixed as: clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaign count.
 - Natural CVR is a required user input because it smooths low-sample bid recommendations.
