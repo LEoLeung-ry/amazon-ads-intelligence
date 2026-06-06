@@ -3448,6 +3448,10 @@ tbody tr:hover {
     padding: 12px 14px;
   }
 
+  body[data-bulk-ready="true"] .brand-block {
+    display: none;
+  }
+
   body[data-bulk-ready="true"] .drop-card {
     grid-template-columns: 1fr;
     gap: 8px;

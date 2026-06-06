@@ -513,11 +513,17 @@
       renderFileStack();
     }
     finalizeDefaultSelection();
-    if (!hadBulkBefore && state.bulkLoaded && isDefaultQueueView()) {
+    const shouldMobileFocusQueue = !hadBulkBefore && state.bulkLoaded;
+    if (shouldMobileFocusQueue && isDefaultQueueView()) {
       state.pendingQueueAutoFocus = true;
     }
     setLoading(false);
     renderAll();
+    if (shouldMobileFocusQueue && window.matchMedia?.("(max-width: 820px)").matches) {
+      requestAnimationFrame(() => {
+        if (els.actionQueue) els.actionQueue.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
+    }
   }
 
   async function parseFile(file, record) {
