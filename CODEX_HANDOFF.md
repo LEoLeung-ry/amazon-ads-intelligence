@@ -719,3 +719,4 @@ If the future Codex can access the repository but not this conversation, this do
 Latest AI handoff note:
 
 - The action-queue header includes `data-start-lead-review` / `开始复核第一条`. This is the bridge from the non-interactive work order to the first concrete backend action. Keep it lightweight and focused on scrolling to `.queue-table-card .lead-action`; do not replace it with another explanatory card or make operators hunt below the plan for the first review target.
+- Keep `.queue-export-actions .queue-confirmed-export` hidden only while disabled. Once rows are confirmed, `导出已确认` must be visible directly under the first action card so mobile and desktop operators can complete the loop from review to execution package without returning to the top workflow compass or mistaking `导出当前视图` for the backend execution CSV.

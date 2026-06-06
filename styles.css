@@ -2264,9 +2264,12 @@ body[data-bulk-ready="false"] #emptyState .hero-upload-actions {
   opacity: 0.45;
 }
 
-.queue-export-actions .queue-confirmed-export,
 .execution-package .package-export-btn,
 .export-receipt .receipt-export-btn {
+  display: none;
+}
+
+.queue-export-actions .queue-confirmed-export:disabled {
   display: none;
 }
 
