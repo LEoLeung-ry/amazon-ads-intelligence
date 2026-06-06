@@ -534,6 +534,9 @@
         record.type = `每小时报告 · ${state.hourlyRows.length} 行`;
         return;
       }
+      if (looksLikeSearchTermCsv(headers)) {
+        throw new Error("这像是单独的搜索词 CSV。请上传 Bulk xlsx/xls；搜索词需要在 Bulk 工作簿的“商品推广搜索词报告”工作表里，才能和活动、广告组、竞价一起生成动作");
+      }
       throw new Error("这不是 Bulk 工作簿，也不是可识别的每小时 CSV；请先上传 Bulk xlsx/xls");
     }
 
@@ -4305,6 +4308,21 @@
 
   function hasAny(headers, aliases) {
     return aliases.every((alias) => headers.some((header) => header.includes(alias.replace(/\s+/g, ""))));
+  }
+
+  function hasHeader(headers, aliases) {
+    const normalizedHeaders = headers.map((header) => cleanText(header).replace(/\s+/g, "").toLowerCase());
+    return aliases.some((alias) => {
+      const normalizedAlias = cleanText(alias).replace(/\s+/g, "").toLowerCase();
+      return normalizedHeaders.some((header) => header.includes(normalizedAlias) || normalizedAlias.includes(header));
+    });
+  }
+
+  function looksLikeSearchTermCsv(headers) {
+    const hasSearchTerm = hasHeader(headers, ["客户搜索词", "顾客搜索词", "Customer Search Term", "CustomerSearchTerm"]);
+    const hasCampaign = hasHeader(headers, ["广告活动名称", "Campaign Name", "CampaignName"]);
+    const hasMetrics = hasHeader(headers, ["点击量", "Clicks", "花费", "Spend", "销售额", "Sales", "订单数量", "Orders"]);
+    return hasSearchTerm && (hasCampaign || hasMetrics);
   }
 
   function toNumber(value) {
