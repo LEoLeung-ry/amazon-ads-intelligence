@@ -1304,6 +1304,12 @@
     const detailsVisible = ready && state.detailsExpanded;
     if (els.briefGrid) els.briefGrid.hidden = !detailsVisible;
     els.tabs.hidden = !detailsVisible;
+    renderDetailTabs({
+      campaignCount: selectedCampaigns.length,
+      targetCount: selectedTargets.length,
+      searchCount: selectedSearch.length,
+      placementCount: selectedPlacement.length,
+    });
     document.querySelectorAll("#analysisWorkspace .tab-panel").forEach((panel) => {
       panel.hidden = !detailsVisible;
     });
@@ -1329,6 +1335,26 @@
     renderPlacement(selectedPlacement, metrics);
     renderMentorTable();
     renderCharts(selectedCampaigns, selectedTargets, selectedPlacement, selectedNames);
+  }
+
+  function renderDetailTabs({ campaignCount, targetCount, searchCount, placementCount }) {
+    if (!els.tabs) return;
+    const activeTab = els.tabs.querySelector(".tab.active")?.dataset.tab || "overview";
+    const tabs = [
+      ["overview", "总览", `${fmtInt(campaignCount)} 活动`],
+      ["targets", "标的诊断", `${fmtInt(targetCount)} 标的`],
+      ["search", "搜索词", `${fmtInt(searchCount)} 条`],
+      ["hourly", "分时", state.hourlyLoaded ? `${fmtInt(state.hourlyRows.length)} 行` : "未导入"],
+      ["placement", "广告位", `${fmtInt(placementCount)} 组`],
+      ["mentor", "规则库", state.mentorLoaded ? `${fmtInt(state.mentorRows.length)} 条` : "内置"],
+    ];
+    els.tabs.innerHTML = tabs
+      .map(([key, label, meta]) => `
+        <button class="tab${key === activeTab ? " active" : ""}" data-tab="${key}" type="button">
+          <span class="tab-label">${escapeHtml(label)}</span>
+          <span class="tab-meta">${escapeHtml(meta)}</span>
+        </button>`)
+      .join("");
   }
 
   function renderScopeSummary(campaigns, searchRows, metrics, calculated) {

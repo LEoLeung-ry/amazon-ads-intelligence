@@ -2764,21 +2764,40 @@ body[data-bulk-ready="false"] #emptyState .hero-upload-actions {
 }
 
 .tab {
-  height: 34px;
-  min-width: 72px;
-  padding: 0 12px;
+  min-height: 38px;
+  min-width: 94px;
+  display: inline-grid;
+  align-content: center;
+  gap: 1px;
+  padding: 4px 12px;
   border: 1px solid transparent;
   border-radius: 7px;
   background: transparent;
   color: #415164;
-  font-size: 13px;
+  font-size: 12px;
   white-space: nowrap;
+  text-align: left;
+}
+
+.tab-label {
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.tab-meta {
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.1;
 }
 
 .tab.active {
   color: #fff;
   background: #10212b;
   box-shadow: 0 6px 14px rgba(15, 32, 42, 0.12);
+}
+
+.tab.active .tab-meta {
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .tab-panel {
