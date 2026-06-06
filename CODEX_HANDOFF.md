@@ -12,6 +12,7 @@ This push preserves the current production app code and refreshes this handoff s
 - The app is a lightweight Amazon Ads decision workbench, not a dense reporting dashboard.
 - The primary control goal is product-level CPS/CPA. Target ACOS is derived from CPS and AOV for explanation only.
 - The user optimizes one product at a time across all campaigns for that product. The default workflow must therefore stay all-product first, with campaign search/selection as refinement tools.
+- The sidebar mode switch should express task order, not two equal modules: `先做广告诊断` is the primary entry and `再查关键词结构` is the supplemental structure check after Bulk is understood.
 - The first important screen after import is the product action queue. It should tell the user what to do first, why, and what backend path to edit.
 - Keep the KPI order fixed as: clicks, CTR, CVR, orders, CPC, spend, sales, ACOS, ROAS, campaign count.
 - Natural CVR is a required user input because it smooths low-sample bid recommendations.
