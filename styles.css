@@ -3514,6 +3514,10 @@ tbody tr:hover {
     gap: 6px;
   }
 
+  body[data-bulk-ready="false"] .import-assist.info b {
+    display: none;
+  }
+
   body[data-bulk-ready="false"] .import-assist.info > span {
     display: none;
   }
@@ -3578,6 +3582,10 @@ tbody tr:hover {
     min-width: 0;
   }
 
+  body[data-bulk-ready="false"] .status-pills {
+    display: none;
+  }
+
   .workflow-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3611,9 +3619,14 @@ tbody tr:hover {
   }
 
   body[data-bulk-ready="false"] .workflow-compass {
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 10px;
-    padding: 10px 12px;
+    padding: 7px 10px;
+  }
+
+  body[data-bulk-ready="false"] .workflow-compass-copy h3 {
+    margin-top: 2px;
+    font-size: 15px;
   }
 
   body[data-bulk-ready="false"] .workflow-compass-copy p,
@@ -3634,6 +3647,16 @@ tbody tr:hover {
 
   .workflow-compass-side > div {
     justify-content: flex-start;
+  }
+
+  body[data-bulk-ready="false"] .workflow-compass-side > div {
+    gap: 6px;
+  }
+
+  body[data-bulk-ready="false"] .workflow-compass-side .export-btn,
+  body[data-bulk-ready="false"] .workflow-compass-side .secondary-btn {
+    min-height: 30px;
+    padding: 0 10px;
   }
 
   .hero-panel {
@@ -3914,6 +3937,7 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 
+  body[data-bulk-ready="false"] .goal-fields,
   body[data-bulk-ready="true"] .goal-fields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
