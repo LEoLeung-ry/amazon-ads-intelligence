@@ -1630,6 +1630,7 @@
             <button class="${currentExportClass}" type="button" data-export-queue title="仅导出当前筛选快照，不等于已确认执行包"${filteredQueueRows.length ? "" : " disabled"}>${exportCurrentLabel} (${filteredQueueRows.length})</button>
           </div>
         </div>
+        ${renderLeadAction(filteredQueueRows)}
         <div class="execution-summary">
           ${reviewSummaryItem("待确认", state.lastReviewCounts.pending, "pending")}
           ${reviewSummaryItem("已确认", state.lastReviewCounts.confirmed, "confirmed")}
@@ -1638,7 +1639,6 @@
         ${renderReviewGuide(filteredQueueRows, confirmedRows, canBatchConfirm)}
         ${renderExecutionPackage(confirmedRows)}
         ${renderExportReceipt()}
-        ${renderLeadAction(filteredQueueRows)}
         ${renderActionLanguage(filteredQueueRows)}
         ${renderQueueFilters(queueRows, filteredQueueRows)}
         ${renderQueueRecovery(queueRows, filteredQueueRows)}
@@ -3652,7 +3652,9 @@
       controls.className = "column-controls";
       controls.dataset.tableId = tableId;
       const head = card.querySelector(".table-head");
-      if (head) head.insertAdjacentElement("afterend", controls);
+      const leadAction = tableId === "productActionTable" ? card.querySelector(".lead-action") : null;
+      if (leadAction) leadAction.insertAdjacentElement("afterend", controls);
+      else if (head) head.insertAdjacentElement("afterend", controls);
       else card.insertBefore(controls, card.firstChild);
     }
     const prefs = loadColumnPrefs(tableId);
