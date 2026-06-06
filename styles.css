@@ -1463,12 +1463,24 @@ body[data-bulk-ready="false"] #emptyState .hero-upload-actions {
   gap: 7px;
 }
 
-.queue-actions .secondary-btn {
+.queue-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.queue-action-buttons .secondary-btn,
+.queue-action-buttons .export-btn {
   width: fit-content;
   grid-column: auto;
   height: 30px;
   padding: 0 10px;
   font-size: 12px;
+}
+
+.queue-start-review {
+  box-shadow: 0 6px 14px rgba(15, 118, 110, 0.12);
 }
 
 .task-rail {
@@ -3722,7 +3734,14 @@ tbody tr:hover {
     justify-items: end;
   }
 
-  .queue-actions .secondary-btn {
+  .queue-action-buttons {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+  }
+
+  .queue-action-buttons .secondary-btn,
+  .queue-action-buttons .export-btn {
     min-width: 0;
     height: 28px;
     padding: 0 10px;

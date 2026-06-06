@@ -715,3 +715,7 @@ Read CODEX_HANDOFF.md first. This is a static GitHub Pages app for Amazon Sponso
 ```
 
 If the future Codex can access the repository but not this conversation, this document is sufficient context.
+
+Latest AI handoff note:
+
+- The action-queue header includes `data-start-lead-review` / `开始复核第一条`. This is the bridge from the non-interactive work order to the first concrete backend action. Keep it lightweight and focused on scrolling to `.queue-table-card .lead-action`; do not replace it with another explanatory card or make operators hunt below the plan for the first review target.

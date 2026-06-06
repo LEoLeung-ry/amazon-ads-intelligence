@@ -426,6 +426,15 @@
       renderAnalysis();
       return;
     }
+    const startReviewButton = event.target.closest("[data-start-lead-review]");
+    if (startReviewButton) {
+      const leadAction = els.actionQueue?.querySelector(".queue-table-card .lead-action");
+      if (leadAction) {
+        const isMobile = Boolean(window.matchMedia?.("(max-width: 820px)").matches);
+        leadAction.scrollIntoView({ block: isMobile ? "center" : "start", behavior: "smooth" });
+      }
+      return;
+    }
     const detailsButton = event.target.closest("[data-toggle-details]");
     if (detailsButton) {
       state.detailsExpanded = !state.detailsExpanded;
@@ -1615,7 +1624,10 @@
         </div>
         <div class="queue-actions">
           <p>${escapeHtml(queueHeadCopy)}</p>
-          <button class="secondary-btn" type="button" data-toggle-details>${state.detailsExpanded ? "收起详情" : "展开详情"}</button>
+          <div class="queue-action-buttons">
+            ${filteredQueueRows.length ? '<button class="export-btn queue-start-review" type="button" data-start-lead-review>开始复核第一条</button>' : ""}
+            <button class="secondary-btn" type="button" data-toggle-details>${state.detailsExpanded ? "收起详情" : "展开详情"}</button>
+          </div>
         </div>
       </div>
       ${renderRoundPlan({
