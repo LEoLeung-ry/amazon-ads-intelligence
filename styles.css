@@ -2449,6 +2449,10 @@ body[data-bulk-ready="false"] #emptyState .hero-upload-actions {
   font-size: 12px;
 }
 
+.lead-action-mobile-review {
+  display: none;
+}
+
 .lead-priority {
   display: flex;
   flex-wrap: wrap;
@@ -3896,6 +3900,29 @@ tbody tr:hover {
 
   .lead-action {
     grid-template-columns: 1fr;
+  }
+
+  .lead-action small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .lead-action-mobile-review {
+    display: block;
+    margin-top: 6px;
+  }
+
+  .lead-action-mobile-review .review-control {
+    width: 100%;
+  }
+
+  .lead-action-mobile-review .review-control button {
+    min-height: 30px;
+  }
+
+  .lead-action-side .review-control {
+    display: none;
   }
 
   .review-guide {

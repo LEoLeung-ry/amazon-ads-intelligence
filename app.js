@@ -2354,6 +2354,7 @@
         <h4>${escapeHtml(row.executionAction || "人工复核")}</h4>
         <p>${escapeHtml(row.nextStep || row.reason || "先复核数据，再决定是否执行。")}</p>
         <small>${escapeHtml(row.evidence || "")}</small>
+        <div class="lead-action-mobile-review">${reviewControl(row)}</div>
         <div class="lead-priority">
           <b>为什么先看它</b>
           <span>${escapeHtml(row.priorityReason || leadPriorityReason(row))}</span>
