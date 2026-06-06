@@ -25,6 +25,9 @@ Latest implementation note for this release:
 
 - The imported action queue now includes a compact `本轮作业单` strip before the task chips. It translates the current execution batch into an ordered operator path: first stop-loss/budget protection, then growth, then structure carryover, then confirmation/export. Keep it thin and non-interactive; it exists to reduce first-time scanning burden, not to become another KPI/report block.
 - Keep `本轮作业单` as the first decision layer inside `#actionQueue`, directly under the action-queue header. Global `data-scroll-action-queue` shortcuts should scroll to `.round-plan` when it exists, so mobile users land on the ordered work path instead of another explanation block.
+- The `#actionQueue` header should point the operator to that work order, e.g. `本轮执行包：先按作业单复核`. Do not title the first layer as a neutral statistics block such as `本轮动作构成`; the task chips are filters, not the primary reading path.
+- On mobile, hide the `#actionQueue .queue-head p` helper sentence so the `本轮作业单` appears immediately after the title and expand button. The helper sentence can remain on desktop, but narrow screens should prioritize the actual 1-4 work order.
+- Keep the detail toggle in the queue header short (`展开详情` / `收起详情`) and inline on mobile. Long labels such as `展开解释和详细分析` add height and delay the work order.
 - In the default unconfirmed `本轮执行包` view, do not show both `execution-coach` and `today-focus` above the table; they repeat the same stop-loss/growth order already expressed by `本轮作业单`. Show `execution-coach` after rows are confirmed or when the filtered queue is empty, and show `today-focus` when details are expanded or when the operator is outside the default today batch.
 - On mobile, keep `.task-rail` as a compact three-segment filter (`放量 / 控费 / 结构`) and hide its long meta/proof text. The full explanation already exists in `本轮作业单` and expandable detail layers; expanding the task rail back into three vertical cards makes the execution path feel crowded again.
 - Before Bulk is loaded on mobile, keep the product goal card compact: show only default CPS and natural CVR inputs, hide derived ACOS/actual CPS/gap/helper text until data exists. New users should reach the workflow strip sooner; detailed goal interpretation is useful after import, not before the first upload.
@@ -344,7 +347,7 @@ Core principle:
 
 The homepage action queue is now the primary workflow.
 
-- `renderActionQueue()` is deliberately light in the first layer: `Next action` coach, `Today focus`, compact task rail, then the `productActionTable`.
+- `renderActionQueue()` is deliberately work-order-first in the first layer: action queue header, `本轮作业单`, goal checkpoint, compact task rail, then the review/table layer. `execution-coach` and `today-focus` appear only when they add state-specific value instead of repeating the work order.
 - Do not restore the old bulky three-card-first action area. It pushed the executable table too far down and made the post-import screen feel like a report wall.
 - `actionTaskChip(card)` renders the compact task rail. It keeps the three business tasks visible, acts as a preset filter, and preserves formula/proof text inside a small `details` disclosure.
 - `buildProductActionRows()` mixes target rows and search term rows into one product-wide queue.

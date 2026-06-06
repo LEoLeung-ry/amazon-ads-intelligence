@@ -1503,10 +1503,10 @@
     const growthTaskRows = taskRowsFor("growth");
     const stopTaskRows = taskRowsFor("stop");
     const structureTaskRows = taskRowsFor("structure");
-    const taskRailTitle = isTodayBatch ? "本轮动作构成" : "当前候选类型";
-    const taskRailCopy = isTodayBatch
-      ? "下面只统计本轮执行包，点击卡片会在本轮内继续收窄。"
-      : "当前是候选池视角，点击卡片会继续按任务类型收窄。";
+    const queueHeadTitle = isTodayBatch ? "本轮执行包：先按作业单复核" : "当前筛选动作：先复核再确认";
+    const queueHeadCopy = isTodayBatch
+      ? "先看下方 1-4 步；任务卡只是继续筛选。"
+      : "先复核目标、风险和后台定位，再确认或暂缓。";
 
     const cards = [
       {
@@ -1553,11 +1553,11 @@
       <div class="queue-head">
         <div>
           <span class="eyebrow">行动队列</span>
-          <h3>${escapeHtml(taskRailTitle)}</h3>
+          <h3>${escapeHtml(queueHeadTitle)}</h3>
         </div>
         <div class="queue-actions">
-          <p>${escapeHtml(taskRailCopy)}</p>
-          <button class="secondary-btn" type="button" data-toggle-details>${state.detailsExpanded ? "收起解释和详细分析" : "展开解释和详细分析"}</button>
+          <p>${escapeHtml(queueHeadCopy)}</p>
+          <button class="secondary-btn" type="button" data-toggle-details>${state.detailsExpanded ? "收起详情" : "展开详情"}</button>
         </div>
       </div>
       ${renderRoundPlan({

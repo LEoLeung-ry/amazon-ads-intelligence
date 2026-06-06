@@ -3655,10 +3655,24 @@ tbody tr:hover {
 
   .queue-head {
     display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
   }
 
   .queue-head p {
+    display: none;
     text-align: left;
+  }
+
+  .queue-actions {
+    justify-items: end;
+  }
+
+  .queue-actions .secondary-btn {
+    min-width: 0;
+    height: 28px;
+    padding: 0 10px;
+    white-space: nowrap;
   }
 
   .queue-export-actions button:disabled {
