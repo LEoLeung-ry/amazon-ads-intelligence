@@ -33,11 +33,11 @@
           <input id="fileInput" type="file" multiple accept=".xlsx,.xls,.csv" />
           <div class="drop-icon" aria-hidden="true">↑</div>
           <div class="drop-copy">
-            <strong>拖入广告文件</strong>
-            <span>Bulk、每小时 CSV、SciAds 记录</span>
+            <strong id="dropTitle">先上传 Bulk 工作簿</strong>
+            <span id="dropSubtitle">CSV / SciAds 可稍后补充</span>
           </div>
           <div class="drop-actions">
-            <button class="secondary-btn" id="browseBtn" type="button">选择文件</button>
+            <button class="secondary-btn" id="browseBtn" type="button">选择 Bulk</button>
             <button class="secondary-btn" id="demoDataBtn" type="button">体验示例</button>
             <button class="secondary-btn" id="fieldChecklistBtn" type="button">字段清单</button>
           </div>
@@ -53,11 +53,11 @@
           </div>
           <div class="goal-fields">
             <label for="defaultTargetCps">
-              <span>默认目标 CPS</span>
+              <span>目标 CPS（每单上限）</span>
               <input id="defaultTargetCps" type="number" value="670" min="1" step="10" />
             </label>
             <label for="naturalCvr">
-              <span>自然 CVR</span>
+              <span>自然 CVR（转化率）</span>
               <input id="naturalCvr" type="number" value="5" min="0" max="100" step="0.1" />
             </label>
           </div>
@@ -405,7 +405,7 @@
 
     <script src="./assets/xlsx.full.min.js"></script>
     <script src="./assets/echarts.min.js"></script>
-    <script src="./app.js?v=queue-work-order-first-20260606c"></script>
+    <script src="./app.js?v=empty-upload-goal-copy-20260606"></script>
     <script src="./keyword-checker.js?v=keyword-lead-20260606"></script>
   </body>
 </html>

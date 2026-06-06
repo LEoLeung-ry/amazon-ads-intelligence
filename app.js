@@ -105,6 +105,8 @@
     [
       "dropZone",
       "fileInput",
+      "dropTitle",
+      "dropSubtitle",
       "browseBtn",
       "demoDataBtn",
       "fieldChecklistBtn",
@@ -1065,8 +1067,14 @@
 
   function renderStatus() {
     document.body.dataset.bulkReady = state.bulkLoaded ? "true" : "false";
+    if (els.dropTitle) {
+      els.dropTitle.textContent = state.bulkLoaded ? "补充广告文件" : "先上传 Bulk 工作簿";
+    }
+    if (els.dropSubtitle) {
+      els.dropSubtitle.textContent = state.bulkLoaded ? "每小时 CSV / SciAds 或重导 Bulk" : "CSV / SciAds 可稍后补充";
+    }
     if (els.browseBtn) {
-      els.browseBtn.textContent = state.bulkLoaded ? "补充文件" : "选择文件";
+      els.browseBtn.textContent = state.bulkLoaded ? "补充文件" : "选择 Bulk";
       els.browseBtn.title = state.bulkLoaded ? "补充每小时 CSV 或重新选择 Bulk" : "选择 Bulk 工作簿";
     }
     const pills = [
