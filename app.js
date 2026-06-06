@@ -394,11 +394,19 @@
       const key = reviewButton.dataset.reviewKey;
       const status = reviewButton.dataset.reviewStatus;
       if (!key || !reviewLabels[status]) return;
+      const keepLeadVisible = Boolean(
+        event.target.closest(".lead-action-mobile-review") && window.matchMedia?.("(max-width: 820px)").matches,
+      );
       if (status === "pending") delete state.actionReviews[key];
       else state.actionReviews[key] = status;
       clearQueueExportState();
       state.goalChangeNotice = null;
       renderAnalysis();
+      if (keepLeadVisible) {
+        requestAnimationFrame(() => {
+          els.actionQueue?.querySelector(".queue-table-card .lead-action")?.scrollIntoView({ block: "center", behavior: "smooth" });
+        });
+      }
       return;
     }
     const bulkReviewButton = event.target.closest("[data-review-current]");
