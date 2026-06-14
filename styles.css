@@ -56,7 +56,10 @@ button {
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -587,6 +590,67 @@ body[data-bulk-ready="false"] .campaign-panel {
 
 body[data-bulk-ready="false"] #emptyState .hero-upload-actions {
   display: none;
+}
+
+body[data-bulk-ready="true"] .search-card {
+  order: 2;
+}
+
+body[data-bulk-ready="true"] .brand-block {
+  min-height: 42px;
+}
+
+body[data-bulk-ready="true"] .brand-block p {
+  display: none;
+}
+
+body[data-bulk-ready="true"] .goal-card {
+  order: 3;
+  gap: 8px;
+}
+
+body[data-bulk-ready="true"] .sidebar .goal-helper {
+  display: none;
+}
+
+body[data-bulk-ready="true"] .activity-controls {
+  order: 4;
+}
+
+body[data-bulk-ready="true"] .activity-controls .segmented {
+  max-height: 62px;
+}
+
+body[data-bulk-ready="true"] .campaign-panel {
+  order: 5;
+  flex: 0 0 auto;
+  max-height: clamp(240px, 34vh, 360px);
+}
+
+body[data-bulk-ready="true"] .import-assist {
+  order: 6;
+}
+
+body[data-bulk-ready="true"] .file-stack {
+  order: 7;
+  max-height: 82px;
+  overflow: auto;
+}
+
+body[data-bulk-ready="true"] .drop-card {
+  order: 8;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 11px;
+  background: #f8fafc;
+}
+
+body[data-bulk-ready="true"] .drop-card .drop-icon {
+  display: none;
+}
+
+body[data-bulk-ready="true"] .drop-actions {
+  grid-column: 1;
 }
 
 .control-row label {
@@ -3502,10 +3566,29 @@ tbody tr:hover {
 
   body[data-bulk-ready="true"] .drop-card .drop-icon,
   body[data-bulk-ready="true"] .drop-card .drop-copy,
-  body[data-bulk-ready="true"] .file-stack,
-  body[data-bulk-ready="true"] .activity-controls,
-  body[data-bulk-ready="true"] .campaign-panel {
+  body[data-bulk-ready="true"] .file-stack {
     display: none;
+  }
+
+  body[data-bulk-ready="true"] .activity-controls {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  body[data-bulk-ready="true"] .activity-controls .segmented {
+    max-height: 62px;
+  }
+
+  body[data-bulk-ready="true"] .campaign-panel {
+    max-height: clamp(190px, 32vh, 260px);
+  }
+
+  body[data-bulk-ready="true"] .campaign-panel .panel-title {
+    padding: 9px 11px;
+  }
+
+  body[data-bulk-ready="true"] .campaign-list {
+    padding: 6px;
   }
 
   body[data-bulk-ready="true"] .drop-actions {
